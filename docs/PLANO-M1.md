@@ -10,9 +10,9 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Não avance par
 - [x] `docs/ADR-001-data-model.md` com o modelo completo (tabelas, colunas, índices, relações) baseado no núcleo do `CLAUDE.md` e nas specs
 
 ## 2. Modelo + migrações
-- [ ] Models SQLAlchemy de todas as tabelas do ADR-001
-- [ ] Migração inicial Alembic
-- [ ] Seed de desenvolvimento: 1 admin (`admin`/senha do .env), 1 reseller de teste, settings padrão (preço mensal 35.00, pacotes vazios)
+- [x] Models SQLAlchemy de todas as tabelas do ADR-001
+- [x] Migração inicial Alembic
+- [x] Seed de desenvolvimento: 1 admin (`admin`/senha do .env), 1 reseller de teste, settings padrão (preço mensal 35.00, pacotes vazios)
 
 ## 3. Autenticação
 - [ ] `POST /api/v1/auth/admin/login`, `POST /api/v1/auth/reseller/login` → JWT em cookie httpOnly + CSRF token
