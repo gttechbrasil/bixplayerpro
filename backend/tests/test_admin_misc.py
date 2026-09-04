@@ -197,3 +197,69 @@ async def test_settings_credits_toggle_reflects_in_me(
     )
     assert login.json()["platform"]["credits_enabled"] is True
     assert login.json()["platform"]["name"]
+
+
+async def test_gateway_info_is_masked(admin_client: AsyncClient, monkeypatch) -> None:
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(
+        get_settings(), "mercadopago_access_token", "APP_USR-1234567890-abcdef-XYZ9"
+    )
+    monkeypatch.setattr(get_settings(), "mercadopago_webhook_secret", "s3cr3t")
+    resp = await admin_client.get("/api/v1/admin/settings/gateway")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["access_token_masked"] == "APP_USR-…XYZ9"
+    assert "1234567890" not in body["access_token_masked"]
+    assert body["access_token_kind"] == "produção"
+    assert body["webhook_secret_configured"] is True
+    assert body["webhook_url"].endswith("/api/v1/webhooks/mercadopago")
+    assert body["provider"] == "fake"
+
+    monkeypatch.setattr(get_settings(), "mercadopago_access_token", "")
+    body = (await admin_client.get("/api/v1/admin/settings/gateway")).json()
+    assert body["access_token_masked"] is None and body["access_token_kind"] is None
+
+
+async def test_admin_reseller_devices_and_payments(
+    admin_client: AsyncClient,
+    reseller_client: AsyncClient,
+    reseller_user: Reseller,
+    db: AsyncSession,
+) -> None:
+    from tests.test_reseller_devices import BASE as DEVICES
+    from tests.test_reseller_devices import payload
+
+    await reseller_client.post(DEVICES, json=payload("AA:BB:CC:DD:EE:01", client_name="Maria"))
+    await reseller_client.post(DEVICES, json=payload("AA:BB:CC:DD:EE:02", client_name="José"))
+    db.add(
+        Payment(
+            reseller_id=reseller_user.id,
+            provider="fake",
+            provider_id="x1",
+            months=1,
+            amount=Decimal("35.00"),
+            status="approved",
+        )
+    )
+    await db.flush()
+
+    # the admin session must be restored: both clients share the same cookie jar
+    resp = await admin_client.get(f"/api/v1/admin/resellers/{reseller_user.id}/devices")
+    assert resp.status_code == 200, resp.text
+    items = resp.json()["items"]
+    assert [d["client_name"] for d in items] == ["José", "Maria"]
+    assert items[0]["playlist_url"] is None  # never exposed to the admin
+    assert items[0]["playlist_host"] == "http://cnplay.click"
+
+    resp = await admin_client.get(
+        f"/api/v1/admin/resellers/{reseller_user.id}/devices", params={"search": "maria"}
+    )
+    assert resp.json()["total"] == 1
+
+    resp = await admin_client.get(f"/api/v1/admin/resellers/{reseller_user.id}/payments")
+    assert resp.status_code == 200
+    assert resp.json()["total"] == 1
+    assert resp.json()["items"][0]["reseller_username"] == "revenda"
+    assert (await admin_client.get("/api/v1/admin/resellers/999/devices")).status_code == 404
+    assert (await admin_client.get("/api/v1/admin/resellers/999/payments")).status_code == 404

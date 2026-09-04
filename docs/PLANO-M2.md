@@ -44,8 +44,8 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Reutilize os co
 - [x] Revendedor vencido: acesso somente ao modal de renovação e ao perfil; demais rotas redirecionam com aviso
 
 ## 6. Painel admin — complementos
-- [ ] Configurações: toggle `credits_enabled`, credenciais do gateway (mascaradas), pacotes promocionais (CRUD inline)
-- [ ] Detalhe da revenda: lista dos devices dela (somente leitura) e histórico de pagamentos
+- [x] Configurações: toggle `credits_enabled`, credenciais do gateway (mascaradas), pacotes promocionais (CRUD inline)
+- [x] Detalhe da revenda: lista dos devices dela (somente leitura) e histórico de pagamentos
 
 ## 7. Fechamento do M2
 - [ ] `docs/API.md` regenerado; `docs/DEPLOY.md` com configuração do Mercado Pago e do volume de uploads

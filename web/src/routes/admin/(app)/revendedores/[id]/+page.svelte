@@ -9,7 +9,7 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Select from '$lib/components/Select.svelte';
-	import { expirationState, formatDate, formatDateTime } from '$lib/format';
+	import { expirationState, formatDate, formatDateTime, formatMoney } from '$lib/format';
 	import { updateQuery } from '$lib/query';
 	import { toast } from '$lib/stores/toast.svelte';
 	import type { Reseller } from '$lib/types';
@@ -138,6 +138,16 @@
 	}
 
 	const ledgerPages = $derived(Math.max(1, Math.ceil(data.ledger.total / data.ledger.per_page)));
+	const devicePages = $derived(Math.max(1, Math.ceil(data.devices.total / data.devices.per_page)));
+	const paymentPages = $derived(
+		Math.max(1, Math.ceil(data.payments.total / data.payments.per_page))
+	);
+	const paymentLabels: Record<string, string> = {
+		approved: 'Aprovado',
+		pending: 'Pendente',
+		cancelled: 'Cancelado',
+		expired: 'Expirado'
+	};
 </script>
 
 <PageHeader title={r.name} subtitle="@{r.username} · criado em {formatDate(r.created_at)}">
@@ -296,6 +306,145 @@
 			{/if}
 		</section>
 	{/if}
+</div>
+
+<div class="mt-6 grid gap-6 lg:grid-cols-2">
+	<section class="card">
+		<div
+			class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800"
+		>
+			<h2 class="font-semibold">Dispositivos</h2>
+			<span class="text-xs text-slate-500">{data.devices.total} cadastrados</span>
+		</div>
+		<div class="overflow-x-auto">
+			<table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+				<thead class="bg-slate-50 dark:bg-slate-900/60">
+					<tr>
+						<th class="table-th">Cliente</th>
+						<th class="table-th">MAC</th>
+						<th class="table-th">Servidor</th>
+						<th class="table-th">Licença</th>
+						<th class="table-th">Último acesso</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-slate-100 dark:divide-slate-800/70">
+					{#if data.devices.items.length === 0}
+						<tr>
+							<td class="table-td py-8 text-center text-slate-500" colspan="5"
+								>Nenhum dispositivo.</td
+							>
+						</tr>
+					{/if}
+					{#each data.devices.items as d (d.id)}
+						<tr>
+							<td class="table-td">{d.client_name || '—'}</td>
+							<td class="table-td font-mono text-xs">{d.mac_address}</td>
+							<td class="table-td text-xs">{d.playlist_host ?? '—'}</td>
+							<td class="table-td">
+								{#if d.status === 'expired'}
+									<Badge tone="red">Vencida</Badge>
+								{:else}
+									{d.license_expires_at ? formatDate(d.license_expires_at) : 'Vitalícia'}
+								{/if}
+							</td>
+							<td class="table-td text-xs text-slate-500">{formatDateTime(d.last_seen_at)}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+		{#if devicePages > 1}
+			<div
+				class="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-3 text-sm dark:border-slate-800"
+			>
+				<Button
+					size="sm"
+					variant="ghost"
+					disabled={data.devices.page <= 1}
+					onclick={() => updateQuery(page.url, { dpage: data.devices.page - 1 })}>‹</Button
+				>
+				<span>Página {data.devices.page} de {devicePages}</span>
+				<Button
+					size="sm"
+					variant="ghost"
+					disabled={data.devices.page >= devicePages}
+					onclick={() => updateQuery(page.url, { dpage: data.devices.page + 1 })}>›</Button
+				>
+			</div>
+		{/if}
+	</section>
+
+	<section class="card">
+		<div
+			class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800"
+		>
+			<h2 class="font-semibold">Pagamentos</h2>
+			<span class="text-xs text-slate-500">{data.payments.total} registros</span>
+		</div>
+		<div class="overflow-x-auto">
+			<table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+				<thead class="bg-slate-50 dark:bg-slate-900/60">
+					<tr>
+						<th class="table-th">Data</th>
+						<th class="table-th text-right">Meses</th>
+						<th class="table-th text-right">Valor</th>
+						<th class="table-th">Status</th>
+						<th class="table-th">Vencimento</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-slate-100 dark:divide-slate-800/70">
+					{#if data.payments.items.length === 0}
+						<tr>
+							<td class="table-td py-8 text-center text-slate-500" colspan="5">Nenhum pagamento.</td
+							>
+						</tr>
+					{/if}
+					{#each data.payments.items as p (p.id)}
+						<tr>
+							<td class="table-td whitespace-nowrap">{formatDateTime(p.created_at)}</td>
+							<td class="table-td text-right tabular-nums">{p.months}</td>
+							<td class="table-td text-right tabular-nums">{formatMoney(p.amount)}</td>
+							<td class="table-td">
+								<Badge
+									tone={p.status === 'approved'
+										? 'green'
+										: p.status === 'pending'
+											? 'yellow'
+											: 'gray'}
+								>
+									{paymentLabels[p.status] ?? p.status}
+								</Badge>
+							</td>
+							<td class="table-td text-xs whitespace-nowrap">
+								{p.new_expires_at
+									? `${formatDate(p.previous_expires_at)} → ${formatDate(p.new_expires_at)}`
+									: '—'}
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+		{#if paymentPages > 1}
+			<div
+				class="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-3 text-sm dark:border-slate-800"
+			>
+				<Button
+					size="sm"
+					variant="ghost"
+					disabled={data.payments.page <= 1}
+					onclick={() => updateQuery(page.url, { ppage: data.payments.page - 1 })}>‹</Button
+				>
+				<span>Página {data.payments.page} de {paymentPages}</span>
+				<Button
+					size="sm"
+					variant="ghost"
+					disabled={data.payments.page >= paymentPages}
+					onclick={() => updateQuery(page.url, { ppage: data.payments.page + 1 })}>›</Button
+				>
+			</div>
+		{/if}
+	</section>
 </div>
 
 <Modal bind:open={creditOpen} title="Ajustar créditos" size="sm">

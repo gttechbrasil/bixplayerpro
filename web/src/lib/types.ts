@@ -173,3 +173,12 @@ export interface Pix {
 	new_expires_at: string | null;
 	projected_expires_at: string;
 }
+
+export interface GatewayInfo {
+	provider: string;
+	access_token_masked: string | null;
+	access_token_kind: string | null;
+	webhook_secret_configured: boolean;
+	webhook_url: string;
+	pix_expiration_minutes: number;
+}

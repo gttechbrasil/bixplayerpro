@@ -157,3 +157,41 @@
 		<Button type="submit" loading={saving}>Salvar configurações</Button>
 	</div>
 </form>
+
+<section class="card mt-6 p-5">
+	<h2 class="font-semibold">Gateway de pagamento (Pix)</h2>
+	<p class="mt-1 text-sm text-slate-500">
+		As credenciais ficam no arquivo <code>.env</code> do servidor e não são editáveis aqui.
+	</p>
+	<dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+		<div>
+			<dt class="text-slate-500">Provedor</dt>
+			<dd class="font-medium">{data.gateway.provider}</dd>
+		</div>
+		<div>
+			<dt class="text-slate-500">Access token</dt>
+			<dd class="font-mono">
+				{data.gateway.access_token_masked ?? 'não configurado'}
+				{#if data.gateway.access_token_kind}
+					<span class="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-800"
+						>{data.gateway.access_token_kind}</span
+					>
+				{/if}
+			</dd>
+		</div>
+		<div>
+			<dt class="text-slate-500">Assinatura do webhook</dt>
+			<dd class="font-medium">
+				{data.gateway.webhook_secret_configured ? 'configurada' : 'não configurada'}
+			</dd>
+		</div>
+		<div>
+			<dt class="text-slate-500">Validade do QR Pix</dt>
+			<dd class="font-medium">{data.gateway.pix_expiration_minutes} min</dd>
+		</div>
+		<div class="sm:col-span-2">
+			<dt class="text-slate-500">URL do webhook (cadastre no Mercado Pago)</dt>
+			<dd class="font-mono text-xs break-all">{data.gateway.webhook_url}</dd>
+		</div>
+	</dl>
+</section>

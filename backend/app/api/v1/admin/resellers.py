@@ -3,25 +3,29 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 
 from app.core.deps import CurrentAdmin, DbSession, get_client_ip
 from app.core.exceptions import bad_request, conflict, not_found
 from app.core.pagination import paginate
 from app.core.security import hash_password
-from app.models import CreditLedger, Device, Reseller
+from app.models import CreditLedger, Device, Payment, Reseller
 from app.schemas.admin import (
     BlockUpdate,
     CreditAdjust,
     ExpirationUpdate,
     LedgerOut,
     PasswordReset,
+    PaymentOut,
     ResellerCreate,
     ResellerOut,
     ResellerUpdate,
 )
 from app.schemas.common import Message, Page, PageParams
+from app.schemas.reseller import ResellerDeviceOut
 from app.services import audit
 from app.services.credits import adjust_credits
+from app.services.reseller_devices import device_to_out
 from app.services.settings import credits_enabled
 
 router = APIRouter(prefix="/resellers", tags=["admin: resellers"])
@@ -309,3 +313,49 @@ async def delete_reseller(
     await db.delete(reseller)
     await db.commit()
     return Message(message="Revenda excluída.")
+
+
+@router.get(
+    "/{reseller_id}/devices",
+    summary="Dispositivos da revenda (somente leitura)",
+    response_model=Page[ResellerDeviceOut],
+)
+async def list_reseller_devices(
+    reseller_id: int, _: CurrentAdmin, db: DbSession, params: PageParams = Depends()
+) -> Page[ResellerDeviceOut]:
+    await _get_reseller(db, reseller_id)
+    stmt = (
+        select(Device)
+        .where(Device.reseller_id == reseller_id)
+        .options(selectinload(Device.playlists))
+        .order_by(Device.created_at.desc(), Device.id.desc())
+    )
+    if params.search:
+        term = f"%{params.search.strip()}%"
+        stmt = stmt.where(or_(Device.mac_address.ilike(term), Device.client_name.ilike(term)))
+
+    def to_out(device: Device) -> ResellerDeviceOut:
+        out = device_to_out(device)
+        out.playlist_url = None  # credentials are never shown to the admin
+        return out
+
+    return await paginate(db, stmt, params, to_out)
+
+
+@router.get(
+    "/{reseller_id}/payments",
+    summary="Histórico de pagamentos da revenda",
+    response_model=Page[PaymentOut],
+)
+async def list_reseller_payments(
+    reseller_id: int, _: CurrentAdmin, db: DbSession, params: PageParams = Depends()
+) -> Page[PaymentOut]:
+    reseller = await _get_reseller(db, reseller_id)
+    stmt = select(Payment).where(Payment.reseller_id == reseller_id).order_by(Payment.id.desc())
+
+    def to_out(payment: Payment) -> PaymentOut:
+        out = PaymentOut.model_validate(payment)
+        out.reseller_username = reseller.username
+        return out
+
+    return await paginate(db, stmt, params, to_out)
