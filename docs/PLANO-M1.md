@@ -38,11 +38,11 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Não avance par
 - [x] `GET /payments`, `GET /audit-log` com filtros e paginação
 
 ## 6. Painel admin (SvelteKit)
-- [ ] Bootstrap `/web` com SvelteKit, Tailwind, layout com sidebar, tema claro/escuro persistido
-- [ ] Login admin
-- [ ] Telas: Dashboard, Revendedores (lista, criar, editar, créditos, vencimento, bloquear), Pagamentos, Auditoria, Configurações
-- [ ] Componentes base reutilizáveis para o M2: tabela com busca/paginação, modal, toast, formulário
-- [ ] Textos em português
+- [x] Bootstrap `/web` com SvelteKit, Tailwind, layout com sidebar, tema claro/escuro persistido
+- [x] Login admin
+- [x] Telas: Dashboard, Revendedores (lista, criar, editar, créditos, vencimento, bloquear), Pagamentos, Auditoria, Configurações
+- [x] Componentes base reutilizáveis para o M2: tabela com busca/paginação, modal, toast, formulário
+- [x] Textos em português
 
 ## 7. Fechamento do M1
 - [ ] `docs/API.md` gerado a partir do OpenAPI com exemplos de request/response para todas as rotas
