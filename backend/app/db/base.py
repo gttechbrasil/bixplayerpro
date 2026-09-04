@@ -7,7 +7,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
-    pass
+    # Fetch server-generated defaults (created_at/updated_at) via RETURNING so that
+    # instances can be serialised after commit without a lazy refresh.
+    __mapper_args__ = {"eager_defaults": True}
 
 
 class TimestampMixin:

@@ -30,12 +30,12 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Não avance par
 - [x] Testes cobrindo: device novo, device cadastrado, expirado, reseller bloqueado, playlist add/delete
 
 ## 5. API do admin
-- [ ] CRUD `resellers` (listar com busca/paginação, criar, editar, bloquear, resetar senha)
-- [ ] `POST /resellers/{id}/credits` — ajuste manual com motivo → `credit_ledger` + `audit_log`
-- [ ] `PATCH /resellers/{id}/expiration`
-- [ ] `GET/PUT /settings` — preço mensal, pacotes promocionais `[{months, price}]`, versão mínima do app, apk_url
-- [ ] `GET /dashboard` — totais: resellers, devices ativos, pagamentos do mês
-- [ ] `GET /payments`, `GET /audit-log` com filtros e paginação
+- [x] CRUD `resellers` (listar com busca/paginação, criar, editar, bloquear, resetar senha)
+- [x] `POST /resellers/{id}/credits` — ajuste manual com motivo → `credit_ledger` + `audit_log`
+- [x] `PATCH /resellers/{id}/expiration`
+- [x] `GET/PUT /settings` — preço mensal, pacotes promocionais `[{months, price}]`, versão mínima do app, apk_url
+- [x] `GET /dashboard` — totais: resellers, devices ativos, pagamentos do mês
+- [x] `GET /payments`, `GET /audit-log` com filtros e paginação
 
 ## 6. Painel admin (SvelteKit)
 - [ ] Bootstrap `/web` com SvelteKit, Tailwind, layout com sidebar, tema claro/escuro persistido
