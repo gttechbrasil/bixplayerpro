@@ -22,6 +22,7 @@ os.environ["LOGIN_RATE_LIMIT"] = "5"
 os.environ["LOGIN_RATE_WINDOW"] = "60"
 os.environ["UPLOAD_DIR"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".uploads")
 os.environ["PUBLIC_BASE_URL"] = "http://test"
+os.environ["PAYMENT_PROVIDER"] = "fake"
 
 import pytest  # noqa: E402
 from alembic.config import Config  # noqa: E402
@@ -146,3 +147,15 @@ async def credits_on(db: AsyncSession) -> None:
 
     db.add(Setting(key="credits_enabled", value=True))
     await db.flush()
+
+
+@pytest.fixture
+def fake_provider():
+    """The in-memory payment provider used by the billing tests."""
+    from app.services.payments import get_provider
+    from app.services.payments.fake import FakeProvider
+
+    provider = get_provider()
+    assert isinstance(provider, FakeProvider)
+    provider.payments.clear()
+    return provider

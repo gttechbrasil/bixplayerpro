@@ -69,7 +69,7 @@ def ensure_reseller_active(reseller: Reseller, today: date | None = None) -> Non
     today = today or date.today()
     if reseller.is_blocked:
         raise forbidden(MSG_RESELLER_BLOCKED, "reseller_blocked")
-    if reseller.is_expired(today):
+    if reseller.has_expired(today):
         raise forbidden(MSG_RESELLER_EXPIRED, "reseller_expired")
 
 
@@ -83,6 +83,22 @@ async def current_reseller(
     if reseller is None:
         raise unauthorized()
     ensure_reseller_active(reseller)
+    _check_csrf(request, settings)
+    return reseller
+
+
+async def current_reseller_allow_expired(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> Reseller:
+    """Like `current_reseller` but lets an expired reseller through (renewal/profile)."""
+    reseller_id = _subject_from_cookie(request, RESELLER_COOKIE, "reseller")
+    reseller = await db.get(Reseller, reseller_id)
+    if reseller is None:
+        raise unauthorized()
+    if reseller.is_blocked:
+        raise forbidden(MSG_RESELLER_BLOCKED, "reseller_blocked")
     _check_csrf(request, settings)
     return reseller
 
@@ -101,5 +117,6 @@ async def current_device(
 
 CurrentAdmin = Annotated[Admin, Depends(current_admin)]
 CurrentReseller = Annotated[Reseller, Depends(current_reseller)]
+CurrentResellerAllowExpired = Annotated[Reseller, Depends(current_reseller_allow_expired)]
 CurrentDevice = Annotated[Device, Depends(current_device)]
 DbSession = Annotated[AsyncSession, Depends(get_db)]

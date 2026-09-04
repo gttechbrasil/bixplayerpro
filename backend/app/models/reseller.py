@@ -42,8 +42,8 @@ class Reseller(TimestampMixin, Base):
         back_populates="reseller", cascade="all, delete-orphan"
     )
 
-    def is_expired(self, today: date) -> bool:
+    def has_expired(self, today: date) -> bool:
         return self.expires_at is not None and self.expires_at < today
 
     def is_active(self, today: date) -> bool:
-        return not self.is_blocked and not self.is_expired(today)
+        return not self.is_blocked and not self.has_expired(today)

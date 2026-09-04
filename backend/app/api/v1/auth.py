@@ -1,14 +1,16 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.core.deps import (
     ADMIN_COOKIE,
+    MSG_RESELLER_BLOCKED,
     RESELLER_COOKIE,
-    ensure_reseller_active,
     get_client_ip,
 )
-from app.core.exceptions import unauthorized
+from app.core.exceptions import forbidden, unauthorized
 from app.core.security import create_access_token, decode_access_token, generate_csrf_token
 from app.db.session import get_db
 from app.models import Admin, Reseller
@@ -26,6 +28,12 @@ from app.services.auth import authenticate_admin, authenticate_reseller
 from app.services.settings import get_all_settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _reseller_me(reseller: Reseller) -> ResellerMe:
+    me = ResellerMe.model_validate(reseller)
+    me.is_expired = reseller.has_expired(date.today())
+    return me
 
 
 async def _platform(db: AsyncSession) -> PlatformInfo:
@@ -87,11 +95,13 @@ async def reseller_login(
     settings: Settings = Depends(get_settings),
 ) -> ResellerLoginResponse:
     reseller = await authenticate_reseller(db, body.username, body.password, get_client_ip(request))
-    ensure_reseller_active(reseller)
+    # Expired resellers may log in to renew; blocked ones may not.
+    if reseller.is_blocked:
+        raise forbidden(MSG_RESELLER_BLOCKED, "reseller_blocked")
     token = create_access_token(reseller.id, "reseller")
     csrf = _set_session_cookies(response, settings, RESELLER_COOKIE, token)
     return ResellerLoginResponse(
-        user=ResellerMe.model_validate(reseller), csrf_token=csrf, platform=await _platform(db)
+        user=_reseller_me(reseller), csrf_token=csrf, platform=await _platform(db)
     )
 
 
@@ -119,10 +129,11 @@ async def me(request: Request, db: AsyncSession = Depends(get_db)) -> MeResponse
     if payload and payload.get("role") == "reseller":
         reseller = await db.get(Reseller, int(payload["sub"]))
         if reseller is not None:
-            ensure_reseller_active(reseller)
+            if reseller.is_blocked:
+                raise forbidden(MSG_RESELLER_BLOCKED, "reseller_blocked")
             return MeResponse(
                 role="reseller",
-                user=ResellerMe.model_validate(reseller),
+                user=_reseller_me(reseller),
                 platform=await _platform(db),
             )
 

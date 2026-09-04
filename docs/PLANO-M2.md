@@ -26,13 +26,13 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Reutilize os co
 - [x] `GET/PUT /api/v1/reseller/profile` — nome (readonly), username (readonly), troca de senha com senha atual
 
 ## 4. Pagamentos Pix
-- [ ] `services/payments/base.py` (interface) + `mercadopago.py`; provedor escolhido por env
-- [ ] `GET /api/v1/reseller/billing/plans` — preço mensal e pacotes de `settings`
-- [ ] `POST /api/v1/reseller/billing/pix` — `{months}` ou `{package_id}`; valor calculado **no servidor**; cria `payments` pendente; retorna `payment_id`, `qr_code` (copia-e-cola), `qr_base64`, `expires_at`
-- [ ] `GET /api/v1/reseller/billing/pix/{payment_id}` — status para polling
-- [ ] `POST /api/v1/webhooks/mercadopago` — valida assinatura, idempotente por `provider_id`; ao aprovar: marca pago, estende `expires_at` (a partir do vencimento atual se futuro, senão de hoje), auditoria
-- [ ] `GET /api/v1/reseller/billing/history`
-- [ ] Modo sandbox documentado em `docs/DEPLOY.md`; teste unitário do webhook com payload de exemplo do Mercado Pago
+- [x] `services/payments/base.py` (interface) + `mercadopago.py`; provedor escolhido por env
+- [x] `GET /api/v1/reseller/billing/plans` — preço mensal e pacotes de `settings`
+- [x] `POST /api/v1/reseller/billing/pix` — `{months}` ou `{package_id}`; valor calculado **no servidor**; cria `payments` pendente; retorna `payment_id`, `qr_code` (copia-e-cola), `qr_base64`, `expires_at`
+- [x] `GET /api/v1/reseller/billing/pix/{payment_id}` — status para polling
+- [x] `POST /api/v1/webhooks/mercadopago` — valida assinatura, idempotente por `provider_id`; ao aprovar: marca pago, estende `expires_at` (a partir do vencimento atual se futuro, senão de hoje), auditoria
+- [x] `GET /api/v1/reseller/billing/history`
+- [x] Modo sandbox documentado em `docs/DEPLOY.md`; teste unitário do webhook com payload de exemplo do Mercado Pago
 
 ## 5. Dashboard do revendedor (SvelteKit `/painel`)
 - [ ] Login do revendedor; layout com sidebar: card de vencimento (estados ok / vence em ≤7 dias / vencido), Dispositivos, Migrador de DNS, Logomarca, Background, Layout, Banners, QR Code, Perfil, Sair; header com créditos (só se `credits_enabled`) e tema

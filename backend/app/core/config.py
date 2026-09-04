@@ -41,7 +41,8 @@ class Settings(BaseSettings):
     login_rate_limit: int = 10
     login_rate_window: int = 300
 
-    payment_provider: str = "mercadopago"
+    payment_provider: Literal["mercadopago", "fake"] = "mercadopago"
+    pix_expiration_minutes: int = 30
     mercadopago_access_token: str = ""
     mercadopago_webhook_secret: str = ""
 

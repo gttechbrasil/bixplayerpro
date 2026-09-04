@@ -111,6 +111,7 @@ Login da revenda
     "credits": 10,
     "expires_at": "2027-01-31",
     "is_blocked": false,
+    "is_expired": false,
     "logo_url": "https://cdn.exemplo.com/logo.png",
     "bg_url": "https://cdn.exemplo.com/fundo.jpg",
     "qr_content": "https://wa.me/5511999999999",
@@ -1308,5 +1309,153 @@ Troca a própria senha
 ```json
 {
   "message": "Operação realizada."
+}
+```
+
+### reseller: billing
+
+#### `GET /api/v1/reseller/billing/plans`
+
+Preço mensal e pacotes promocionais
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Response 200**
+
+```json
+{
+  "monthly_price": "35.00",
+  "max_months": 1,
+  "packages": [
+    {
+      "id": 12,
+      "months": 3,
+      "price": "100.00"
+    }
+  ],
+  "can_renew": true,
+  "expires_at": "2027-01-31"
+}
+```
+
+#### `POST /api/v1/reseller/billing/pix`
+
+Gera cobrança Pix para renovar a revenda
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Request**
+
+```json
+{
+  "months": 3,
+  "package_id": 1
+}
+```
+
+**Response 201**
+
+```json
+{
+  "payment_id": 1,
+  "status": "active",
+  "months": 3,
+  "amount": "105.00",
+  "qr_code": "00020126…",
+  "qr_base64": "iVBORw0KGgo…",
+  "expires_at": "2027-01-31",
+  "paid_at": "2026-09-04T12:05:00Z",
+  "new_expires_at": "2027-01-01",
+  "projected_expires_at": "texto"
+}
+```
+
+#### `GET /api/v1/reseller/billing/pix/{payment_id}`
+
+Status da cobrança (polling)
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `payment_id` | path | sim | integer |
+
+**Response 200**
+
+```json
+{
+  "payment_id": 1,
+  "status": "active",
+  "months": 3,
+  "amount": "105.00",
+  "qr_code": "00020126…",
+  "qr_base64": "iVBORw0KGgo…",
+  "expires_at": "2027-01-31",
+  "paid_at": "2026-09-04T12:05:00Z",
+  "new_expires_at": "2027-01-01",
+  "projected_expires_at": "texto"
+}
+```
+
+#### `GET /api/v1/reseller/billing/history`
+
+Histórico de pagamentos da revenda
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `page` | query | não | integer |
+| `per_page` | query | não | integer |
+| `search` | query | não | string |
+
+**Response 200**
+
+```json
+{
+  "items": [
+    {
+      "id": 12,
+      "reseller_id": 12,
+      "reseller_username": "revenda01",
+      "provider": "mercadopago",
+      "provider_id": "123456789",
+      "months": 3,
+      "amount": "105.00",
+      "status": "active",
+      "paid_at": "2026-09-04T12:05:00Z",
+      "previous_expires_at": "2026-10-01",
+      "new_expires_at": "2027-01-01",
+      "created_at": "2026-09-04T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "per_page": 25
+}
+```
+
+### webhooks
+
+#### `POST /api/v1/webhooks/mercadopago`
+
+Notificação de pagamento do Mercado Pago
+
+Mercado Pago sends `{type: "payment", data: {id}}` (plus `data.id` in the query
+string). The signature is validated when a secret is configured and the payment is
+always re-fetched from the provider before anything is approved.
+
+**Autenticação:** Sem autenticação.
+
+**Response 200**
+
+```json
+{
+  "processed": true,
+  "status": "active"
 }
 ```

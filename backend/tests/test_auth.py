@@ -88,7 +88,7 @@ async def test_reseller_login_blocked(
     assert "bloqueada" in resp.json()["detail"]["message"]
 
 
-async def test_reseller_login_expired(
+async def test_reseller_login_expired_can_only_renew(
     client: AsyncClient, reseller_user: Reseller, db: AsyncSession
 ) -> None:
     reseller_user.expires_at = date.today() - timedelta(days=1)
@@ -96,9 +96,20 @@ async def test_reseller_login_expired(
     resp = await client.post(
         LOGIN_RESELLER, json={"username": "revenda", "password": RESELLER_PASSWORD}
     )
+    assert resp.status_code == 200
+    assert resp.json()["user"]["is_expired"] is True
+    client.headers["X-CSRF-Token"] = resp.json()["csrf_token"]
+
+    me = await client.get("/api/v1/auth/me")
+    assert me.status_code == 200 and me.json()["user"]["is_expired"] is True
+
+    resp = await client.get("/api/v1/reseller/devices")
     assert resp.status_code == 403
     assert resp.json()["detail"]["code"] == "reseller_expired"
     assert "vencida" in resp.json()["detail"]["message"]
+
+    assert (await client.get("/api/v1/reseller/profile")).status_code == 200
+    assert (await client.get("/api/v1/reseller/billing/plans")).status_code == 200
 
 
 async def test_reseller_session_dies_when_blocked_later(

@@ -51,8 +51,10 @@ as configurações padrão. Depois disso acesse `https://SEU_DOMINIO/admin` e fa
 | `PLATFORM_NAME` | sim | Nome exibido no painel e enviado ao app (também editável em Configurações) |
 | `MAC_PREFIX` | não | 3 bytes iniciais dos MACs gerados (padrão `02:50:50`, faixa "localmente administrada") |
 | `LOGIN_RATE_LIMIT`, `LOGIN_RATE_WINDOW` | não | Tentativas de login por IP+usuário e janela em segundos (padrão 10 / 300) |
-| `PAYMENT_PROVIDER` | M2 | `mercadopago` |
-| `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET` | M2 | Credenciais do Pix. Ficam **apenas** no `.env` |
+| `PAYMENT_PROVIDER` | sim | `mercadopago` (padrão) ou `fake` (desenvolvimento) |
+| `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET` | sim | Credenciais do Pix (§9). Ficam **apenas** no `.env` |
+| `PIX_EXPIRATION_MINUTES` | não | Validade do QR Pix (padrão 30) |
+| `UPLOAD_DIR` | não | Pasta das imagens enviadas (padrão `./uploads`; no compose `/app/uploads`) |
 | `APP_ENV` | sim | `production` no VPS (desativa `/api/docs` e o seed da revenda de teste) |
 | `LOG_LEVEL` | não | `info` (padrão) ou `debug` |
 
@@ -159,3 +161,32 @@ sobe só o banco e o Redis nas portas locais.
 - `SECRET_KEY` e `FERNET_KEY` únicos por instalação e fora do git
 - Backups testados (restaure em um banco temporário periodicamente)
 - Atualize as imagens base de tempos em tempos: `docker compose pull && docker compose up -d --build`
+
+## 9. Mercado Pago (Pix)
+
+1. Crie uma aplicação em https://www.mercadopago.com.br/developers (tipo *Pagamentos online*,
+   integração *Checkout Transparente*).
+2. **Credenciais de teste** (sandbox): em *Credenciais de teste* copie o *Access Token* para
+   `MERCADOPAGO_ACCESS_TOKEN`. Pagamentos criados com ele não movimentam dinheiro; para
+   aprovar um Pix de teste use a conta de *Usuário de teste comprador* ou aprove pela API de
+   sandbox. Em produção troque pelo *Access Token de produção*.
+3. **Webhook**: em *Webhooks* configure a URL `https://SEU_DOMINIO/api/v1/webhooks/mercadopago`
+   para o evento *Pagamentos* e copie a **assinatura secreta** exibida para
+   `MERCADOPAGO_WEBHOOK_SECRET`. Sem esse valor a assinatura não é validada, mas o pagamento
+   sempre é confirmado consultando a API antes de aprovar.
+4. `PAYMENT_PROVIDER=mercadopago` (padrão). Para desenvolvimento sem gateway use
+   `PAYMENT_PROVIDER=fake`: o Pix é fictício e o pagamento fica pendente até ser aprovado por
+   código (usado nos testes).
+5. `PIX_EXPIRATION_MINUTES` (padrão 30) define a validade do QR.
+
+O painel da revenda consulta o status a cada 4 s; em desenvolvimento local, sem webhook
+acessível pela internet, é essa consulta que detecta a aprovação.
+
+## 10. Uploads (logo e fundo)
+
+As imagens enviadas pela revenda ficam no volume `uploads` (`UPLOAD_DIR=/app/uploads` na API)
+e são servidas pelo Caddy em `https://SEU_DOMINIO/uploads/...`. Inclua o volume no backup:
+
+```bash
+docker run --rm -v iptv-platform_uploads:/data -v $PWD/backups:/backup alpine   tar czf /backup/uploads-$(date +%F).tgz -C /data .
+```

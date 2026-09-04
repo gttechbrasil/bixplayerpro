@@ -41,5 +41,6 @@ class Payment(TimestampMixin, Base):
     qr_code: Mapped[str | None] = mapped_column(Text, nullable=True)
     qr_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     previous_expires_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     new_expires_at: Mapped[date | None] = mapped_column(Date, nullable=True)

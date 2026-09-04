@@ -22,6 +22,7 @@ class ResellerMe(ORMModel):
     credits: int
     expires_at: date | None
     is_blocked: bool
+    is_expired: bool = False
     logo_url: str | None
     bg_url: str | None
     qr_content: str | None

@@ -48,8 +48,11 @@ vencimentos são `DATE` (semântica "válido até o fim do dia"). Tabelas com
 
 Índices: `ix_resellers_expires_at`.
 
-Regras: revenda com `is_blocked = true` **ou** `expires_at < hoje` não loga e seus dispositivos
-recebem `status = expired` no app. Exclusão de revenda é física; `devices.reseller_id` vai
+Regras: revenda com `is_blocked = true` não loga. Revenda com `expires_at < hoje` **loga** mas só
+acessa renovação (Pix) e perfil; as demais rotas respondem 403 `reseller_expired`. Em ambos os
+casos seus dispositivos recebem `status = expired` no app. Revenda com `expires_at = NULL` não
+vence, **não renova** (sem card de vencimento no painel; `POST /reseller/billing/pix` responde 422
+`no_expiration`) e só o admin define um vencimento para ela (decisão do M2, 2026-09-04). Exclusão de revenda é física; `devices.reseller_id` vai
 para `NULL` (dispositivo volta a "não cadastrado"); `payments` e `credit_ledger` mantêm o
 histórico com `reseller_id = NULL`.
 
@@ -122,7 +125,8 @@ decifrada (o app precisa dela para autenticar no Xtream); o transporte é TLS.
 | qr_code | text, nullable | Pix copia-e-cola |
 | qr_base64 | text, nullable | PNG base64 |
 | paid_at | timestamptz, nullable | |
-| previous_expires_at, new_expires_at | date, nullable | vencimento antes/depois da aprovação |
+| expires_at | timestamptz, nullable | validade do QR Pix (`PIX_EXPIRATION_MINUTES`, padrão 30) |
+| previous_expires_at, new_expires_at | date, nullable | vencimento antes/depois da aprovação. Aprovação estende a partir do vencimento atual se futuro, senão de hoje |
 | created_at, updated_at | timestamptz | |
 
 Índices: `ix_payments_reseller_id`, `ix_payments_status`, `ix_payments_created_at`,
