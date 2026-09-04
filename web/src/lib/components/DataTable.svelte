@@ -28,7 +28,10 @@
 		loading = false,
 		row,
 		filters,
-		onchange
+		onchange,
+		selectable = false,
+		rowId = (item: T) => (item as { id: number }).id,
+		selected = $bindable(new Set<number>())
 	}: {
 		columns: Column[];
 		items: T[];
@@ -43,7 +46,28 @@
 		row: Snippet<[T]>;
 		filters?: Snippet;
 		onchange: (q: Query) => void;
+		selectable?: boolean;
+		rowId?: (item: T) => number;
+		selected?: Set<number>;
 	} = $props();
+
+	const pageIds = $derived(items.map(rowId));
+	const allSelected = $derived(pageIds.length > 0 && pageIds.every((id) => selected.has(id)));
+	const someSelected = $derived(!allSelected && pageIds.some((id) => selected.has(id)));
+
+	function toggleAll() {
+		const next = new Set(selected);
+		if (allSelected) pageIds.forEach((id) => next.delete(id));
+		else pageIds.forEach((id) => next.add(id));
+		selected = next;
+	}
+
+	function toggleOne(id: number) {
+		const next = new Set(selected);
+		if (next.has(id)) next.delete(id);
+		else next.add(id);
+		selected = next;
+	}
 
 	let searchValue = $state('');
 	let timer: ReturnType<typeof setTimeout> | undefined;
@@ -111,6 +135,18 @@
 		<table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
 			<thead class="bg-slate-50 dark:bg-slate-900/60">
 				<tr>
+					{#if selectable}
+						<th scope="col" class="table-th w-10">
+							<input
+								type="checkbox"
+								class="rounded"
+								aria-label="Selecionar todos"
+								checked={allSelected}
+								indeterminate={someSelected}
+								onchange={toggleAll}
+							/>
+						</th>
+					{/if}
 					{#each columns as col (col.key)}
 						<th scope="col" class="table-th {col.class ?? ''}">{col.label}</th>
 					{/each}
@@ -119,13 +155,30 @@
 			<tbody class="divide-y divide-slate-100 dark:divide-slate-800/70">
 				{#if items.length === 0}
 					<tr>
-						<td class="table-td py-10 text-center text-slate-500" colspan={columns.length}>
+						<td
+							class="table-td py-10 text-center text-slate-500"
+							colspan={columns.length + (selectable ? 1 : 0)}
+						>
 							{empty}
 						</td>
 					</tr>
 				{:else}
 					{#each items as item, i (i)}
-						<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+						<tr
+							class="hover:bg-slate-50 dark:hover:bg-slate-800/40"
+							class:bg-brand-50={selectable && selected.has(rowId(item))}
+						>
+							{#if selectable}
+								<td class="table-td w-10">
+									<input
+										type="checkbox"
+										class="rounded"
+										aria-label="Selecionar linha"
+										checked={selected.has(rowId(item))}
+										onchange={() => toggleOne(rowId(item))}
+									/>
+								</td>
+							{/if}
 							{@render row(item)}
 						</tr>
 					{/each}

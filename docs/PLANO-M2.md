@@ -35,13 +35,13 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Reutilize os co
 - [x] Modo sandbox documentado em `docs/DEPLOY.md`; teste unitário do webhook com payload de exemplo do Mercado Pago
 
 ## 5. Dashboard do revendedor (SvelteKit `/painel`)
-- [ ] Login do revendedor; layout com sidebar: card de vencimento (estados ok / vence em ≤7 dias / vencido), Dispositivos, Migrador de DNS, Logomarca, Background, Layout, Banners, QR Code, Perfil, Sair; header com créditos (só se `credits_enabled`) e tema
-- [ ] **Dispositivos:** DataTable com busca, paginação, seleção em lote, criar/editar em página própria, exclusão com ConfirmDialog, exclusão em lote
-- [ ] **Migrador de DNS:** select de origem populado da API + destino + resultado com contagem
-- [ ] **Personalização:** logo e background com pré-visualização e upload ou URL; layout com cards de pré-visualização dos 2 temas e selo "Ativo"; banners com tabela, modal de novo, toggle ativo, exclusão, toggle "banners automáticos"; QR Code
-- [ ] **Renovação:** modal aberto pelo card de vencimento — escolha de meses (1–60) ou pacote, total, botão gerar; exibe QR + copia-e-cola com botão copiar; polling a cada 4 s; sucesso mostra novo vencimento e recarrega. Fechar o modal não cancela
-- [ ] **Perfil:** troca de senha
-- [ ] Revendedor vencido: acesso somente ao modal de renovação e ao perfil; demais rotas redirecionam com aviso
+- [x] Login do revendedor; layout com sidebar: card de vencimento (estados ok / vence em ≤7 dias / vencido), Dispositivos, Migrador de DNS, Logomarca, Background, Layout, Banners, QR Code, Perfil, Sair; header com créditos (só se `credits_enabled`) e tema
+- [x] **Dispositivos:** DataTable com busca, paginação, seleção em lote, criar/editar em página própria, exclusão com ConfirmDialog, exclusão em lote
+- [x] **Migrador de DNS:** select de origem populado da API + destino + resultado com contagem
+- [x] **Personalização:** logo e background com pré-visualização e upload ou URL; layout com cards de pré-visualização dos 2 temas e selo "Ativo"; banners com tabela, modal de novo, toggle ativo, exclusão, toggle "banners automáticos"; QR Code
+- [x] **Renovação:** modal aberto pelo card de vencimento — escolha de meses (1–60) ou pacote, total, botão gerar; exibe QR + copia-e-cola com botão copiar; polling a cada 4 s; sucesso mostra novo vencimento e recarrega. Fechar o modal não cancela
+- [x] **Perfil:** troca de senha
+- [x] Revendedor vencido: acesso somente ao modal de renovação e ao perfil; demais rotas redirecionam com aviso
 
 ## 6. Painel admin — complementos
 - [ ] Configurações: toggle `credits_enabled`, credenciais do gateway (mascaradas), pacotes promocionais (CRUD inline)

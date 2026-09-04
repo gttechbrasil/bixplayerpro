@@ -1,11 +1,23 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { post } from '$lib/api';
-	import Sidebar from '$lib/components/Sidebar.svelte';
+	import Sidebar, { type NavGroup } from '$lib/components/Sidebar.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 
 	let { data, children } = $props();
+
+	const groups: NavGroup[] = [
+		{
+			items: [
+				{ href: '/admin', label: 'Dashboard', exact: true },
+				{ href: '/admin/revendedores', label: 'Revendedores' },
+				{ href: '/admin/pagamentos', label: 'Pagamentos' },
+				{ href: '/admin/auditoria', label: 'Auditoria' },
+				{ href: '/admin/configuracoes', label: 'Configurações' }
+			]
+		}
+	];
 
 	async function logout() {
 		try {
@@ -21,7 +33,7 @@
 <svelte:head><title>{data.platformName} · Admin</title></svelte:head>
 
 <div class="flex h-screen overflow-hidden">
-	<Sidebar platformName={data.platformName} />
+	<Sidebar platformName={data.platformName} {groups} footer="Painel administrativo" />
 	<div class="flex min-w-0 flex-1 flex-col">
 		<header
 			class="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-slate-200 bg-white px-6 dark:border-slate-800 dark:bg-slate-900"

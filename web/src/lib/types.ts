@@ -98,3 +98,78 @@ export interface AuditEntry {
 	ip: string | null;
 	created_at: string;
 }
+
+// ---- reseller dashboard --------------------------------------------------------
+export interface ResellerUser {
+	id: number;
+	username: string;
+	name: string;
+	credits: number;
+	expires_at: string | null;
+	is_blocked: boolean;
+	is_expired: boolean;
+	logo_url: string | null;
+	bg_url: string | null;
+	qr_content: string | null;
+	theme: string;
+	auto_ads: boolean;
+}
+
+export interface ResellerDevice {
+	id: number;
+	mac_address: string;
+	client_name: string | null;
+	license_expires_at: string | null;
+	playlist_name: string | null;
+	playlist_url: string | null;
+	playlist_host: string | null;
+	playlists_count: number;
+	app_type: string | null;
+	app_version: string | null;
+	last_seen_at: string | null;
+	connected: boolean;
+	status: 'active' | 'expired';
+	created_at: string;
+}
+
+export interface DnsHost {
+	host: string;
+	playlists: number;
+}
+
+export interface Branding {
+	logo_url: string | null;
+	bg_url: string | null;
+	qr_content: string | null;
+	theme: 'default' | 'grid';
+	auto_ads: boolean;
+}
+
+export interface Banner {
+	id: number;
+	title: string;
+	url: string;
+	is_active: boolean;
+	created_at: string;
+}
+
+export interface Plans {
+	monthly_price: string;
+	max_months: number;
+	packages: { id: number; months: number; price: string }[];
+	can_renew: boolean;
+	expires_at: string | null;
+}
+
+export interface Pix {
+	payment_id: number;
+	status: 'pending' | 'approved' | 'cancelled' | 'expired';
+	months: number;
+	amount: string;
+	qr_code: string | null;
+	qr_base64: string | null;
+	expires_at: string | null;
+	paid_at: string | null;
+	new_expires_at: string | null;
+	projected_expires_at: string;
+}
