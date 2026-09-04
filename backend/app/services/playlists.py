@@ -70,3 +70,20 @@ def replace_host(url: str, new_host: str) -> str:
     parts = urlsplit(url)
     new = urlsplit(new_host)
     return urlunsplit((new.scheme, new.netloc, parts.path, parts.query, parts.fragment))
+
+
+def normalize_host(raw: str) -> str:
+    """Turns user input (`novo.com`, `http://novo.com/`, `HTTP://Novo.com:8080`) into
+    `scheme://host[:port]`. Defaults to http when the scheme is missing."""
+    value = raw.strip()
+    if "://" not in value:
+        value = "http://" + value
+    parts = urlsplit(value)
+    if parts.scheme not in ("http", "https") or not parts.hostname:
+        raise bad_request(
+            "DNS inválida. Informe algo como http://servidor.com:8080.", "invalid_host"
+        )
+    host = parts.hostname.lower()
+    if parts.port:
+        host = f"{host}:{parts.port}"
+    return f"{parts.scheme}://{host}"

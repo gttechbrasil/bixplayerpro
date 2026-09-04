@@ -16,8 +16,8 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Reutilize os co
 - [x] Todo cadastro/edição/exclusão em `audit_log`
 
 ## 2. API do revendedor — migrador de DNS
-- [ ] `GET /api/v1/reseller/dns` — hosts distintos em uso nas playlists do revendedor, com contagem de playlists por host
-- [ ] `POST /api/v1/reseller/dns/migrate` — `{from_host, to_host}`; substitui o host em todas as playlists do revendedor; retorna quantidade afetada; `from == to` → 422; auditoria com contagem
+- [x] `GET /api/v1/reseller/dns` — hosts distintos em uso nas playlists do revendedor, com contagem de playlists por host
+- [x] `POST /api/v1/reseller/dns/migrate` — `{from_host, to_host}`; substitui o host em todas as playlists do revendedor; retorna quantidade afetada; `from == to` → 422; auditoria com contagem
 
 ## 3. API do revendedor — personalização
 - [ ] `GET/PUT /api/v1/reseller/branding` — `logo_url`, `bg_url`, `qr_content`, `theme` (enum dos 2 layouts da v1: `default`, `grid`), `auto_ads`
