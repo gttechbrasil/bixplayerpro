@@ -70,7 +70,11 @@ async def _reseller_out(db: DbSession, reseller: Reseller) -> ResellerOut:
     return _to_out((reseller, count))
 
 
-@router.get("", response_model=Page[ResellerOut])
+@router.get(
+    "",
+    summary="Lista revendas com busca, paginação e filtro de status",
+    response_model=Page[ResellerOut],
+)
 async def list_resellers(
     _: CurrentAdmin,
     db: DbSession,
@@ -99,7 +103,9 @@ async def list_resellers(
     return await paginate(db, stmt, params, _to_out)
 
 
-@router.post("", response_model=ResellerOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", summary="Cria revenda", response_model=ResellerOut, status_code=status.HTTP_201_CREATED
+)
 async def create_reseller(
     body: ResellerCreate, admin: CurrentAdmin, db: DbSession, request: Request
 ) -> ResellerOut:
@@ -141,12 +147,12 @@ async def create_reseller(
     return await _reseller_out(db, reseller)
 
 
-@router.get("/{reseller_id}", response_model=ResellerOut)
+@router.get("/{reseller_id}", summary="Detalhe da revenda", response_model=ResellerOut)
 async def get_reseller(reseller_id: int, _: CurrentAdmin, db: DbSession) -> ResellerOut:
     return await _reseller_out(db, await _get_reseller(db, reseller_id))
 
 
-@router.patch("/{reseller_id}", response_model=ResellerOut)
+@router.patch("/{reseller_id}", summary="Edita dados da revenda", response_model=ResellerOut)
 async def update_reseller(
     reseller_id: int, body: ResellerUpdate, admin: CurrentAdmin, db: DbSession, request: Request
 ) -> ResellerOut:
@@ -174,7 +180,9 @@ async def update_reseller(
     return await _reseller_out(db, reseller)
 
 
-@router.post("/{reseller_id}/block", response_model=ResellerOut)
+@router.post(
+    "/{reseller_id}/block", summary="Bloqueia ou desbloqueia a revenda", response_model=ResellerOut
+)
 async def block_reseller(
     reseller_id: int, body: BlockUpdate, admin: CurrentAdmin, db: DbSession, request: Request
 ) -> ResellerOut:
@@ -192,7 +200,9 @@ async def block_reseller(
     return await _reseller_out(db, reseller)
 
 
-@router.post("/{reseller_id}/password", response_model=Message)
+@router.post(
+    "/{reseller_id}/password", summary="Redefine a senha da revenda", response_model=Message
+)
 async def reset_password(
     reseller_id: int, body: PasswordReset, admin: CurrentAdmin, db: DbSession, request: Request
 ) -> Message:
@@ -210,7 +220,11 @@ async def reset_password(
     return Message(message="Senha redefinida.")
 
 
-@router.post("/{reseller_id}/credits", response_model=ResellerOut)
+@router.post(
+    "/{reseller_id}/credits",
+    summary="Ajuste manual de créditos (gera ledger + auditoria)",
+    response_model=ResellerOut,
+)
 async def adjust_reseller_credits(
     reseller_id: int, body: CreditAdjust, admin: CurrentAdmin, db: DbSession, request: Request
 ) -> ResellerOut:
@@ -229,7 +243,11 @@ async def adjust_reseller_credits(
     return await _reseller_out(db, reseller)
 
 
-@router.get("/{reseller_id}/credits", response_model=Page[LedgerOut])
+@router.get(
+    "/{reseller_id}/credits",
+    summary="Histórico de movimentação de créditos",
+    response_model=Page[LedgerOut],
+)
 async def list_reseller_credits(
     reseller_id: int, _: CurrentAdmin, db: DbSession, params: PageParams = Depends()
 ) -> Page[LedgerOut]:
@@ -242,7 +260,11 @@ async def list_reseller_credits(
     return await paginate(db, stmt, params, LedgerOut.model_validate)
 
 
-@router.patch("/{reseller_id}/expiration", response_model=ResellerOut)
+@router.patch(
+    "/{reseller_id}/expiration",
+    summary="Define o vencimento da revenda",
+    response_model=ResellerOut,
+)
 async def update_expiration(
     reseller_id: int,
     body: ExpirationUpdate,
@@ -266,7 +288,7 @@ async def update_expiration(
     return await _reseller_out(db, reseller)
 
 
-@router.delete("/{reseller_id}", response_model=Message)
+@router.delete("/{reseller_id}", summary="Exclui a revenda", response_model=Message)
 async def delete_reseller(
     reseller_id: int, admin: CurrentAdmin, db: DbSession, request: Request
 ) -> Message:

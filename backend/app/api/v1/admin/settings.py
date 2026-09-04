@@ -21,12 +21,12 @@ def _to_out(values: dict[str, Any]) -> SettingsOut:
     )
 
 
-@router.get("", response_model=SettingsOut)
+@router.get("", summary="Configurações globais", response_model=SettingsOut)
 async def get_settings_(_: CurrentAdmin, db: DbSession) -> SettingsOut:
     return _to_out(await get_all_settings(db))
 
 
-@router.put("", response_model=SettingsOut)
+@router.put("", summary="Atualiza configurações globais", response_model=SettingsOut)
 async def update_settings(
     body: SettingsUpdate, admin: CurrentAdmin, db: DbSession, request: Request
 ) -> SettingsOut:

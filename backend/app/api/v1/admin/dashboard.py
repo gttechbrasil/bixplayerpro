@@ -11,7 +11,7 @@ from app.schemas.admin import DashboardOut
 router = APIRouter(prefix="/dashboard", tags=["admin: dashboard"])
 
 
-@router.get("", response_model=DashboardOut)
+@router.get("", summary="Totais para o dashboard", response_model=DashboardOut)
 async def dashboard(_: CurrentAdmin, db: DbSession) -> DashboardOut:
     today = func.current_date()
     now = datetime.now(UTC)

@@ -52,7 +52,7 @@ def _set_session_cookies(
     return csrf
 
 
-@router.post("/admin/login", response_model=AdminLoginResponse)
+@router.post("/admin/login", summary="Login do administrador", response_model=AdminLoginResponse)
 async def admin_login(
     body: LoginRequest,
     request: Request,
@@ -66,7 +66,7 @@ async def admin_login(
     return AdminLoginResponse(user=AdminOut.model_validate(admin), csrf_token=csrf)
 
 
-@router.post("/reseller/login", response_model=ResellerLoginResponse)
+@router.post("/reseller/login", summary="Login da revenda", response_model=ResellerLoginResponse)
 async def reseller_login(
     body: LoginRequest,
     request: Request,
@@ -81,14 +81,14 @@ async def reseller_login(
     return ResellerLoginResponse(user=ResellerMe.model_validate(reseller), csrf_token=csrf)
 
 
-@router.post("/logout", response_model=Message)
+@router.post("/logout", summary="Encerra a sessão", response_model=Message)
 async def logout(response: Response, settings: Settings = Depends(get_settings)) -> Message:
     for name in (ADMIN_COOKIE, RESELLER_COOKIE, settings.csrf_cookie_name):
         response.delete_cookie(name, path="/")
     return Message(message="Sessão encerrada.")
 
 
-@router.get("/me", response_model=MeResponse)
+@router.get("/me", summary="Ator autenticado na sessão atual", response_model=MeResponse)
 async def me(request: Request, db: AsyncSession = Depends(get_db)) -> MeResponse:
     """Returns the logged-in actor. Checks the admin cookie first, then the reseller one."""
     admin_token = request.cookies.get(ADMIN_COOKIE)

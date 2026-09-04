@@ -12,7 +12,7 @@ from app.schemas.common import Page, PageParams
 router = APIRouter(prefix="/audit-log", tags=["admin: audit"])
 
 
-@router.get("", response_model=Page[AuditOut])
+@router.get("", summary="Lista o log de auditoria com filtros", response_model=Page[AuditOut])
 async def list_audit(
     _: CurrentAdmin,
     db: DbSession,

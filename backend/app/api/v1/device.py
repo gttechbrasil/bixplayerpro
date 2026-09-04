@@ -25,14 +25,22 @@ MAX_PLAYLISTS_PER_DEVICE = 20
 MSG_NOT_REGISTERED = "Dispositivo não cadastrado. Informe o MAC ao seu revendedor."
 
 
-@router.post("/register", response_model=DeviceRegisterResponse)
+@router.post(
+    "/register",
+    summary="Registra o aparelho e devolve MAC + token",
+    response_model=DeviceRegisterResponse,
+)
 async def register(body: DeviceRegisterRequest, db: DbSession) -> DeviceRegisterResponse:
     device, token = await register_device(db, body.device_id, body.app_type, body.app_version)
     await db.commit()
     return DeviceRegisterResponse(mac_address=device.mac_address, token=token)
 
 
-@router.get("/config", response_model=DeviceConfig)
+@router.get(
+    "/config",
+    summary="Configuração completa para o app (playlists, tema, status)",
+    response_model=DeviceConfig,
+)
 async def config(device: CurrentDevice, db: DbSession) -> DeviceConfig:
     device.last_seen_at = datetime.now(UTC)
     settings_values = await get_all_settings(db)
@@ -41,7 +49,12 @@ async def config(device: CurrentDevice, db: DbSession) -> DeviceConfig:
     return result
 
 
-@router.post("/playlists", response_model=PlaylistOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/playlists",
+    summary="Adiciona playlist ao dispositivo (auto-cadastro pelo app)",
+    response_model=PlaylistOut,
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_playlist(
     body: PlaylistCreate, device: CurrentDevice, db: DbSession, request: Request
 ) -> PlaylistOut:
@@ -79,7 +92,9 @@ async def add_playlist(
     )
 
 
-@router.delete("/playlists/{playlist_id}", response_model=Message)
+@router.delete(
+    "/playlists/{playlist_id}", summary="Remove playlist do dispositivo", response_model=Message
+)
 async def delete_playlist(
     playlist_id: int, device: CurrentDevice, db: DbSession, request: Request
 ) -> Message:

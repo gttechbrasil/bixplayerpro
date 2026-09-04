@@ -3,7 +3,7 @@
 
 UV ?= uv
 
-.PHONY: install dev test migrate migration lint format seed
+.PHONY: install dev test migrate migration lint format seed docs
 
 install:
 	$(UV) sync --all-groups
@@ -31,3 +31,6 @@ format:
 
 seed:
 	$(UV) run python -m app.db.seed
+
+docs:
+	$(UV) run python scripts/gen_api_docs.py

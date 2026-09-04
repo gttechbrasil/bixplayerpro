@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,8 +9,14 @@ from app.db.session import get_db
 router = APIRouter(tags=["health"])
 
 
-@router.get("/health")
-async def health(db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+class Health(BaseModel):
+    status: str
+    database: str
+    redis: str
+
+
+@router.get("/health", summary="Verifica API, banco e Redis")
+async def health(db: AsyncSession = Depends(get_db)) -> Health:
     checks = {"status": "ok", "database": "ok", "redis": "ok"}
     try:
         await db.execute(text("SELECT 1"))
@@ -21,4 +28,4 @@ async def health(db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     except Exception:  # pragma: no cover
         checks["redis"] = "error"
         checks["status"] = "degraded"
-    return checks
+    return Health(**checks)

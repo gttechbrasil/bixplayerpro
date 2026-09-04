@@ -22,7 +22,7 @@ def _to_out(row) -> PaymentOut:
     return out
 
 
-@router.get("", response_model=Page[PaymentOut])
+@router.get("", summary="Lista pagamentos com filtros", response_model=Page[PaymentOut])
 async def list_payments(
     _: CurrentAdmin,
     db: DbSession,

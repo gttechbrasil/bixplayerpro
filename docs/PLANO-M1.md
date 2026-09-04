@@ -45,10 +45,10 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Não avance par
 - [x] Textos em português
 
 ## 7. Fechamento do M1
-- [ ] `docs/API.md` gerado a partir do OpenAPI com exemplos de request/response para todas as rotas
-- [ ] `docs/DEPLOY.md`: subir no VPS do zero, variáveis, backup do Postgres
-- [ ] `docker compose up` do zero funciona e o admin loga
-- [ ] Cobertura de testes das rotas ≥ 80%
+- [x] `docs/API.md` gerado a partir do OpenAPI com exemplos de request/response para todas as rotas
+- [x] `docs/DEPLOY.md`: subir no VPS do zero, variáveis, backup do Postgres
+- [ ] `docker compose up` do zero funciona e o admin loga — **pendente de verificação**: o Docker Desktop desta máquina não sobe; `docker compose config` valida os arquivos e o fluxo equivalente (migração + seed + login) foi verificado com PostgreSQL/Redis locais. Validar no VPS.
+- [x] Cobertura de testes das rotas ≥ 80%
 
 ## Ao concluir
 Me apresente: lista do que foi entregue, o que ficou pendente e as decisões registradas em ADRs. Então aguarde para iniciar o M2 (`docs/PLANO-M2.md`, ainda a criar).
