@@ -8,12 +8,12 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Reutilize os co
 - [x] Atualizar ADR-001 com a decisão; testes cobrindo os dois modos
 
 ## 1. API do revendedor — dispositivos
-- [ ] `GET /api/v1/reseller/devices` — busca por MAC ou nome, paginação (10/25/50/100), ordenação por criação desc
-- [ ] `POST /api/v1/reseller/devices` — vincula um MAC já registrado pelo app **ou** cria um device manual com MAC informado. Campos: `mac_address`, `client_name`, `playlist_name`, `playlist_url`, `license_expires_at` (padrão 2050-01-01). Valida formato do MAC e da URL; parser Xtream do M1
-- [ ] `GET/PUT /api/v1/reseller/devices/{id}` — edição dos mesmos campos
-- [ ] `DELETE /api/v1/reseller/devices/{id}` e `POST /api/v1/reseller/devices/batch-delete` (`ids[]`)
-- [ ] Regra: um MAC pertence a um único revendedor; tentativa de cadastrar MAC de outro revendedor → 409 com mensagem em português
-- [ ] Todo cadastro/edição/exclusão em `audit_log`
+- [x] `GET /api/v1/reseller/devices` — busca por MAC ou nome, paginação (10/25/50/100), ordenação por criação desc
+- [x] `POST /api/v1/reseller/devices` — vincula um MAC já registrado pelo app **ou** cria um device manual com MAC informado. Campos: `mac_address`, `client_name`, `playlist_name`, `playlist_url`, `license_expires_at` (padrão 2050-01-01). Valida formato do MAC e da URL; parser Xtream do M1
+- [x] `GET/PUT /api/v1/reseller/devices/{id}` — edição dos mesmos campos
+- [x] `DELETE /api/v1/reseller/devices/{id}` e `POST /api/v1/reseller/devices/batch-delete` (`ids[]`)
+- [x] Regra: um MAC pertence a um único revendedor; tentativa de cadastrar MAC de outro revendedor → 409 com mensagem em português
+- [x] Todo cadastro/edição/exclusão em `audit_log`
 
 ## 2. API do revendedor — migrador de DNS
 - [ ] `GET /api/v1/reseller/dns` — hosts distintos em uso nas playlists do revendedor, com contagem de playlists por host
