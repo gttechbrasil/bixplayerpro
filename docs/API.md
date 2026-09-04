@@ -657,6 +657,90 @@ Define o vencimento da revenda
 }
 ```
 
+#### `GET /api/v1/admin/resellers/{reseller_id}/devices`
+
+Dispositivos da revenda (somente leitura)
+
+**Autenticação:** Cookie `admin_session` (login do admin) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `reseller_id` | path | sim | integer |
+| `page` | query | não | integer |
+| `per_page` | query | não | integer |
+| `search` | query | não | string |
+
+**Response 200**
+
+```json
+{
+  "items": [
+    {
+      "id": 12,
+      "mac_address": "02:50:50:A1:B2:C3",
+      "client_name": "João Silva",
+      "license_expires_at": null,
+      "playlist_name": "texto",
+      "playlist_url": "texto",
+      "playlist_host": "texto",
+      "playlists_count": 0,
+      "app_type": "tv",
+      "app_version": "1.0.0",
+      "last_seen_at": "2026-09-04T12:00:00Z",
+      "connected": false,
+      "status": "active",
+      "created_at": "2026-09-04T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "per_page": 25
+}
+```
+
+#### `GET /api/v1/admin/resellers/{reseller_id}/payments`
+
+Histórico de pagamentos da revenda
+
+**Autenticação:** Cookie `admin_session` (login do admin) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `reseller_id` | path | sim | integer |
+| `page` | query | não | integer |
+| `per_page` | query | não | integer |
+| `search` | query | não | string |
+
+**Response 200**
+
+```json
+{
+  "items": [
+    {
+      "id": 12,
+      "reseller_id": 12,
+      "reseller_username": "revenda01",
+      "provider": "mercadopago",
+      "provider_id": "123456789",
+      "months": 3,
+      "amount": "105.00",
+      "status": "active",
+      "paid_at": "2026-09-04T12:05:00Z",
+      "previous_expires_at": "2026-10-01",
+      "new_expires_at": "2027-01-01",
+      "created_at": "2026-09-04T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "per_page": 25
+}
+```
+
 ### admin: settings
 
 #### `GET /api/v1/admin/settings`
@@ -722,6 +806,25 @@ Atualiza configurações globais
   "min_app_version": "1.0.0",
   "apk_url": "https://cdn.exemplo.com/app.apk",
   "platform_name": "Minha Plataforma"
+}
+```
+
+#### `GET /api/v1/admin/settings/gateway`
+
+Configuração do gateway de pagamento (mascarada)
+
+**Autenticação:** Cookie `admin_session` (login do admin) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Response 200**
+
+```json
+{
+  "provider": "mercadopago",
+  "access_token_masked": "texto",
+  "access_token_kind": "texto",
+  "webhook_secret_configured": true,
+  "webhook_url": "texto",
+  "pix_expiration_minutes": 1
 }
 ```
 

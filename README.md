@@ -26,7 +26,7 @@ make install && make migrate && make seed && make dev      # http://localhost:80
 cd web && npm install && npm run dev                        # http://localhost:5173/admin
 ```
 
-Login padrão do seed: admin `admin` / senha do `ADMIN_PASSWORD`; revenda de teste `revenda` / `revenda123`.
+Login padrão do seed: admin `admin` / senha do `ADMIN_PASSWORD` em `/admin`; revenda de teste `revenda` / `revenda123` em `/painel`.
 
 ## Produção
 

@@ -48,9 +48,9 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Reutilize os co
 - [x] Detalhe da revenda: lista dos devices dela (somente leitura) e histórico de pagamentos
 
 ## 7. Fechamento do M2
-- [ ] `docs/API.md` regenerado; `docs/DEPLOY.md` com configuração do Mercado Pago e do volume de uploads
-- [ ] Testes: fluxo completo revendedor (login → cadastrar device → app `config` retorna a playlist → migrar DNS → `config` reflete o novo host → gerar Pix → webhook aprova → `expires_at` estendido)
-- [ ] Cobertura ≥ 80%; `svelte-check` sem erros; build OK
+- [x] `docs/API.md` regenerado; `docs/DEPLOY.md` com configuração do Mercado Pago e do volume de uploads
+- [x] Testes: fluxo completo revendedor (login → cadastrar device → app `config` retorna a playlist → migrar DNS → `config` reflete o novo host → gerar Pix → webhook aprova → `expires_at` estendido)
+- [x] Cobertura ≥ 80%; `svelte-check` sem erros; build OK
 
 ## Ao concluir
 Apresente o que foi entregue, pendências e ADRs novos. Então aguarde `docs/PLANO-M3.md` (app Android TV).
