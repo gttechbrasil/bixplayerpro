@@ -10,17 +10,8 @@ if TYPE_CHECKING:
     from app.models.banner import Banner
     from app.models.device import Device
 
-THEMES = (
-    "theme_d",
-    "theme_1",
-    "theme_2",
-    "theme_3",
-    "theme_4",
-    "theme_5",
-    "theme_6",
-    "theme_7",
-    "theme_8",
-)
+# The two home layouts included in v1 (Anexo I §2.3).
+THEMES = ("default", "grid")
 
 
 class Reseller(TimestampMixin, Base):
@@ -40,7 +31,7 @@ class Reseller(TimestampMixin, Base):
     bg_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     qr_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     theme: Mapped[str] = mapped_column(
-        String(16), nullable=False, default="theme_d", server_default="theme_d"
+        String(16), nullable=False, default="default", server_default="default"
     )
     auto_ads: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"

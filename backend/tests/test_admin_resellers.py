@@ -85,9 +85,9 @@ async def test_update_block_password(
     created = await create(admin_client)
     rid = created["id"]
 
-    resp = await admin_client.patch(f"{BASE}/{rid}", json={"name": "Nova", "theme": "theme_2"})
+    resp = await admin_client.patch(f"{BASE}/{rid}", json={"name": "Nova", "theme": "grid"})
     assert resp.status_code == 200
-    assert resp.json()["name"] == "Nova" and resp.json()["theme"] == "theme_2"
+    assert resp.json()["name"] == "Nova" and resp.json()["theme"] == "grid"
     assert (await admin_client.patch(f"{BASE}/{rid}", json={"theme": "theme_x"})).status_code == 422
 
     resp = await admin_client.post(f"{BASE}/{rid}/block", json={"is_blocked": True})

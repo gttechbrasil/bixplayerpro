@@ -20,10 +20,10 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Reutilize os co
 - [x] `POST /api/v1/reseller/dns/migrate` — `{from_host, to_host}`; substitui o host em todas as playlists do revendedor; retorna quantidade afetada; `from == to` → 422; auditoria com contagem
 
 ## 3. API do revendedor — personalização
-- [ ] `GET/PUT /api/v1/reseller/branding` — `logo_url`, `bg_url`, `qr_content`, `theme` (enum dos 2 layouts da v1: `default`, `grid`), `auto_ads`
-- [ ] Upload de imagem: `POST /api/v1/reseller/branding/upload` (logo ou bg), PNG/JPG/WebP até 2 MB, salvo em volume local `/uploads` servido pelo Caddy; URL externa continua aceita
-- [ ] CRUD `banners` (`title`, `url`, `is_active`), máximo 10 por revendedor
-- [ ] `GET/PUT /api/v1/reseller/profile` — nome (readonly), username (readonly), troca de senha com senha atual
+- [x] `GET/PUT /api/v1/reseller/branding` — `logo_url`, `bg_url`, `qr_content`, `theme` (enum dos 2 layouts da v1: `default`, `grid`), `auto_ads`
+- [x] Upload de imagem: `POST /api/v1/reseller/branding/upload` (logo ou bg), PNG/JPG/WebP até 2 MB, salvo em volume local `/uploads` servido pelo Caddy; URL externa continua aceita
+- [x] CRUD `banners` (`title`, `url`, `is_active`), máximo 10 por revendedor
+- [x] `GET/PUT /api/v1/reseller/profile` — nome (readonly), username (readonly), troca de senha com senha atual
 
 ## 4. Pagamentos Pix
 - [ ] `services/payments/base.py` (interface) + `mercadopago.py`; provedor escolhido por env

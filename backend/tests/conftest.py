@@ -20,6 +20,8 @@ os.environ["ADMIN_USERNAME"] = "admin"
 os.environ["ADMIN_PASSWORD"] = "admin123"
 os.environ["LOGIN_RATE_LIMIT"] = "5"
 os.environ["LOGIN_RATE_WINDOW"] = "60"
+os.environ["UPLOAD_DIR"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".uploads")
+os.environ["PUBLIC_BASE_URL"] = "http://test"
 
 import pytest  # noqa: E402
 from alembic.config import Config  # noqa: E402

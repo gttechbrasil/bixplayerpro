@@ -102,7 +102,7 @@ async def build_config(
         client_name=device.client_name,
         license_expires_at=device.license_expires_at,
         playlists=playlists,
-        theme=reseller.theme if reseller else "theme_d",
+        theme=reseller.theme if reseller else "default",
         logo_url=reseller.logo_url if reseller else None,
         bg_url=reseller.bg_url if reseller else None,
         qr_content=reseller.qr_content if reseller else None,

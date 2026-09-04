@@ -19,15 +19,8 @@
 	const base = $derived(`admin/resellers/${r.id}`);
 
 	const themes = [
-		{ value: 'theme_d', label: 'Padrão' },
-		{ value: 'theme_1', label: 'Tema 1' },
-		{ value: 'theme_2', label: 'Tema 2' },
-		{ value: 'theme_3', label: 'Tema 3' },
-		{ value: 'theme_4', label: 'Tema 4' },
-		{ value: 'theme_5', label: 'Tema 5' },
-		{ value: 'theme_6', label: 'Tema HTV' },
-		{ value: 'theme_7', label: 'Tema XC' },
-		{ value: 'theme_8', label: 'Tema P2P' }
+		{ value: 'default', label: 'Padrão' },
+		{ value: 'grid', label: 'Grade' }
 	];
 
 	const status = $derived.by(() => {

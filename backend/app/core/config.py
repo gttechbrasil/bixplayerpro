@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     admin_password: str = "admin"
 
     mac_prefix: str = "02:50:50"
+    upload_dir: str = "./uploads"
     login_rate_limit: int = 10
     login_rate_window: int = 300
 

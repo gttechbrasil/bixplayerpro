@@ -842,3 +842,471 @@ Lista o log de auditoria com filtros
   "per_page": 25
 }
 ```
+
+### reseller: devices
+
+#### `GET /api/v1/reseller/devices`
+
+Lista os dispositivos da revenda
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `status` | query | não | string |
+| `page` | query | não | integer |
+| `per_page` | query | não | integer |
+| `search` | query | não | string |
+
+**Response 200**
+
+```json
+{
+  "items": [
+    {
+      "id": 12,
+      "mac_address": "02:50:50:A1:B2:C3",
+      "client_name": "João Silva",
+      "license_expires_at": null,
+      "playlist_name": "texto",
+      "playlist_url": "texto",
+      "playlist_host": "texto",
+      "playlists_count": 0,
+      "app_type": "tv",
+      "app_version": "1.0.0",
+      "last_seen_at": "2026-09-04T12:00:00Z",
+      "connected": false,
+      "status": "active",
+      "created_at": "2026-09-04T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "per_page": 25
+}
+```
+
+#### `POST /api/v1/reseller/devices`
+
+Cadastra (ou reivindica) um dispositivo pelo MAC
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Request**
+
+```json
+{
+  "mac_address": "02:50:50:A1:B2:C3",
+  "client_name": "João Silva",
+  "playlist_name": "texto",
+  "playlist_url": "texto",
+  "license_expires_at": null
+}
+```
+
+**Response 201**
+
+```json
+{
+  "id": 12,
+  "mac_address": "02:50:50:A1:B2:C3",
+  "client_name": "João Silva",
+  "license_expires_at": null,
+  "playlist_name": "texto",
+  "playlist_url": "texto",
+  "playlist_host": "texto",
+  "playlists_count": 0,
+  "app_type": "tv",
+  "app_version": "1.0.0",
+  "last_seen_at": "2026-09-04T12:00:00Z",
+  "connected": false,
+  "status": "active",
+  "created_at": "2026-09-04T12:00:00Z"
+}
+```
+
+#### `GET /api/v1/reseller/devices/{device_id}`
+
+Detalhe do dispositivo
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `device_id` | path | sim | integer |
+
+**Response 200**
+
+```json
+{
+  "id": 12,
+  "mac_address": "02:50:50:A1:B2:C3",
+  "client_name": "João Silva",
+  "license_expires_at": null,
+  "playlist_name": "texto",
+  "playlist_url": "texto",
+  "playlist_host": "texto",
+  "playlists_count": 0,
+  "app_type": "tv",
+  "app_version": "1.0.0",
+  "last_seen_at": "2026-09-04T12:00:00Z",
+  "connected": false,
+  "status": "active",
+  "created_at": "2026-09-04T12:00:00Z"
+}
+```
+
+#### `PUT /api/v1/reseller/devices/{device_id}`
+
+Edita o dispositivo
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `device_id` | path | sim | integer |
+
+**Request**
+
+```json
+{
+  "client_name": "João Silva",
+  "playlist_name": "texto",
+  "playlist_url": "texto",
+  "license_expires_at": null
+}
+```
+
+**Response 200**
+
+```json
+{
+  "id": 12,
+  "mac_address": "02:50:50:A1:B2:C3",
+  "client_name": "João Silva",
+  "license_expires_at": null,
+  "playlist_name": "texto",
+  "playlist_url": "texto",
+  "playlist_host": "texto",
+  "playlists_count": 0,
+  "app_type": "tv",
+  "app_version": "1.0.0",
+  "last_seen_at": "2026-09-04T12:00:00Z",
+  "connected": false,
+  "status": "active",
+  "created_at": "2026-09-04T12:00:00Z"
+}
+```
+
+#### `DELETE /api/v1/reseller/devices/{device_id}`
+
+Exclui o dispositivo
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `device_id` | path | sim | integer |
+
+**Response 200**
+
+```json
+{
+  "message": "Operação realizada."
+}
+```
+
+#### `POST /api/v1/reseller/devices/batch-delete`
+
+Exclui vários dispositivos
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Request**
+
+```json
+{
+  "ids": [
+    1
+  ]
+}
+```
+
+**Response 200**
+
+```json
+{
+  "deleted": 1,
+  "message": "Operação realizada."
+}
+```
+
+### reseller: dns
+
+#### `GET /api/v1/reseller/dns`
+
+Hosts (DNS) em uso nas playlists da revenda
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Response 200**
+
+```json
+[
+  {
+    "host": "texto",
+    "playlists": 1
+  }
+]
+```
+
+#### `POST /api/v1/reseller/dns/migrate`
+
+Substitui o host em todas as playlists
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Request**
+
+```json
+{
+  "from_host": "texto",
+  "to_host": "texto"
+}
+```
+
+**Response 200**
+
+```json
+{
+  "from_host": "texto",
+  "to_host": "texto",
+  "affected": 1,
+  "message": "Operação realizada."
+}
+```
+
+### reseller: branding
+
+#### `GET /api/v1/reseller/branding`
+
+Personalização do app (logo, fundo, QR, layout)
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Response 200**
+
+```json
+{
+  "logo_url": "https://cdn.exemplo.com/logo.png",
+  "bg_url": "https://cdn.exemplo.com/fundo.jpg",
+  "qr_content": "https://wa.me/5511999999999",
+  "theme": "theme_d",
+  "auto_ads": false
+}
+```
+
+#### `PUT /api/v1/reseller/branding`
+
+Atualiza a personalização
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Request**
+
+```json
+{
+  "logo_url": "https://cdn.exemplo.com/logo.png",
+  "bg_url": "https://cdn.exemplo.com/fundo.jpg",
+  "qr_content": "https://wa.me/5511999999999",
+  "theme": "theme_d",
+  "auto_ads": false
+}
+```
+
+**Response 200**
+
+```json
+{
+  "logo_url": "https://cdn.exemplo.com/logo.png",
+  "bg_url": "https://cdn.exemplo.com/fundo.jpg",
+  "qr_content": "https://wa.me/5511999999999",
+  "theme": "theme_d",
+  "auto_ads": false
+}
+```
+
+#### `POST /api/v1/reseller/branding/upload`
+
+Envia imagem de logo ou fundo (PNG/JPG/WebP, até 2 MB)
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `kind` | query | não | string (logo, bg) |
+
+**Response 200**
+
+```json
+{
+  "url": "http://servidor.exemplo.com/get.php?username=u1&password=p1&type=m3u_plus",
+  "kind": "logo"
+}
+```
+
+#### `GET /api/v1/reseller/branding/banners`
+
+Lista banners
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Response 200**
+
+```json
+[
+  {
+    "id": 12,
+    "title": "Promoção de setembro",
+    "url": "http://servidor.exemplo.com/get.php?username=u1&password=p1&type=m3u_plus",
+    "is_active": true,
+    "created_at": "2026-09-04T12:00:00Z"
+  }
+]
+```
+
+#### `POST /api/v1/reseller/branding/banners`
+
+Cria banner
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Request**
+
+```json
+{
+  "title": "Promoção de setembro",
+  "url": "http://servidor.exemplo.com/get.php?username=u1&password=p1&type=m3u_plus",
+  "is_active": true
+}
+```
+
+**Response 201**
+
+```json
+{
+  "id": 12,
+  "title": "Promoção de setembro",
+  "url": "http://servidor.exemplo.com/get.php?username=u1&password=p1&type=m3u_plus",
+  "is_active": true,
+  "created_at": "2026-09-04T12:00:00Z"
+}
+```
+
+#### `PATCH /api/v1/reseller/branding/banners/{banner_id}`
+
+Edita banner (título, URL, ativo)
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `banner_id` | path | sim | integer |
+
+**Request**
+
+```json
+{
+  "title": "Promoção de setembro",
+  "url": "http://servidor.exemplo.com/get.php?username=u1&password=p1&type=m3u_plus",
+  "is_active": true
+}
+```
+
+**Response 200**
+
+```json
+{
+  "id": 12,
+  "title": "Promoção de setembro",
+  "url": "http://servidor.exemplo.com/get.php?username=u1&password=p1&type=m3u_plus",
+  "is_active": true,
+  "created_at": "2026-09-04T12:00:00Z"
+}
+```
+
+#### `DELETE /api/v1/reseller/branding/banners/{banner_id}`
+
+Exclui banner
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `banner_id` | path | sim | integer |
+
+**Response 200**
+
+```json
+{
+  "message": "Operação realizada."
+}
+```
+
+### reseller: profile
+
+#### `GET /api/v1/reseller/profile`
+
+Perfil da revenda
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Response 200**
+
+```json
+{
+  "id": 12,
+  "username": "revenda01",
+  "name": "Revenda 01",
+  "expires_at": "2027-01-31",
+  "credits": 10,
+  "created_at": "2026-09-04T12:00:00Z"
+}
+```
+
+#### `PUT /api/v1/reseller/profile/password`
+
+Troca a própria senha
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Request**
+
+```json
+{
+  "current_password": "texto",
+  "new_password": "texto"
+}
+```
+
+**Response 200**
+
+```json
+{
+  "message": "Operação realizada."
+}
+```

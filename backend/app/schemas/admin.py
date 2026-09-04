@@ -7,17 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 from app.models.reseller import THEMES
 from app.schemas.common import ORMModel
 
-Theme = Literal[
-    "theme_d",
-    "theme_1",
-    "theme_2",
-    "theme_3",
-    "theme_4",
-    "theme_5",
-    "theme_6",
-    "theme_7",
-    "theme_8",
-]
+Theme = Literal["default", "grid"]
 
 
 # ---- resellers ---------------------------------------------------------------

@@ -46,7 +46,7 @@ async def test_new_device_is_unregistered(client: AsyncClient) -> None:
     assert cfg["status"] == "unregistered"
     assert cfg["mac_address"] == data["mac_address"]
     assert cfg["playlists"] == []
-    assert cfg["theme"] == "theme_d"
+    assert cfg["theme"] == "default"
     assert cfg["pin"] == "0000"
     assert cfg["min_app_version"] == "1.0.0"
 
@@ -71,7 +71,7 @@ async def test_registered_device_gets_playlists_and_branding(
 ) -> None:
     data = await register(client)
     device = await attach_to_reseller(db, data["mac_address"], reseller_user)
-    reseller_user.theme = "theme_8"
+    reseller_user.theme = "grid"
     reseller_user.logo_url = "https://cdn/logo.png"
     db.add(Banner(reseller_id=reseller_user.id, title="Promo", url="https://cdn/b.jpg"))
     db.add(
@@ -90,7 +90,7 @@ async def test_registered_device_gets_playlists_and_branding(
     assert cfg["registered"] is True
     assert cfg["status"] == "active"
     assert cfg["client_name"] == "João"
-    assert cfg["theme"] == "theme_8"
+    assert cfg["theme"] == "grid"
     assert cfg["logo_url"] == "https://cdn/logo.png"
     assert [b["title"] for b in cfg["banners"]] == ["Promo"]
     assert len(cfg["playlists"]) == 1
