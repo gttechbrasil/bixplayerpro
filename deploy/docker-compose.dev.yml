@@ -1,0 +1,9 @@
+# Development override: expose db and redis on localhost.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db redis
+services:
+  db:
+    ports:
+      - "127.0.0.1:5432:5432"
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"

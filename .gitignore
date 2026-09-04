@@ -1,0 +1,43 @@
+# env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# node
+node_modules/
+.svelte-kit/
+build/
+dist/
+*.log
+
+# android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# ide / os
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# docker volumes (local)
+deploy/data/
