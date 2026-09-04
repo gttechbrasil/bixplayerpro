@@ -76,7 +76,11 @@ Login do administrador
     "id": 12,
     "username": "revenda01"
   },
-  "csrf_token": "Y2xpZW50LWNzcmYtdG9rZW4"
+  "csrf_token": "Y2xpZW50LWNzcmYtdG9rZW4",
+  "platform": {
+    "name": "Revenda 01",
+    "credits_enabled": true
+  }
 }
 ```
 
@@ -113,7 +117,11 @@ Login da revenda
     "theme": "theme_d",
     "auto_ads": false
   },
-  "csrf_token": "Y2xpZW50LWNzcmYtdG9rZW4"
+  "csrf_token": "Y2xpZW50LWNzcmYtdG9rZW4",
+  "platform": {
+    "name": "Revenda 01",
+    "credits_enabled": true
+  }
 }
 ```
 
@@ -147,6 +155,10 @@ Returns the logged-in actor. Checks the admin cookie first, then the reseller on
   "user": {
     "id": 12,
     "username": "revenda01"
+  },
+  "platform": {
+    "name": "Revenda 01",
+    "credits_enabled": true
   }
 }
 ```
@@ -656,6 +668,7 @@ Configurações globais
 
 ```json
 {
+  "credits_enabled": true,
   "monthly_price": "35.00",
   "packages": [
     {
@@ -679,6 +692,7 @@ Atualiza configurações globais
 
 ```json
 {
+  "credits_enabled": true,
   "monthly_price": "35.00",
   "packages": [
     {
@@ -696,6 +710,7 @@ Atualiza configurações globais
 
 ```json
 {
+  "credits_enabled": true,
   "monthly_price": "35.00",
   "packages": [
     {

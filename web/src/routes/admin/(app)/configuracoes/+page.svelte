@@ -11,6 +11,7 @@
 	let { data } = $props();
 
 	let form = $state({
+		credits_enabled: false,
 		platform_name: '',
 		monthly_price: '',
 		min_app_version: '',
@@ -22,6 +23,7 @@
 	$effect(() => {
 		const s = data.settings;
 		form = {
+			credits_enabled: s.credits_enabled,
 			platform_name: s.platform_name,
 			monthly_price: s.monthly_price,
 			min_app_version: s.min_app_version,
@@ -42,6 +44,7 @@
 		saving = true;
 		try {
 			await put<Settings>('admin/settings', {
+				credits_enabled: form.credits_enabled,
 				platform_name: form.platform_name.trim(),
 				monthly_price: String(form.monthly_price).replace(',', '.'),
 				min_app_version: form.min_app_version.trim(),
@@ -67,6 +70,18 @@
 	<section class="card space-y-4 p-5">
 		<h2 class="font-semibold">Plataforma</h2>
 		<Input label="Nome da plataforma" required maxlength={80} bind:value={form.platform_name} />
+		<label
+			class="flex items-start gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
+		>
+			<input type="checkbox" class="mt-0.5 rounded" bind:checked={form.credits_enabled} />
+			<span>
+				<span class="block text-sm font-medium">Sistema de créditos</span>
+				<span class="block text-xs text-slate-500"
+					>Quando ativo, cada dispositivo cadastrado pela revenda consome 1 crédito e o saldo é
+					exibido nos painéis. Desativado por padrão.</span
+				>
+			</span>
+		</label>
 		<Input
 			label="Versão mínima do app"
 			required

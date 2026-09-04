@@ -135,3 +135,12 @@ async def admin_client(client: AsyncClient, admin_user: Admin) -> AsyncClient:
 async def reseller_client(client: AsyncClient, reseller_user: Reseller) -> AsyncClient:
     await login(client, "/api/v1/auth/reseller/login", reseller_user.username, RESELLER_PASSWORD)
     return client
+
+
+@pytest.fixture
+async def credits_on(db: AsyncSession) -> None:
+    """Turns the optional credit system on (default is off)."""
+    from app.models import Setting
+
+    db.add(Setting(key="credits_enabled", value=True))
+    await db.flush()

@@ -13,6 +13,7 @@ router = APIRouter(prefix="/settings", tags=["admin: settings"])
 
 def _to_out(values: dict[str, Any]) -> SettingsOut:
     return SettingsOut(
+        credits_enabled=bool(values.get("credits_enabled", False)),
         monthly_price=Decimal(str(values.get("monthly_price", "0"))),
         packages=[Package.model_validate(p) for p in values.get("packages", [])],
         min_app_version=str(values.get("min_app_version", "")),

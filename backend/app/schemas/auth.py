@@ -29,18 +29,26 @@ class ResellerMe(ORMModel):
     auto_ads: bool
 
 
+class PlatformInfo(BaseModel):
+    name: str
+    credits_enabled: bool
+
+
 class AdminLoginResponse(BaseModel):
     role: str = "admin"
     user: AdminOut
     csrf_token: str
+    platform: PlatformInfo
 
 
 class ResellerLoginResponse(BaseModel):
     role: str = "reseller"
     user: ResellerMe
     csrf_token: str
+    platform: PlatformInfo
 
 
 class MeResponse(BaseModel):
     role: str
     user: AdminOut | ResellerMe
+    platform: PlatformInfo

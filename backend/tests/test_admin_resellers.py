@@ -33,7 +33,9 @@ async def test_csrf_required_on_mutations(admin_client: AsyncClient) -> None:
     assert (await admin_client.get(BASE)).status_code == 200
 
 
-async def test_create_list_get(admin_client: AsyncClient, db: AsyncSession) -> None:
+async def test_create_list_get(
+    admin_client: AsyncClient, db: AsyncSession, credits_on: None
+) -> None:
     created = await create(admin_client, credits=3, expires_at="2030-01-01")
     assert created["credits"] == 3
     assert created["expires_at"] == "2030-01-01"
@@ -103,7 +105,9 @@ async def test_update_block_password(
     assert login.status_code == 200
 
 
-async def test_credits_adjust_and_history(admin_client: AsyncClient, db: AsyncSession) -> None:
+async def test_credits_adjust_and_history(
+    admin_client: AsyncClient, db: AsyncSession, credits_on: None
+) -> None:
     rid = (await create(admin_client))["id"]
     resp = await admin_client.post(
         f"{BASE}/{rid}/credits", json={"delta": 10, "note": "Compra de pacote"}
@@ -153,3 +157,14 @@ async def test_expiration_and_delete(admin_client: AsyncClient, db: AsyncSession
 
     actions = (await db.scalars(select(AuditLog.action).order_by(AuditLog.id))).all()
     assert "reseller.expiration" in actions and actions[-1] == "reseller.delete"
+
+
+async def test_credits_disabled_by_default(admin_client: AsyncClient, db: AsyncSession) -> None:
+    created = await create(admin_client, credits=5)
+    assert created["credits"] == 0  # initial credits ignored while disabled
+    resp = await admin_client.post(
+        f"{BASE}/{created['id']}/credits", json={"delta": 3, "note": "tentativa"}
+    )
+    assert resp.status_code == 400
+    assert resp.json()["detail"]["code"] == "credits_disabled"
+    assert (await db.scalars(select(CreditLedger))).all() == []

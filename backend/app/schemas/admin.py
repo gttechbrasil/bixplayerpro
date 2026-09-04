@@ -100,6 +100,7 @@ class Package(BaseModel):
 
 
 class SettingsOut(BaseModel):
+    credits_enabled: bool
     monthly_price: Decimal
     packages: list[Package]
     min_app_version: str
@@ -108,6 +109,7 @@ class SettingsOut(BaseModel):
 
 
 class SettingsUpdate(BaseModel):
+    credits_enabled: bool | None = None
     monthly_price: Decimal | None = Field(None, gt=0, max_digits=10, decimal_places=2)
     packages: list[Package] | None = None
     min_app_version: str | None = Field(None, max_length=32, pattern=r"^\d+(\.\d+){0,3}$")

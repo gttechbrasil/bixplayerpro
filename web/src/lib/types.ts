@@ -45,7 +45,13 @@ export interface Package {
 	price: string;
 }
 
+export interface Platform {
+	name: string;
+	credits_enabled: boolean;
+}
+
 export interface Settings {
+	credits_enabled: boolean;
 	monthly_price: string;
 	packages: Package[];
 	min_app_version: string;

@@ -13,6 +13,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "min_app_version": "1.0.0",
     "apk_url": "",
     "platform_name": "Plataforma",
+    "credits_enabled": False,
 }
 
 
@@ -26,6 +27,10 @@ async def get_all_settings(db: AsyncSession) -> dict[str, Any]:
 async def get_setting(db: AsyncSession, key: str) -> Any:
     row = await db.get(Setting, key)
     return row.value if row is not None else DEFAULT_SETTINGS.get(key)
+
+
+async def credits_enabled(db: AsyncSession) -> bool:
+    return bool(await get_setting(db, "credits_enabled"))
 
 
 async def set_settings(db: AsyncSession, values: dict[str, Any]) -> dict[str, Any]:

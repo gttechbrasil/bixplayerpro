@@ -17,13 +17,23 @@ from app.schemas.auth import (
     AdminOut,
     LoginRequest,
     MeResponse,
+    PlatformInfo,
     ResellerLoginResponse,
     ResellerMe,
 )
 from app.schemas.common import Message
 from app.services.auth import authenticate_admin, authenticate_reseller
+from app.services.settings import get_all_settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+async def _platform(db: AsyncSession) -> PlatformInfo:
+    values = await get_all_settings(db)
+    return PlatformInfo(
+        name=str(values.get("platform_name", "")),
+        credits_enabled=bool(values.get("credits_enabled", False)),
+    )
 
 
 def _set_session_cookies(
@@ -63,7 +73,9 @@ async def admin_login(
     admin = await authenticate_admin(db, body.username, body.password, get_client_ip(request))
     token = create_access_token(admin.id, "admin")
     csrf = _set_session_cookies(response, settings, ADMIN_COOKIE, token)
-    return AdminLoginResponse(user=AdminOut.model_validate(admin), csrf_token=csrf)
+    return AdminLoginResponse(
+        user=AdminOut.model_validate(admin), csrf_token=csrf, platform=await _platform(db)
+    )
 
 
 @router.post("/reseller/login", summary="Login da revenda", response_model=ResellerLoginResponse)
@@ -78,7 +90,9 @@ async def reseller_login(
     ensure_reseller_active(reseller)
     token = create_access_token(reseller.id, "reseller")
     csrf = _set_session_cookies(response, settings, RESELLER_COOKIE, token)
-    return ResellerLoginResponse(user=ResellerMe.model_validate(reseller), csrf_token=csrf)
+    return ResellerLoginResponse(
+        user=ResellerMe.model_validate(reseller), csrf_token=csrf, platform=await _platform(db)
+    )
 
 
 @router.post("/logout", summary="Encerra a sessão", response_model=Message)
@@ -96,7 +110,9 @@ async def me(request: Request, db: AsyncSession = Depends(get_db)) -> MeResponse
     if payload and payload.get("role") == "admin":
         admin = await db.get(Admin, int(payload["sub"]))
         if admin is not None:
-            return MeResponse(role="admin", user=AdminOut.model_validate(admin))
+            return MeResponse(
+                role="admin", user=AdminOut.model_validate(admin), platform=await _platform(db)
+            )
 
     reseller_token = request.cookies.get(RESELLER_COOKIE)
     payload = decode_access_token(reseller_token) if reseller_token else None
@@ -104,6 +120,10 @@ async def me(request: Request, db: AsyncSession = Depends(get_db)) -> MeResponse
         reseller = await db.get(Reseller, int(payload["sub"]))
         if reseller is not None:
             ensure_reseller_active(reseller)
-            return MeResponse(role="reseller", user=ResellerMe.model_validate(reseller))
+            return MeResponse(
+                role="reseller",
+                user=ResellerMe.model_validate(reseller),
+                platform=await _platform(db),
+            )
 
     raise unauthorized()

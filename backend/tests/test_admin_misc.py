@@ -14,6 +14,7 @@ async def test_settings_get_and_update(admin_client: AsyncClient, client: AsyncC
     assert resp.status_code == 200
     assert Decimal(resp.json()["monthly_price"]) == Decimal("35.00")
     assert resp.json()["packages"] == []
+    assert resp.json()["credits_enabled"] is False
 
     resp = await admin_client.put(
         SETTINGS,
@@ -154,7 +155,7 @@ async def test_payments_listing(
     assert resp.json()["total"] == 0
 
 
-async def test_audit_log_listing(admin_client: AsyncClient) -> None:
+async def test_audit_log_listing(admin_client: AsyncClient, credits_on: None) -> None:
     r = await admin_client.post(
         "/api/v1/admin/resellers", json={"username": "aud", "name": "A", "password": "senha123"}
     )
@@ -182,3 +183,17 @@ async def test_audit_log_listing(admin_client: AsyncClient) -> None:
         "/api/v1/admin/audit-log", params={"from": str(today), "to": str(today), "actor_id": 1}
     )
     assert resp.status_code == 200
+
+
+async def test_settings_credits_toggle_reflects_in_me(
+    admin_client: AsyncClient, client: AsyncClient, reseller_user: Reseller
+) -> None:
+    me = await admin_client.get("/api/v1/auth/me")
+    assert me.json()["platform"]["credits_enabled"] is False
+    resp = await admin_client.put(SETTINGS, json={"credits_enabled": True})
+    assert resp.status_code == 200 and resp.json()["credits_enabled"] is True
+    login = await client.post(
+        "/api/v1/auth/reseller/login", json={"username": "revenda", "password": "revenda123"}
+    )
+    assert login.json()["platform"]["credits_enabled"] is True
+    assert login.json()["platform"]["name"]

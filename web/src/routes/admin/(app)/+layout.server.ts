@@ -15,5 +15,9 @@ export const load: LayoutServerLoad = async ({ fetch, url }) => {
 
 	const settingsRes = await fetch('/api/v1/admin/settings');
 	const settings = settingsRes.ok ? ((await settingsRes.json()) as Settings) : null;
-	return { user: me.user, platformName: settings?.platform_name ?? 'Painel' };
+	return {
+		user: me.user,
+		platformName: settings?.platform_name ?? 'Painel',
+		creditsEnabled: settings?.credits_enabled ?? false
+	};
 };

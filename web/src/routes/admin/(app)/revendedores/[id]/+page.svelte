@@ -158,15 +158,21 @@
 </PageHeader>
 
 <div class="grid gap-6 lg:grid-cols-3">
-	<!-- credits -->
+	<!-- credits / devices -->
 	<section class="card p-5">
-		<h2 class="text-sm font-medium text-slate-500">Créditos</h2>
-		<p class="mt-2 text-4xl font-semibold tabular-nums">{r.credits}</p>
-		<p class="mt-1 text-xs text-slate-500">{r.devices_count} dispositivos cadastrados</p>
-		<div class="mt-4 flex gap-2">
-			<Button size="sm" onclick={() => openCredits(1)}>+ Adicionar</Button>
-			<Button size="sm" variant="secondary" onclick={() => openCredits(-1)}>− Remover</Button>
-		</div>
+		{#if data.creditsEnabled}
+			<h2 class="text-sm font-medium text-slate-500">Créditos</h2>
+			<p class="mt-2 text-4xl font-semibold tabular-nums">{r.credits}</p>
+			<p class="mt-1 text-xs text-slate-500">{r.devices_count} dispositivos cadastrados</p>
+			<div class="mt-4 flex gap-2">
+				<Button size="sm" onclick={() => openCredits(1)}>+ Adicionar</Button>
+				<Button size="sm" variant="secondary" onclick={() => openCredits(-1)}>− Remover</Button>
+			</div>
+		{:else}
+			<h2 class="text-sm font-medium text-slate-500">Dispositivos</h2>
+			<p class="mt-2 text-4xl font-semibold tabular-nums">{r.devices_count}</p>
+			<p class="mt-1 text-xs text-slate-500">cadastrados por esta revenda</p>
+		{/if}
 	</section>
 
 	<!-- expiration -->
@@ -227,74 +233,76 @@
 		</form>
 	</section>
 
-	<section class="card lg:col-span-2">
-		<div
-			class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800"
-		>
-			<h2 class="font-semibold">Movimentação de créditos</h2>
-			<span class="text-xs text-slate-500">{data.ledger.total} registros</span>
-		</div>
-		<div class="overflow-x-auto">
-			<table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-				<thead class="bg-slate-50 dark:bg-slate-900/60">
-					<tr>
-						<th class="table-th">Data</th>
-						<th class="table-th text-right">Ajuste</th>
-						<th class="table-th text-right">Saldo</th>
-						<th class="table-th">Motivo</th>
-						<th class="table-th">Por</th>
-					</tr>
-				</thead>
-				<tbody class="divide-y divide-slate-100 dark:divide-slate-800/70">
-					{#if data.ledger.items.length === 0}
-						<tr
-							><td class="table-td py-8 text-center text-slate-500" colspan="5"
-								>Nenhuma movimentação.</td
-							></tr
-						>
-					{/if}
-					{#each data.ledger.items as entry (entry.id)}
-						<tr>
-							<td class="table-td whitespace-nowrap">{formatDateTime(entry.created_at)}</td>
-							<td
-								class="table-td text-right font-medium tabular-nums {entry.delta > 0
-									? 'text-emerald-600'
-									: 'text-red-600'}"
-							>
-								{entry.delta > 0 ? '+' : ''}{entry.delta}
-							</td>
-							<td class="table-td text-right tabular-nums">{entry.balance_after}</td>
-							<td class="table-td"
-								>{entry.note ?? entry.reason}{entry.ref ? ` (${entry.ref})` : ''}</td
-							>
-							<td class="table-td"
-								>{entry.actor_type}{entry.actor_id ? ` #${entry.actor_id}` : ''}</td
-							>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
-		{#if ledgerPages > 1}
+	{#if data.creditsEnabled}
+		<section class="card lg:col-span-2">
 			<div
-				class="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-3 text-sm dark:border-slate-800"
+				class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800"
 			>
-				<Button
-					size="sm"
-					variant="ghost"
-					disabled={data.ledger.page <= 1}
-					onclick={() => updateQuery(page.url, { lpage: data.ledger.page - 1 })}>‹</Button
-				>
-				<span>Página {data.ledger.page} de {ledgerPages}</span>
-				<Button
-					size="sm"
-					variant="ghost"
-					disabled={data.ledger.page >= ledgerPages}
-					onclick={() => updateQuery(page.url, { lpage: data.ledger.page + 1 })}>›</Button
-				>
+				<h2 class="font-semibold">Movimentação de créditos</h2>
+				<span class="text-xs text-slate-500">{data.ledger.total} registros</span>
 			</div>
-		{/if}
-	</section>
+			<div class="overflow-x-auto">
+				<table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+					<thead class="bg-slate-50 dark:bg-slate-900/60">
+						<tr>
+							<th class="table-th">Data</th>
+							<th class="table-th text-right">Ajuste</th>
+							<th class="table-th text-right">Saldo</th>
+							<th class="table-th">Motivo</th>
+							<th class="table-th">Por</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-slate-100 dark:divide-slate-800/70">
+						{#if data.ledger.items.length === 0}
+							<tr
+								><td class="table-td py-8 text-center text-slate-500" colspan="5"
+									>Nenhuma movimentação.</td
+								></tr
+							>
+						{/if}
+						{#each data.ledger.items as entry (entry.id)}
+							<tr>
+								<td class="table-td whitespace-nowrap">{formatDateTime(entry.created_at)}</td>
+								<td
+									class="table-td text-right font-medium tabular-nums {entry.delta > 0
+										? 'text-emerald-600'
+										: 'text-red-600'}"
+								>
+									{entry.delta > 0 ? '+' : ''}{entry.delta}
+								</td>
+								<td class="table-td text-right tabular-nums">{entry.balance_after}</td>
+								<td class="table-td"
+									>{entry.note ?? entry.reason}{entry.ref ? ` (${entry.ref})` : ''}</td
+								>
+								<td class="table-td"
+									>{entry.actor_type}{entry.actor_id ? ` #${entry.actor_id}` : ''}</td
+								>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+			{#if ledgerPages > 1}
+				<div
+					class="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-3 text-sm dark:border-slate-800"
+				>
+					<Button
+						size="sm"
+						variant="ghost"
+						disabled={data.ledger.page <= 1}
+						onclick={() => updateQuery(page.url, { lpage: data.ledger.page - 1 })}>‹</Button
+					>
+					<span>Página {data.ledger.page} de {ledgerPages}</span>
+					<Button
+						size="sm"
+						variant="ghost"
+						disabled={data.ledger.page >= ledgerPages}
+						onclick={() => updateQuery(page.url, { lpage: data.ledger.page + 1 })}>›</Button
+					>
+				</div>
+			{/if}
+		</section>
+	{/if}
 </div>
 
 <Modal bind:open={creditOpen} title="Ajustar créditos" size="sm">

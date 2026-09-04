@@ -15,15 +15,15 @@
 
 	let { data } = $props();
 
-	const columns = [
+	const columns = $derived([
 		{ key: 'username', label: 'Usuário' },
 		{ key: 'name', label: 'Nome' },
-		{ key: 'credits', label: 'Créditos', class: 'text-right' },
+		...(data.creditsEnabled ? [{ key: 'credits', label: 'Créditos', class: 'text-right' }] : []),
 		{ key: 'devices', label: 'Dispositivos', class: 'text-right' },
 		{ key: 'expires_at', label: 'Vencimento' },
 		{ key: 'status', label: 'Status' },
 		{ key: 'actions', label: '', class: 'text-right' }
-	];
+	]);
 
 	const statusOptions = [
 		{ value: '', label: 'Todos os status' },
@@ -116,7 +116,9 @@
 			</a>
 		</td>
 		<td class="table-td">{r.name}</td>
-		<td class="table-td text-right tabular-nums">{r.credits}</td>
+		{#if data.creditsEnabled}
+			<td class="table-td text-right tabular-nums">{r.credits}</td>
+		{/if}
 		<td class="table-td text-right tabular-nums">{r.devices_count}</td>
 		<td class="table-td">{r.expires_at ? formatDate(r.expires_at) : 'Sem vencimento'}</td>
 		<td class="table-td"><Badge tone={st.tone}>{st.label}</Badge></td>
@@ -149,7 +151,9 @@
 			bind:value={form.password}
 		/>
 		<div class="grid grid-cols-2 gap-4">
-			<Input label="Créditos iniciais" type="number" min={0} bind:value={form.credits} />
+			{#if data.creditsEnabled}
+				<Input label="Créditos iniciais" type="number" min={0} bind:value={form.credits} />
+			{/if}
 			<Input
 				label="Vencimento"
 				type="date"

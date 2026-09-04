@@ -1,6 +1,6 @@
 # ADR-001 — Modelo de dados
 
-**Status:** aceito · **Data:** 2026-09-04
+**Status:** aceito · **Data:** 2026-09-04 · **Atualizado:** 2026-09-04 (créditos opcionais, M2)
 
 ## Contexto
 
@@ -74,7 +74,7 @@ histórico com `reseller_id = NULL`.
 Regras:
 - `POST /device/register` é idempotente por `device_id`: repetir devolve o mesmo MAC e **rotaciona** o token (caso de reinstalação do app).
 - Cadastro pela revenda (M2) informa o MAC exibido no app. Se já existe um device com esse MAC e `reseller_id IS NULL`, ele é reivindicado; se não existe, é criado com `device_id = NULL`. MAC já pertencente a outra revenda → 409.
-- **Cada cadastro pela revenda consome 1 crédito** (linha em `credit_ledger`, `delta = -1`). Exclusão de dispositivo **não devolve** crédito (o Anexo não prevê estorno).
+- **Créditos são opcionais** (decisão do M2, bloco 0): a configuração global `credits_enabled` (padrão `false`) liga o sistema. Com `true`, cada cadastro pela revenda consome 1 crédito (linha em `credit_ledger`, `delta = -1`), saldo zerado bloqueia o cadastro (400 `insufficient_credits`) e o admin ajusta saldos. Com `false`, nada é consumido, o ledger não é escrito, o ajuste manual responde 400 `credits_disabled` e os painéis não exibem saldo. Exclusão de dispositivo **não devolve** crédito (o Anexo não prevê estorno).
 - Status para o app: `unregistered` (sem revenda) · `expired` (licença vencida, revenda bloqueada ou revenda vencida) · `active`.
 
 ### `playlists`
@@ -176,6 +176,7 @@ Chaves e valores padrão (seed):
 | `min_app_version` | `"1.0.0"` |
 | `apk_url` | `""` |
 | `platform_name` | `PLATFORM_NAME` do `.env` |
+| `credits_enabled` | `false` — liga o sistema de créditos (M2 §0) |
 
 Chaves do gateway Pix ficam **somente no `.env`**, nunca no banco.
 

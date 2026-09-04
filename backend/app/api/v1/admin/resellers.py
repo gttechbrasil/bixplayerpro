@@ -5,7 +5,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 
 from app.core.deps import CurrentAdmin, DbSession, get_client_ip
-from app.core.exceptions import conflict, not_found
+from app.core.exceptions import bad_request, conflict, not_found
 from app.core.pagination import paginate
 from app.core.security import hash_password
 from app.models import CreditLedger, Device, Reseller
@@ -22,11 +22,13 @@ from app.schemas.admin import (
 from app.schemas.common import Message, Page, PageParams
 from app.services import audit
 from app.services.credits import adjust_credits
+from app.services.settings import credits_enabled
 
 router = APIRouter(prefix="/resellers", tags=["admin: resellers"])
 
 MSG_USERNAME_TAKEN = "Já existe uma revenda com este usuário."
 MSG_NOT_FOUND = "Revenda não encontrada."
+MSG_CREDITS_DISABLED = "O sistema de créditos está desativado nas configurações."
 
 StatusFilter = Literal["active", "blocked", "expired"]
 
@@ -132,7 +134,7 @@ async def create_reseller(
         payload={"username": reseller.username, "expires_at": str(body.expires_at)},
         ip=get_client_ip(request),
     )
-    if body.credits:
+    if body.credits and await credits_enabled(db):
         await adjust_credits(
             db,
             reseller,
@@ -228,6 +230,8 @@ async def reset_password(
 async def adjust_reseller_credits(
     reseller_id: int, body: CreditAdjust, admin: CurrentAdmin, db: DbSession, request: Request
 ) -> ResellerOut:
+    if not await credits_enabled(db):
+        raise bad_request(MSG_CREDITS_DISABLED, "credits_disabled")
     reseller = await _get_reseller(db, reseller_id)
     await adjust_credits(
         db,
