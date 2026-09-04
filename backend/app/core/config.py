@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://iptv:iptv@localhost:5432/iptv"
     redis_url: str = "redis://localhost:6379/0"
 
-    secret_key: str = Field(default="dev-secret-change-me", min_length=8)
+    secret_key: str = Field(default="dev-secret-change-me-dev-secret-change-me", min_length=32)
     fernet_key: str = ""
     jwt_expire_minutes: int = 720
     jwt_algorithm: str = "HS256"

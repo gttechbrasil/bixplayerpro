@@ -1,7 +1,8 @@
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CHAR, BigInteger, Date, DateTime, ForeignKey, String
+from sqlalchemy import CHAR, BigInteger, Date, DateTime, ForeignKey, String, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -40,3 +41,7 @@ class Device(TimestampMixin, Base):
 
     def license_expired(self, today: date) -> bool:
         return self.license_expires_at is not None and self.license_expires_at < today
+
+    @classmethod
+    async def by_token_hash(cls, db: AsyncSession, token_hash: str) -> "Device | None":
+        return await db.scalar(select(cls).where(cls.token_hash == token_hash))

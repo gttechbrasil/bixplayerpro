@@ -15,11 +15,11 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Não avance par
 - [x] Seed de desenvolvimento: 1 admin (`admin`/senha do .env), 1 reseller de teste, settings padrão (preço mensal 35.00, pacotes vazios)
 
 ## 3. Autenticação
-- [ ] `POST /api/v1/auth/admin/login`, `POST /api/v1/auth/reseller/login` → JWT em cookie httpOnly + CSRF token
-- [ ] `POST /api/v1/auth/logout`
-- [ ] Dependências `current_admin`, `current_reseller`, `current_device` (Bearer token opaco)
-- [ ] Bloqueio de reseller com `is_blocked` ou `expires_at` vencido → 403 com mensagem em português
-- [ ] Rate limit em login (Redis)
+- [x] `POST /api/v1/auth/admin/login`, `POST /api/v1/auth/reseller/login` → JWT em cookie httpOnly + CSRF token
+- [x] `POST /api/v1/auth/logout`
+- [x] Dependências `current_admin`, `current_reseller`, `current_device` (Bearer token opaco)
+- [x] Bloqueio de reseller com `is_blocked` ou `expires_at` vencido → 403 com mensagem em português
+- [x] Rate limit em login (Redis)
 
 ## 4. API do dispositivo (é o que faz o app funcionar — prioridade)
 - [ ] `POST /api/v1/device/register` — body `{device_id, app_type, app_version}`; cria device sem reseller se não existir, gera MAC único no formato `XX:XX:XX:XX:XX:XX` (prefixo fixo da plataforma + 3 bytes aleatórios), devolve `{mac_address, token}`
