@@ -1,10 +1,10 @@
 from datetime import date, timedelta
 
-from app.core.deps import ADMIN_COOKIE, RESELLER_COOKIE
-from app.models import Admin, Reseller
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.deps import ADMIN_COOKIE, RESELLER_COOKIE
+from app.models import Admin, Reseller
 from tests.conftest import ADMIN_PASSWORD, RESELLER_PASSWORD
 
 LOGIN_ADMIN = "/api/v1/auth/admin/login"

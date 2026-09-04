@@ -22,12 +22,12 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Não avance par
 - [x] Rate limit em login (Redis)
 
 ## 4. API do dispositivo (é o que faz o app funcionar — prioridade)
-- [ ] `POST /api/v1/device/register` — body `{device_id, app_type, app_version}`; cria device sem reseller se não existir, gera MAC único no formato `XX:XX:XX:XX:XX:XX` (prefixo fixo da plataforma + 3 bytes aleatórios), devolve `{mac_address, token}`
-- [ ] `GET /api/v1/device/config` (Bearer) — devolve o equivalente ao `AppInfoModel` da spec-app §3.2 em JSON limpo: `registered, mac_address, status (active|expired|unregistered), license_expires_at, playlists[], theme, logo_url, bg_url, qr_content, banners[], pin, min_app_version, apk_url`
-- [ ] `POST /api/v1/device/playlists` e `DELETE /api/v1/device/playlists/{id}` — auto-cadastro de playlist pelo app (apenas se device registrado)
-- [ ] Parser de URL Xtream: extrair `host`, `username`, `password` de `get.php?username=&password=`; senha criptografada em repouso (Fernet com chave do .env)
-- [ ] Atualizar `last_seen_at` a cada `config`
-- [ ] Testes cobrindo: device novo, device cadastrado, expirado, reseller bloqueado, playlist add/delete
+- [x] `POST /api/v1/device/register` — body `{device_id, app_type, app_version}`; cria device sem reseller se não existir, gera MAC único no formato `XX:XX:XX:XX:XX:XX` (prefixo fixo da plataforma + 3 bytes aleatórios), devolve `{mac_address, token}`
+- [x] `GET /api/v1/device/config` (Bearer) — devolve o equivalente ao `AppInfoModel` da spec-app §3.2 em JSON limpo: `registered, mac_address, status (active|expired|unregistered), license_expires_at, playlists[], theme, logo_url, bg_url, qr_content, banners[], pin, min_app_version, apk_url`
+- [x] `POST /api/v1/device/playlists` e `DELETE /api/v1/device/playlists/{id}` — auto-cadastro de playlist pelo app (apenas se device registrado)
+- [x] Parser de URL Xtream: extrair `host`, `username`, `password` de `get.php?username=&password=`; senha criptografada em repouso (Fernet com chave do .env)
+- [x] Atualizar `last_seen_at` a cada `config`
+- [x] Testes cobrindo: device novo, device cadastrado, expirado, reseller bloqueado, playlist add/delete
 
 ## 5. API do admin
 - [ ] CRUD `resellers` (listar com busca/paginação, criar, editar, bloquear, resetar senha)

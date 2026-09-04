@@ -1,8 +1,9 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.security import verify_password
 from app.db.seed import TEST_RESELLER, seed
 from app.models import Admin, Reseller, Setting
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def test_seed_is_idempotent(db: AsyncSession) -> None:

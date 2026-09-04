@@ -27,6 +27,9 @@ class Device(TimestampMixin, Base):
     app_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
     license_expires_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    pin: Mapped[str] = mapped_column(
+        String(8), nullable=False, default="0000", server_default="0000"
+    )
 
     reseller: Mapped["Reseller | None"] = relationship(back_populates="devices")
     playlists: Mapped[list["Playlist"]] = relationship(

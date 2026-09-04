@@ -66,6 +66,7 @@ histórico com `reseller_id = NULL`.
 | app_version | varchar(32), nullable | |
 | license_expires_at | date, nullable | `NULL` = vitalícia |
 | last_seen_at | timestamptz, nullable | atualizado em cada `GET /device/config` |
+| pin | varchar(8), default `0000` | PIN parental inicial entregue ao app |
 | created_at, updated_at | timestamptz | |
 
 Índices: `ix_devices_reseller_id` e os uniques acima.
@@ -82,7 +83,7 @@ Regras:
 | id | bigint PK | |
 | device_id | bigint FK → devices **ON DELETE CASCADE** | |
 | name | varchar(120) | |
-| url | text | URL original (M3U ou `get.php` Xtream) |
+| url | text | URL da playlist. Para Xtream, **sem** o parâmetro `password` (fica em `password_enc`); para M3U, a URL original |
 | type | varchar(8) | `xtream` / `m3u` |
 | host | varchar(255), nullable | `scheme://host[:port]` — base para o migrador de DNS |
 | username | varchar(255), nullable | extraído da querystring Xtream |
@@ -93,8 +94,8 @@ Regras:
 
 Índices: `ix_playlists_device_id`, `ix_playlists_host`.
 
-A senha nunca é devolvida para painel/admin. Para o app ela vai em claro dentro da `url`
-(o app precisa dela para autenticar no Xtream); o transporte é TLS.
+A senha nunca é devolvida para painel/admin. Para o app a URL é remontada com a senha
+decifrada (o app precisa dela para autenticar no Xtream); o transporte é TLS.
 
 ### `banners`
 | coluna | tipo |

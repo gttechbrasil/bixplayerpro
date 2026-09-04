@@ -22,14 +22,15 @@ os.environ["LOGIN_RATE_LIMIT"] = "5"
 os.environ["LOGIN_RATE_WINDOW"] = "60"
 
 import pytest  # noqa: E402
-from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
-from app.core.redis import get_redis  # noqa: E402
-from app.db.session import dispose_engine, get_db, get_engine  # noqa: E402
-from app.main import app  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
 from sqlalchemy import text  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker  # noqa: E402
+
+from alembic import command  # noqa: E402
+from app.core.redis import get_redis  # noqa: E402
+from app.db.session import dispose_engine, get_db, get_engine  # noqa: E402
+from app.main import app  # noqa: E402
 
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
