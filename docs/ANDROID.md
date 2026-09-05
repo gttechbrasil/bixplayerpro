@@ -124,7 +124,40 @@ ligado com HVCI desligado, e o processo do desenvolvedor **não elevado** — a 
 administradora, mas o UAC filtra o token, e ela **não pertence ao grupo
 `Hyper-V Administrators`**.
 
-**Correções, da mais provável para a menos:**
+**Já testado e descartado (05/09/2026):**
+
+| Hipótese | Verificação | Resultado |
+|---|---|---|
+| Conta fora do grupo `Hyper-V Administrators` | usuário adicionado e relogado; `whoami /groups` mostra `BUILTIN\Administradores do Hyper-V` no token do processo | **não resolveu** |
+| Feature *Windows Hypervisor Platform* desligada | `Get-CimInstance Win32_OptionalFeature`: `HypervisorPlatform`, `Microsoft-Hyper-V-All` e `VirtualMachinePlatform` = **habilitadas** | descartado |
+| Hipervisor não está rodando | `HvHost`, `vmcompute` e `vmms` rodando; WSL2 funciona | descartado |
+| Conflito com hipervisor de terceiros | nenhum processo/driver de VirtualBox, VMware ou anti-cheat | descartado |
+| Emulador desatualizado | atualizado de 36.5.11 para **37.1.11** (canal estável) | **não resolveu** |
+| Alternativa sem aceleração (`-accel off`) | inicia mas o boot morre: a imagem API 36 exige AVX/F16C, que o TCG não emula | inviável |
+| HVCI / Memory Integrity ligado | `HypervisorEnforcedCodeIntegrity.Enabled = 0`, `SecurityServicesRunning = 0` | descartado |
+
+Fato que resta: o processo do emulador roda **sem elevação** (a conta é administradora, mas o UAC
+filtra o token) e o VBS está ativo (`VirtualizationBasedSecurityStatus = 2`).
+
+**Próximos passos, na ordem:**
+
+1. **Testar elevado.** Em um PowerShell **como administrador**:
+   ```powershell
+   $sdk = "$env:LOCALAPPDATA\Android\Sdk"
+   & "$sdk\emulator\emulator.exe" -avd bix_tv_api36 -no-window -no-snapshot -no-boot-anim
+   ```
+   Se subir, o problema é privilégio e a solução é rodar o emulador (ou o Android Studio) elevado.
+2. **Desligar o VBS e reiniciar.** É a correção definitiva mais relatada para `hr=80070005`:
+   *Segurança do Windows → Segurança do dispositivo → Isolamento do núcleo* e desligue tudo; ou,
+   em um PowerShell como administrador:
+   ```powershell
+   bcdedit /set hypervisorlaunchtype auto
+   ```
+   seguido de **reinicialização**. Atenção: desligar o VBS afeta o WSL2 e o Docker Desktop.
+3. **Reiniciar o Windows.** A associação ao grupo `Hyper-V Administrators` só é lida pelo driver do
+   hipervisor no boot; um logoff/logon pode não bastar.
+
+**Correções originalmente sugeridas (mantidas para histórico):**
 
 1. Adicionar a conta ao grupo `Hyper-V Administrators` e **sair e entrar de novo** no Windows:
    ```powershell
