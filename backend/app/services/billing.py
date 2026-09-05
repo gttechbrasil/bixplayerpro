@@ -78,7 +78,10 @@ def extended_expiration(current: date | None, months: int, today: date | None = 
 
 
 def _payer_email(reseller: Reseller) -> str:
-    host = urlsplit(get_settings().public_base_url).hostname or "plataforma.local"
+    settings = get_settings()
+    if settings.mercadopago_test_payer_email:
+        return settings.mercadopago_test_payer_email
+    host = urlsplit(settings.public_base_url).hostname or "plataforma.local"
     return f"revenda-{reseller.id}@{host}"
 
 

@@ -174,10 +174,13 @@ sobe só o banco e o Redis nas portas locais.
    para o evento *Pagamentos* e copie a **assinatura secreta** exibida para
    `MERCADOPAGO_WEBHOOK_SECRET`. Sem esse valor a assinatura não é validada, mas o pagamento
    sempre é confirmado consultando a API antes de aprovar.
-4. `PAYMENT_PROVIDER=mercadopago` (padrão). Para desenvolvimento sem gateway use
+4. **Sandbox**: crie um *usuário de teste comprador* em *Contas de teste* e coloque o e-mail dele em
+   `MERCADOPAGO_TEST_PAYER_EMAIL`; ele é usado como `payer.email` nas cobranças. Deixe **vazio em
+   produção** (a API usa `revenda-<id>@<domínio>`).
+5. `PAYMENT_PROVIDER=mercadopago` (padrão). Para desenvolvimento sem gateway use
    `PAYMENT_PROVIDER=fake`: o Pix é fictício e o pagamento fica pendente até ser aprovado por
    código (usado nos testes).
-5. `PIX_EXPIRATION_MINUTES` (padrão 30) define a validade do QR.
+6. `PIX_EXPIRATION_MINUTES` (padrão 30) define a validade do QR.
 
 O painel da revenda consulta o status a cada 4 s; em desenvolvimento local, sem webhook
 acessível pela internet, é essa consulta que detecta a aprovação.

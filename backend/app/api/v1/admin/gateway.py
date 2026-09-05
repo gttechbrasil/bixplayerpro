@@ -14,6 +14,7 @@ class GatewayOut(BaseModel):
     access_token_masked: str | None
     access_token_kind: str | None
     webhook_secret_configured: bool
+    sandbox_payer_email: str | None
     webhook_url: str
     pix_expiration_minutes: int
 
@@ -42,6 +43,7 @@ def gateway_info(settings: Settings) -> GatewayOut:
         access_token_masked=mask(settings.mercadopago_access_token),
         access_token_kind=token_kind(settings.mercadopago_access_token),
         webhook_secret_configured=bool(settings.mercadopago_webhook_secret),
+        sandbox_payer_email=settings.mercadopago_test_payer_email or None,
         webhook_url=f"{settings.public_base_url.rstrip('/')}/api/v1/webhooks/mercadopago",
         pix_expiration_minutes=settings.pix_expiration_minutes,
     )

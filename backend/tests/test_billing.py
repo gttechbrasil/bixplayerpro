@@ -179,3 +179,16 @@ async def test_provider_failure_leaves_no_payment(
     assert resp.status_code == 502
     assert resp.json()["detail"]["code"] == "provider_error"
     assert (await db.scalars(select(Payment))).all() == []
+
+
+def test_payer_email_uses_sandbox_buyer_when_configured(
+    reseller_user: Reseller, monkeypatch
+) -> None:
+    from app.core.config import get_settings
+    from app.services.billing import _payer_email
+
+    monkeypatch.setattr(get_settings(), "mercadopago_test_payer_email", "")
+    monkeypatch.setattr(get_settings(), "public_base_url", "https://player.exemplo.com.br")
+    assert _payer_email(reseller_user) == f"revenda-{reseller_user.id}@player.exemplo.com.br"
+    monkeypatch.setattr(get_settings(), "mercadopago_test_payer_email", "TESTUSER1@testuser.com")
+    assert _payer_email(reseller_user) == "TESTUSER1@testuser.com"

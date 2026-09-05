@@ -179,6 +179,7 @@ export interface GatewayInfo {
 	access_token_masked: string | null;
 	access_token_kind: string | null;
 	webhook_secret_configured: boolean;
+	sandbox_payer_email: string | null;
 	webhook_url: string;
 	pix_expiration_minutes: number;
 }

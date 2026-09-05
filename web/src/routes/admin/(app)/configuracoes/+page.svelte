@@ -185,6 +185,12 @@
 				{data.gateway.webhook_secret_configured ? 'configurada' : 'não configurada'}
 			</dd>
 		</div>
+		{#if data.gateway.sandbox_payer_email}
+			<div>
+				<dt class="text-slate-500">Modo sandbox</dt>
+				<dd class="font-mono text-xs">pagador {data.gateway.sandbox_payer_email}</dd>
+			</div>
+		{/if}
 		<div>
 			<dt class="text-slate-500">Validade do QR Pix</dt>
 			<dd class="font-medium">{data.gateway.pix_expiration_minutes} min</dd>

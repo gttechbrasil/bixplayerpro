@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     pix_expiration_minutes: int = 30
     mercadopago_access_token: str = ""
     mercadopago_webhook_secret: str = ""
+    # Sandbox only: e-mail of a Mercado Pago *test buyer*. When set it is used as payer.email
+    # instead of the synthetic reseller address. Leave empty in production.
+    mercadopago_test_payer_email: str = ""
 
     @field_validator("cors_origins", mode="before")
     @classmethod

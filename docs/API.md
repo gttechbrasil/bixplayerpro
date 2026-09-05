@@ -823,6 +823,7 @@ Configuração do gateway de pagamento (mascarada)
   "access_token_masked": "texto",
   "access_token_kind": "texto",
   "webhook_secret_configured": true,
+  "sandbox_payer_email": "texto",
   "webhook_url": "texto",
   "pix_expiration_minutes": 1
 }
