@@ -179,7 +179,8 @@ sobe só o banco e o Redis nas portas locais.
    sandbox. Em produção troque pelo *Access Token de produção*.
 3. **Webhook**: em *Webhooks* configure a URL `https://SEU_DOMINIO/api/v1/webhooks/mercadopago`
    para o evento *Pagamentos* e copie a **assinatura secreta** exibida para
-   `MERCADOPAGO_WEBHOOK_SECRET`. Sem esse valor a assinatura não é validada, mas o pagamento
+   `MERCADOPAGO_WEBHOOK_SECRET` (64 caracteres hexadecimais; não é a *public key*).
+   Sem esse valor a assinatura não é validada, mas o pagamento
    sempre é confirmado consultando a API antes de aprovar.
 4. **Sandbox**: com o *Access Token de teste* (`TEST-…`) o Mercado Pago **recusa** e-mails de usuário
    de teste (`@testuser.com`) como pagador (403 `Payer email forbidden`) e exige um e-mail comum com
@@ -315,6 +316,12 @@ Restauração: veja a §6.
 O usuário administrador é `admin`; a senha está em `ADMIN_PASSWORD` no
 `/home/deploy/app/deploy/.env` do servidor.
 
+O webhook está **cadastrado no Mercado Pago** e a assinatura secreta está em
+`MERCADOPAGO_WEBHOOK_SECRET`. A validação foi testada em produção: assinatura válida é aceita
+e o pagamento é reconsultado na API do Mercado Pago; assinatura inválida, ausente ou emitida
+para outro `data.id` recebe **403** `invalid_signature`; eventos de outro tipo são ignorados
+com 200 e `processed: false`.
+
 ### 11.9 Verificação pós-deploy
 
 Executada e aprovada em 05/09/2026 (23 verificações):
@@ -328,4 +335,6 @@ Executada e aprovada em 05/09/2026 (23 verificações):
 - Geração de Pix real no sandbox do Mercado Pago (QR `br.gov.bcb.pix` + PNG base64) e polling
   consultando `GET /v1/payments/{id}`.
 - `POST /device/register` gerando MAC no prefixo `02:50:50` e `GET /device/config` respondendo.
+- Webhook do Mercado Pago com assinatura válida, inválida, ausente e de outro pagamento
+  (11 verificações), confirmando que só notificações assinadas corretamente são processadas.
 
