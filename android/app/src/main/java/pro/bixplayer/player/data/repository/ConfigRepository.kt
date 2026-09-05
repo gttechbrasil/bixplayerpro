@@ -1,6 +1,7 @@
 package pro.bixplayer.player.data.repository
 
 import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import pro.bixplayer.player.data.api.DeviceApi
 import pro.bixplayer.player.data.api.DeviceRegistrar
+import pro.bixplayer.player.data.api.dto.ApiErrorEnvelope
 import pro.bixplayer.player.data.api.dto.DeviceConfigDto
 import pro.bixplayer.player.data.api.dto.PlaylistCreateRequest
 import pro.bixplayer.player.data.datastore.DeviceStore
@@ -88,6 +90,9 @@ class ConfigRepository @Inject constructor(
 
     suspend fun setActivePlaylist(id: Long) = prefs.setActivePlaylistId(id)
 
+    /** Turns a failure from this repository into a message the user can act on. */
+    fun messageFor(error: Throwable?): String = messages.forThrowable(error)
+
     /** Keeps the stored active playlist pointing at something that still exists. */
     private suspend fun reconcileActivePlaylist(config: AppConfig) {
         val current = prefs.currentActivePlaylistId()
@@ -114,16 +119,33 @@ interface ErrorMessages {
     fun forThrowable(error: Throwable?): String
 }
 
-/** Default implementation; the UI layer supplies one backed by string resources. */
+/**
+ * Default implementation backed by string resources.
+ *
+ * The API already answers in Portuguese with `{"detail": {"message": ...}}`, and that text is
+ * far more useful than a generic "server error" — for instance "Dispositivo não cadastrado.
+ * Informe o MAC ao seu revendedor." So it is preferred whenever the body carries one.
+ */
 class DefaultErrorMessages(
     private val network: String,
     private val server: String,
     private val unknown: String,
+    private val moshi: Moshi = Moshi.Builder().build(),
 ) : ErrorMessages {
+
+    private val envelopeAdapter by lazy { moshi.adapter(ApiErrorEnvelope::class.java) }
+
     override fun forThrowable(error: Throwable?): String = when (error) {
         is IOException -> network
-        is HttpException -> server
+        is HttpException -> serverMessage(error) ?: server
         null -> unknown
         else -> unknown
     }
+
+    private fun serverMessage(error: HttpException): String? = runCatching {
+        error.response()?.errorBody()?.string()
+            ?.let { envelopeAdapter.fromJson(it) }
+            ?.detail?.message
+            ?.takeIf { it.isNotBlank() }
+    }.getOrNull()
 }

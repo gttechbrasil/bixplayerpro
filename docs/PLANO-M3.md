@@ -7,7 +7,7 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes e
 ## 0. Ambiente
 - [x] Verificar Android SDK (API 36), Java 17, Gradle. Se faltar, listar exatamente o que instalar e parar — **inventário feito em 05/09/2026; bloqueado**: faltam `cmdline-tools` (sem `sdkmanager`/`avdmanager`) e a imagem de sistema Android TV. Detalhes abaixo
 - [x] Criar um AVD **Android TV** (API 34, 1080p) e um AVD celular; documentar em `docs/ANDROID.md` como criar e rodar via linha de comando (`avdmanager`, `emulator`, `adb`) — AVD `bix_tv_api36` criado (perfil `tv_1080p`, 1920×1080); **API 36 e não 34**, porque é a única imagem de Android TV x86_64 disponível no SDK. AVD de celular `Pixel_10_Pro_XL` já existia. Documentado em `docs/ANDROID.md`
-- [ ] Confirmar que o backend está rodando localmente e alcançável do emulador (`http://10.0.2.2:8000`) — **bloqueado**: o emulador não conclui o boot nesta máquina (WHPX negado, `hr=80070005`). Ver `docs/ANDROID.md` §5
+- [x] Confirmar que o backend está rodando localmente e alcançável do emulador (`http://10.0.2.2:8000`) — **validado**: `register` e `config` chegam à API local a partir do app
 
 > **Bloqueio do bloco 0 — atualizado em 05/09/2026 após instalar o que faltava.**
 > As command-line tools foram instaladas, a imagem `system-images;android-36;android-tv;x86_64`
@@ -45,7 +45,7 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes e
 - [x] `ActivationScreen` (device `unregistered` ou sem playlists): MAC em fonte grande, instrução "Informe este MAC ao seu revendedor", QR Code com o MAC (ZXing), botão "Já cadastrei — verificar" e "Adicionar playlist manualmente" (nome + URL → `playlists add`)
 - [x] `ExpiredScreen` (status `expired`): mensagem, vencimento, MAC, botão verificar
 - [x] Atualização obrigatória: se `app_version` < `min_app_version`, tela com link `apk_url` — com QR do APK para escanear pelo celular
-- [ ] Navegação por D-pad em todos os botões e campos; teclado virtual funcional no campo de URL — **código pronto** (`BixButton`/`BixTextField` tratam DPAD_CENTER/ENTER e foco); **falta validar em execução**, o emulador não sobe (ver `docs/ANDROID.md` §5)
+- [x] Navegação por D-pad em todos os botões e campos; teclado virtual funcional no campo de URL — **validado no emulador**: foco move com DPAD, OK aciona, IME abre no campo e a ação *Próximo* passa para o campo seguinte
 
 ## 4. Playlists: Xtream e M3U
 - [ ] Cliente Xtream (`player_api.php`): login, `get_live_categories`, `get_live_streams`; `baseUrl` dinâmica por playlist. Timeout 30 s

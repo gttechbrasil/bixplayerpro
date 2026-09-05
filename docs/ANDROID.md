@@ -103,7 +103,23 @@ $ADB logcat -s BixPlayer:V                     # logs do app
 $ADB emu kill                                  # encerra o emulador
 ```
 
-## 5. ⚠️ Emulador bloqueado nesta máquina (05/09/2026)
+## 5. Emulador — histórico do bloqueio (resolvido em 05/09/2026)
+
+> **Resolvido.** Bastou **reiniciar o Windows** depois de adicionar a conta ao grupo
+> `Administradores do Hyper-V`: o driver do hipervisor só lê a associação no boot, e um
+> logoff/logon não é suficiente. Depois disso o WHPX passou a funcionar sem elevação.
+>
+> Um segundo problema apareceu na sequência: o AVD ficava `offline` no `adb` indefinidamente,
+> porque o `userdata` havia sido corrompido pelas tentativas anteriores em modo software.
+> A saída foi subir uma vez com **`-wipe-data`**:
+>
+> ```powershell
+> emulator -avd bix_tv_api36 -no-window -no-boot-anim -no-audio -wipe-data -no-snapshot
+> ```
+>
+> O registro abaixo fica como diagnóstico caso o sintoma volte.
+
+### Histórico do diagnóstico
 
 **Sintoma:** qualquer AVD (inclusive o `Pixel_10_Pro_XL`, que é anterior a este projeto) sobe o
 processo `qemu-system-x86_64` e morre sem abrir a porta de console; o `adb` nunca vê o

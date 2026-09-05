@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -217,18 +218,27 @@ private fun PlaylistForm(
 ) {
     var name by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
+    val urlFocus = remember { FocusRequester() }
+    val submitFocus = remember { FocusRequester() }
 
     Column(
         modifier = Modifier
             .fillMaxWidth(0.7f)
             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-            .padding(24.dp),
+            .padding(24.dp)
+            // While the on-screen keyboard is open it owns the D-pad, so the only way out of a
+            // field is the IME action; padding keeps the button reachable once it closes.
+            .imePadding(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         BixTextField(
             value = name,
             onValueChange = { name = it },
             label = stringResource(R.string.playlist_name),
+            imeAction = ImeAction.Next,
+            // "Next" on the virtual keyboard must land on the URL field: with the IME open the
+            // D-pad moves the keyboard cursor, not the form focus.
+            onImeAction = { runCatching { urlFocus.requestFocus() } },
         )
         BixTextField(
             value = url,
@@ -236,13 +246,18 @@ private fun PlaylistForm(
             label = stringResource(R.string.playlist_url),
             keyboardType = KeyboardType.Uri,
             imeAction = ImeAction.Done,
-            onImeAction = { if (!submitting) onSubmit(name, url) },
+            focusRequester = urlFocus,
+            onImeAction = {
+                runCatching { submitFocus.requestFocus() }
+                if (!submitting) onSubmit(name, url)
+            },
         )
         BixButton(
             text = stringResource(R.string.playlist_add),
             enabled = !submitting,
             onClick = { onSubmit(name, url) },
             modifier = Modifier.align(Alignment.CenterHorizontally),
+            focusRequester = submitFocus,
         )
     }
 }

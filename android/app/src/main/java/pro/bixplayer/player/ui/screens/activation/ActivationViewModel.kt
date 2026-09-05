@@ -108,9 +108,11 @@ class ActivationViewModel @Inject constructor(
                     activated = config?.canWatch == true,
                 )
             } else {
+                // The API validates the URL server-side and answers in Portuguese; showing its
+                // message beats guessing (it may be "device not registered", not a bad URL).
                 _uiState.value.copy(
                     addingPlaylist = false,
-                    notice = onError(ActivationError.INVALID_URL),
+                    notice = repository.messageFor(result.exceptionOrNull()),
                 )
             }
         }
