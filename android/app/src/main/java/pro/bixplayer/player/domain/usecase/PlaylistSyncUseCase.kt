@@ -135,7 +135,7 @@ class PlaylistSyncUseCase @Inject constructor(
             if (!response.isSuccessful) {
                 throw XtreamException("O servidor da playlist respondeu ${response.code}.")
             }
-            val body = response.body ?: throw XtreamException("A playlist veio vazia.")
+            val body = response.body
             body.byteStream().use { stream ->
                 var index = 0
                 M3uParser.parse(stream) { entry ->

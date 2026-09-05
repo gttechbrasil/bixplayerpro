@@ -41,15 +41,17 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.core.os.ConfigurationCompat
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
 import pro.bixplayer.player.domain.model.AppConfig
@@ -85,9 +87,10 @@ fun HomeScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        if (!config?.backgroundUrl.isNullOrBlank()) {
+        val backgroundUrl = config?.backgroundUrl
+        if (!backgroundUrl.isNullOrBlank()) {
             AsyncImage(
-                model = config?.backgroundUrl,
+                model = backgroundUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -181,17 +184,18 @@ private fun TopBar(config: AppConfig?, syncing: Boolean, channelCount: Int) {
         }
     }
     // The date speaks the language chosen in the settings, not the system one.
-    val locale = LocalConfiguration.current.locales[0]
+    val locale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.forLanguageTag("pt-BR")
     val clock = remember(now) { now.format(DateTimeFormatter.ofPattern("HH:mm")) }
     val date = remember(now.hour, locale) {
         LocalDate.now().format(DateTimeFormatter.ofPattern("EEE, dd MMM", locale))
     }
 
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        if (!config?.logoUrl.isNullOrBlank()) {
+        val logoUrl = config?.logoUrl
+        if (!logoUrl.isNullOrBlank()) {
             AsyncImage(
-                model = config?.logoUrl,
-                contentDescription = config?.platformName,
+                model = logoUrl,
+                contentDescription = config.platformName,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.heightIn(max = 56.dp).width(180.dp),
             )
@@ -273,15 +277,15 @@ private fun MenuCard(
                     false
                 }
             }
-            .padding(24.dp),
+            .padding(horizontal = 20.dp, vertical = 24.dp),
     ) {
         Text(text = icon, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(12.dp))
         Text(
             text = title,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         Text(

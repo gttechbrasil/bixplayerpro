@@ -2,6 +2,8 @@ package pro.bixplayer.player.player
 
 import androidx.media3.common.Player
 import kotlinx.coroutines.flow.StateFlow
+import pro.bixplayer.player.R
+import pro.bixplayer.player.util.AppLocale
 
 /** What the engine is doing right now, as far as the UI cares. */
 sealed interface PlaybackState {
@@ -29,14 +31,15 @@ data class TrackOption(
     val selected: Boolean,
 )
 
-/** Messages the engines surface to the user. Resolved from resources by the DI module. */
-data class PlayerMessages(
-    val generic: String,
-    val network: String,
-    val httpStatus: (Int) -> String,
-    val unsupported: String,
-    val vlcUnavailable: String,
-)
+/** Messages the engines surface to the user, resolved in the language chosen in the settings. */
+class PlayerMessages(private val locale: AppLocale) {
+    val generic: String get() = locale.string(R.string.player_error)
+    val network: String get() = locale.string(R.string.player_error_network)
+    val unsupported: String get() = locale.string(R.string.player_error_unsupported)
+    val vlcUnavailable: String get() = locale.string(R.string.player_error_vlc)
+
+    fun httpStatus(status: Int): String = locale.string(R.string.player_error_http, status)
+}
 
 /**
  * The playback engine behind the player screen and the live preview.

@@ -33,6 +33,7 @@ import pro.bixplayer.player.data.api.dto.DeviceConfigDto
 import pro.bixplayer.player.data.repository.DefaultErrorMessages
 import pro.bixplayer.player.data.repository.ErrorMessages
 import pro.bixplayer.player.player.PlayerMessages
+import pro.bixplayer.player.util.AppLocale
 import pro.bixplayer.player.util.DeviceIdentity
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
@@ -137,21 +138,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideErrorMessages(@ApplicationContext context: Context): ErrorMessages =
-        DefaultErrorMessages(
-            network = context.getString(R.string.error_network),
-            server = context.getString(R.string.error_server),
-            unknown = context.getString(R.string.error_unknown),
-        )
+    fun provideErrorMessages(locale: AppLocale): ErrorMessages = ResourceErrorMessages(locale)
+
     @Provides
     @Singleton
-    fun providePlayerMessages(@ApplicationContext context: Context): PlayerMessages = PlayerMessages(
-        generic = context.getString(R.string.player_error),
-        network = context.getString(R.string.player_error_network),
-        httpStatus = { status -> context.getString(R.string.player_error_http, status) },
-        unsupported = context.getString(R.string.player_error_unsupported),
-        vlcUnavailable = context.getString(R.string.player_error_vlc),
-    )
+    fun providePlayerMessages(locale: AppLocale): PlayerMessages = PlayerMessages(locale)
 }
 
 /**
@@ -161,4 +152,13 @@ object AppModule {
 @Singleton
 class DeviceApiHolder @Inject constructor() {
     lateinit var api: DeviceApi
+}
+
+/** [ErrorMessages] that re-reads the strings on every call, so a language change applies at once. */
+class ResourceErrorMessages(private val locale: AppLocale) : ErrorMessages {
+    override fun forThrowable(error: Throwable?): String = DefaultErrorMessages(
+        network = locale.string(R.string.error_network),
+        server = locale.string(R.string.error_server),
+        unknown = locale.string(R.string.error_unknown),
+    ).forThrowable(error)
 }

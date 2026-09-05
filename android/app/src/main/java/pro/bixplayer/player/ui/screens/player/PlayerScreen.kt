@@ -1,6 +1,7 @@
 package pro.bixplayer.player.ui.screens.player
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -49,11 +50,12 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -73,6 +75,7 @@ import pro.bixplayer.player.ui.theme.bixFocusable
  * list the user came from, ←/→ open the quick channel list, MENU opens audio/subtitle tracks,
  * digits tune by number and BACK closes whatever is open before leaving the screen.
  */
+@OptIn(UnstableApi::class)
 @Composable
 fun PlayerScreen(
     onExit: () -> Unit,
