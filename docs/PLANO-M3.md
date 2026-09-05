@@ -6,10 +6,17 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes e
 
 ## 0. Ambiente
 - [x] Verificar Android SDK (API 36), Java 17, Gradle. Se faltar, listar exatamente o que instalar e parar — **inventário feito em 05/09/2026; bloqueado**: faltam `cmdline-tools` (sem `sdkmanager`/`avdmanager`) e a imagem de sistema Android TV. Detalhes abaixo
-- [ ] Criar um AVD **Android TV** (API 34, 1080p) e um AVD celular; documentar em `docs/ANDROID.md` como criar e rodar via linha de comando (`avdmanager`, `emulator`, `adb`)
-- [ ] Confirmar que o backend está rodando localmente e alcançável do emulador (`http://10.0.2.2:8000`)
+- [x] Criar um AVD **Android TV** (API 34, 1080p) e um AVD celular; documentar em `docs/ANDROID.md` como criar e rodar via linha de comando (`avdmanager`, `emulator`, `adb`) — AVD `bix_tv_api36` criado (perfil `tv_1080p`, 1920×1080); **API 36 e não 34**, porque é a única imagem de Android TV x86_64 disponível no SDK. AVD de celular `Pixel_10_Pro_XL` já existia. Documentado em `docs/ANDROID.md`
+- [ ] Confirmar que o backend está rodando localmente e alcançável do emulador (`http://10.0.2.2:8000`) — **bloqueado**: o emulador não conclui o boot nesta máquina (WHPX negado, `hr=80070005`). Ver `docs/ANDROID.md` §5
 
-> **Bloqueio do bloco 0 (05/09/2026).** Presentes: JDK 21 (JBR do Android Studio, via `JAVA_HOME`),
+> **Bloqueio do bloco 0 — atualizado em 05/09/2026 após instalar o que faltava.**
+> As command-line tools foram instaladas, a imagem `system-images;android-36;android-tv;x86_64`
+> foi baixada e o AVD `bix_tv_api36` criado. Restou **um bloqueio de ambiente**: o emulador não
+> inicializa a aceleração WHPX (`Failed to setup partition, hr=80070005`, acesso negado), o que
+> derruba qualquer AVD, inclusive o de celular que já existia. A correção exige elevação e novo
+> login no Windows — ver `docs/ANDROID.md` §5. Registro do inventário original:
+>
+> **Inventário de 05/09/2026 (antes das instalações).** Presentes: JDK 21 (JBR do Android Studio, via `JAVA_HOME`),
 > plataformas `android-36` e `android-36.1`, build-tools 35/36/36.1/37, `emulator` 36.5.11 com
 > aceleração WHPX funcional, `adb` 1.0.41, licença `android-sdk-license` aceita e um AVD de celular
 > (`Pixel_10_Pro_XL`). Faltam: **Android SDK Command-line Tools** (a pasta `cmdline-tools` está vazia,
