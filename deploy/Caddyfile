@@ -14,6 +14,14 @@
 		header Cache-Control "public, max-age=86400"
 	}
 
+	# Release APK published by deploy.sh --apk (bind mount of deploy/downloads on the host)
+	handle_path /downloads/* {
+		root * /srv/downloads
+		file_server
+		header Cache-Control "no-cache"
+		header Content-Type "application/vnd.android.package-archive"
+	}
+
 	handle {
 		reverse_proxy web:3000
 	}

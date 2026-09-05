@@ -338,3 +338,16 @@ Executada e aprovada em 05/09/2026 (23 verificações):
 - Webhook do Mercado Pago com assinatura válida, inválida, ausente e de outro pagamento
   (11 verificações), confirmando que só notificações assinadas corretamente são processadas.
 
+## APK do app (Android TV)
+
+O Caddy serve `deploy/downloads/` em `https://bixplayer.pro/downloads/`. O APK de release entra
+ali pelo `deploy.sh`:
+
+```bash
+./deploy/deploy.sh --apk android/app/build/outputs/apk/release/app-release.apk
+curl -sI https://bixplayer.pro/downloads/app.apk | head -3
+```
+
+Em seguida, em **Admin → Configurações**, `apk_url = https://bixplayer.pro/downloads/app.apk` e
+`min_app_version` igual ao `bix.versionName` do build. O diretório é gitignored: o APK não passa
+pelo repositório, só pelo `scp` do script. Build e assinatura estão em `docs/ANDROID.md`.

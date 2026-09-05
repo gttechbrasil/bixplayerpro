@@ -49,3 +49,6 @@ deploy/.vps.env
 deploy/.vps.env
 deploy/id_deploy
 deploy/id_deploy.pub
+
+# Release APK published to the VPS by deploy.sh --apk
+deploy/downloads/

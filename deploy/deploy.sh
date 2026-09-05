@@ -4,6 +4,8 @@
 #   ./deploy/deploy.sh              # push + pull + build + migrate
 #   ./deploy/deploy.sh --no-push    # skip the git push (server pulls what is on the remote)
 #   ./deploy/deploy.sh --logs       # follow the api/web logs after deploying
+#   ./deploy/deploy.sh --apk android/app/build/outputs/apk/release/app-release.apk
+#                                   # also publish the release APK at https://DOMAIN/downloads/app.apk
 #
 # Reads deploy/.vps.env for VPS_HOST and connects as `deploy` with deploy/id_deploy.
 # Both files are gitignored.
@@ -18,15 +20,25 @@ BRANCH="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD)"
 
 PUSH=1
 LOGS=0
-for arg in "$@"; do
-	case "$arg" in
+APK=""
+while [ $# -gt 0 ]; do
+	case "$1" in
 	--no-push) PUSH=0 ;;
 	--logs) LOGS=1 ;;
+	--apk)
+		shift
+		APK="${1:-}"
+		[ -f "$APK" ] || {
+			echo "APK não encontrado: $APK" >&2
+			exit 2
+		}
+		;;
 	*)
-		echo "argumento desconhecido: $arg" >&2
+		echo "argumento desconhecido: $1" >&2
 		exit 2
 		;;
 	esac
+	shift
 done
 
 [ -f "$ENV_FILE" ] || {
@@ -52,6 +64,12 @@ fi
 
 echo "==> atualizando o código no servidor"
 ssh_run "cd $REMOTE_DIR && git fetch --quiet origin && git reset --hard origin/$BRANCH && git log -1 --oneline"
+
+if [ -n "$APK" ]; then
+	echo "==> publicando o APK em /downloads/app.apk"
+	ssh_run "mkdir -p $REMOTE_DIR/deploy/downloads"
+	MSYS_NO_PATHCONV=1 scp -i "$KEY" -o IdentitiesOnly=yes "$APK" "deploy@$VPS_HOST:$REMOTE_DIR/deploy/downloads/app.apk"
+fi
 
 echo "==> rebuild e subida dos serviços"
 ssh_run "cd $REMOTE_DIR && docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build"

@@ -11,7 +11,7 @@ Guia do ambiente de desenvolvimento do app (`/android`). A stack de UI está def
 | Android SDK | plataformas `android-36` e `android-36.1` | `%LOCALAPPDATA%\Android\Sdk` |
 | Build tools | 36.1.0 (37.0.0 também instalado) | idem |
 | Command-line tools | 1.0 (`sdkmanager`, `avdmanager`) | `cmdline-tools\latest\bin` |
-| Emulator | 36.5.11 | `emulator\emulator.exe` |
+| Emulator | 37.1.11 | `emulator\emulator.exe` |
 | Gradle | 9.7.1 (via wrapper do projeto) | `android/gradlew` |
 
 O `java` do `PATH` desta máquina é o JDK 8; **o Gradle usa o `JAVA_HOME`**, que aponta para o
@@ -207,3 +207,124 @@ adb shell curl -s http://10.0.2.2:8000/api/v1/health
 ```
 
 O `--host 0.0.0.0` é obrigatório: com o padrão `127.0.0.1` o emulador não alcança a API.
+
+## 7. Build e assinatura
+
+```bash
+cd android
+export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
+./gradlew :app:assembleDebug      # app/build/outputs/apk/debug/app-debug.apk
+./gradlew :app:assembleRelease    # app/build/outputs/apk/release/app-release.apk
+./gradlew :app:testDebugUnitTest :app:lintRelease
+```
+
+| Build | applicationId | API | Assinatura |
+|---|---|---|---|
+| `debug` | `<bix.applicationId>.debug` | `http://10.0.2.2:8000` | keystore de debug do SDK (automática) |
+| `release` | `<bix.applicationId>` | `https://bixplayer.pro` | `android/keystore.properties` → `.jks` (R8 + shrink de recursos) |
+
+O release só sai **assinado** se existir `android/keystore.properties` (gitignored, assim como
+qualquer `*.jks`); sem ele o Gradle gera `app-release-unsigned.apk`. Formato do arquivo:
+
+```properties
+storeFile=keystore/bixplayer-release.jks
+storePassword=...
+keyAlias=bixplayer
+keyPassword=...
+```
+
+Para criar um keystore novo (uma vez por marca):
+
+```bash
+"$JAVA_HOME/bin/keytool" -genkeypair -v -keystore keystore/bixplayer-release.jks -storetype PKCS12   -alias bixplayer -keyalg RSA -keysize 4096 -validity 10950   -dname "CN=Bix Player, OU=Mobile, O=Bix Player, L=Sao Paulo, ST=SP, C=BR"
+"$ANDROID_HOME/build-tools/36.1.0/apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk
+```
+
+> Guarde o `.jks` e as senhas fora do repositório (cofre de senhas). Perder o keystore significa
+> não conseguir atualizar o app já instalado nas TVs: o Android exige a mesma assinatura.
+
+## 8. White label: trocar nome, pacote e ícone
+
+Tudo o que identifica a marca está em `android/gradle.properties`; o código não muda:
+
+```properties
+bix.applicationId=pro.bixplayer.player   # pacote (um por marca; define a identidade do app na TV)
+bix.appName=Bix Player                   # nome mostrado no launcher
+bix.versionName=1.0.0
+bix.versionCode=1
+bix.apiBaseUrl.release=https://bixplayer.pro/
+bix.apiBaseUrl.debug=http://10.0.2.2:8000/
+```
+
+- **Ícone e banner**: substitua `app/src/main/res/mipmap-*/ic_launcher*.png` (launcher) e
+  `app/src/main/res/drawable/app_banner.png` (320×180, banner do launcher da TV).
+- **Cores**: `app/src/main/java/pro/bixplayer/player/ui/theme/Color.kt` (`BixBlue` é a cor de foco).
+- **Logo, fundo, banners e nome da plataforma** *não* são do build: vêm do painel, por revenda,
+  em `GET /api/v1/device/config`, e mudam sem republicar o APK.
+- Cada marca deve ter o próprio keystore (seção 7) e o próprio `applicationId`; dois APKs com o
+  mesmo pacote e assinaturas diferentes não coexistem no mesmo aparelho.
+- Idiomas: `values/` (pt-BR, padrão), `values-en/`, `values-es/`. O idioma é escolhido no app
+  (Configurações → Idioma) e aplicado em tempo real por `BixLocale`/`AppLocale`.
+
+## 9. Testar com a playlist de fixture local
+
+O backend serve uma lista de 1.200 canais gerada por script, com streams reais para exercitar o
+player sem depender de um provedor:
+
+```bash
+cd backend
+uv run python scripts/make_fixture.py --download-sample
+# uploads/fixture.m3u         1200 canais, 8 categorias, 2 entradas inválidas (o parser pula)
+# uploads/fixture/sample.ts   ~2 MB de MPEG-TS (4 segmentos do stream público da Mux)
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+| Canais | URL | Exercita |
+|---|---|---|
+| 1–3 | `https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8` | HLS público, multi-bitrate |
+| 4–6 | `http://10.0.2.2:8000/uploads/fixture/sample.ts` | TS local (extractor tolerante) |
+| 7+ | `http://10.0.2.2:8000/fake/stream/N.ts` (404) | retry automático 2× + botão "Tentar novamente" |
+
+Cadastre a playlist no `/painel` (URL `http://10.0.2.2:8000/uploads/fixture.m3u`, tipo M3U) para
+o dispositivo do emulador, ou adicione pelo próprio app na tela de ativação. Roteiro validado no
+M3 (capturas em `docs/screens/android/m3/`): ativação → cadastro → sync (1200 canais) → TV ao vivo
+→ prévia → tocar canal 1 (HLS) → zapping até o 4 (TS) → digitar 7 (erro/retry) → MENU (faixas) →
+←/→ (lista rápida) → favoritar → busca → trocar playlist → idioma → sair.
+
+Sequência de teclas útil para reproduzir pelo `adb`:
+
+```bash
+adb shell input keyevent KEYCODE_DPAD_CENTER    # OK
+adb shell input keyevent KEYCODE_MENU           # favoritar (lista) / faixas (player)
+adb shell input keyevent KEYCODE_7              # sintoniza o canal 7 no player
+adb shell input text "Canal%s12"                # digita na busca (%s = espaço)
+adb exec-out screencap -p > docs/screens/android/m3/xx.png
+```
+
+## 10. Publicar o APK para as TVs
+
+```bash
+cd android && ./gradlew :app:assembleRelease && cd ..
+./deploy/deploy.sh --apk android/app/build/outputs/apk/release/app-release.apk
+```
+
+O `deploy.sh` copia o arquivo para `deploy/downloads/app.apk` no servidor (bind mount lido pelo
+Caddy) e ele fica em `https://bixplayer.pro/downloads/app.apk`. Depois, em **Admin →
+Configurações**, aponte `apk_url` para essa URL e ajuste `min_app_version` quando quiser forçar a
+atualização: o app compara com o próprio `versionName` no boot e mostra a tela de atualização.
+
+## 11. Decisões que valem lembrar
+
+- **BACK**: com `targetSdk 36` o sistema entrega o voltar por `OnBackInvokedCallback`; tratar
+  `Key.Back` em `onKeyEvent` faz o NavHost e a tela "voltarem" duas vezes e esvazia o grafo. Use
+  `BackHandler` (o `PlayerScreen` fecha painéis antes de sair).
+- **Um player só**: `PlayerSession` é um singleton com um `Media3Engine`; a prévia da TV ao vivo e o
+  player em tela cheia trocam de superfície (`VideoSurface`), nunca de instância. `VlcEngine` é um
+  stub até o M4.
+- **IME na TV**: um campo de texto focado abre o teclado; por isso a busca é uma linha focável que
+  só vira campo ao pressionar OK (`SearchRow`).
+- **Ids de canal M3U**: hash de nome+URL com sufixo de ocorrência (`M3uRemoteIds`); só a URL não
+  serve porque provedores repetem o mesmo stream em várias categorias.
+- **Windows/Git Bash**: comandos que passam caminhos remotos ao `adb`/`ssh` precisam de
+  `MSYS_NO_PATHCONV=1`; para copiar o banco do emulador use `adb exec-out run-as ... cat` (o
+  `adb shell` converte quebras de linha e corrompe o SQLite).

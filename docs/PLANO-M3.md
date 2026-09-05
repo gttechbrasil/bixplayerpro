@@ -63,20 +63,20 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes e
 - [x] `SettingsScreen` (mínimo do M3): trocar playlist, atualizar listas, período de atualização, idioma pt-BR/en/es (strings via `strings.xml`), limpar cache, exibir MAC e versão, sair (limpa DataStore e volta à ativação)
 
 ## 6. Player
-- [ ] `PlayerScreen` com Media3: HLS, TS (`DefaultExtractorsFactory` com `TsExtractor` tolerante), MP4, HTTP com redirect; `User-Agent` configurável (padrão do app); buffer ajustado para live (`LiveConfiguration` target offset)
-- [ ] Controles com D-pad: OK mostra/oculta overlay (nome do canal, categoria, relógio, número); ↑/↓ troca de canal (zapping); ←/→ abre lista rápida de canais; Voltar sai; digitar número seleciona canal
-- [ ] Seleção de faixa de áudio e legenda embutidas (`TrackSelectionDialog` próprio em Compose)
-- [ ] Tratamento de erro: mensagem em português, tentativa automática 2× com backoff, depois botão "Tentar novamente". Registrar o erro no Timber com URL sem credenciais
-- [ ] Fallback libVLC: **estrutura pronta** (interface `PlayerEngine` com `Media3Engine` implementado e `VlcEngine` stub) — implementação real fica no M4
-- [ ] Tela permanece ligada durante reprodução; libera o player em background; retoma ao voltar
-- [ ] Miniatura no preview do `LiveScreen` reutiliza a mesma instância do player (não criar dois players)
+- [x] `PlayerScreen` com Media3: HLS, TS (`DefaultExtractorsFactory` com `TsExtractor` tolerante), MP4, HTTP com redirect; `User-Agent` configurável (padrão do app); buffer ajustado para live (`LiveConfiguration` target offset)
+- [x] Controles com D-pad: OK mostra/oculta overlay (nome do canal, categoria, relógio, número); ↑/↓ troca de canal (zapping); ←/→ abre lista rápida de canais; Voltar sai; digitar número seleciona canal
+- [x] Seleção de faixa de áudio e legenda embutidas (`TrackSelectionDialog` próprio em Compose)
+- [x] Tratamento de erro: mensagem em português, tentativa automática 2× com backoff, depois botão "Tentar novamente". Registrar o erro no Timber com URL sem credenciais
+- [x] Fallback libVLC: **estrutura pronta** (interface `PlayerEngine` com `Media3Engine` implementado e `VlcEngine` stub) — implementação real fica no M4
+- [x] Tela permanece ligada durante reprodução; libera o player em background; retoma ao voltar
+- [x] Miniatura no preview do `LiveScreen` reutiliza a mesma instância do player (não criar dois players)
 
 ## 7. Fechamento do M3
-- [ ] Rodar no AVD Android TV: fluxo completo ativação → cadastro no /painel → verificar → sync → TV ao vivo → tocar canal → zapping → favoritar → trocar playlist → sair. Gravar screenshots em `docs/screens/android/m3/`
-- [ ] Testar com playlist de fixture local (servidor HTTP de teste com M3U e alguns streams HLS públicos de teste) — documentar em `docs/ANDROID.md`
-- [ ] APK debug e release assinados em `android/app/build/outputs/`, e o `apk_url` do admin apontando para o release hospedado no Caddy (`/downloads/app.apk`)
-- [ ] `docs/ANDROID.md`: build, assinatura, como trocar applicationId/nome/ícone para white label, como rodar nos AVDs
-- [ ] Testes unitários verdes; `./gradlew lint` sem erros; sem warnings de R8 em release
+- [x] Rodar no AVD Android TV: fluxo completo ativação → cadastro no /painel → verificar → sync → TV ao vivo → tocar canal → zapping → favoritar → trocar playlist → sair. Gravar screenshots em `docs/screens/android/m3/`
+- [x] Testar com playlist de fixture local (servidor HTTP de teste com M3U e alguns streams HLS públicos de teste) — documentar em `docs/ANDROID.md`
+- [x] APK debug e release assinados em `android/app/build/outputs/`, e o `apk_url` do admin apontando para o release hospedado no Caddy (`/downloads/app.apk`)
+- [x] `docs/ANDROID.md`: build, assinatura, como trocar applicationId/nome/ícone para white label, como rodar nos AVDs
+- [x] Testes unitários verdes; `./gradlew lint` sem erros; sem warnings de R8 em release
 
 ## Ao concluir
 Apresente o que foi entregue, o que ficou pendente, as decisões em ADR-004 e quaisquer limitações encontradas no emulador (o ambiente de TV costuma ter surpresas). Então aguarde `docs/PLANO-M4.md` (filmes, séries, EPG, PIN, layout 2, celular).
