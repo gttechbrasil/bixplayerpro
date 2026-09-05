@@ -41,11 +41,11 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes e
 - [x] Testes unitários: parser de resposta, fallback de cache, re-registro em 401 — 19 testes verdes
 
 ## 3. Boot e ativação
-- [ ] `SplashScreen`: logo (do config, senão padrão), chama `refresh()`, decide rota
-- [ ] `ActivationScreen` (device `unregistered` ou sem playlists): MAC em fonte grande, instrução "Informe este MAC ao seu revendedor", QR Code com o MAC (ZXing), botão "Já cadastrei — verificar" e "Adicionar playlist manualmente" (nome + URL → `playlists add`)
-- [ ] `ExpiredScreen` (status `expired`): mensagem, vencimento, MAC, botão verificar
-- [ ] Atualização obrigatória: se `app_version` < `min_app_version`, tela com link `apk_url`
-- [ ] Navegação por D-pad em todos os botões e campos; teclado virtual funcional no campo de URL
+- [x] `SplashScreen`: logo (do config, senão padrão), chama `refresh()`, decide rota
+- [x] `ActivationScreen` (device `unregistered` ou sem playlists): MAC em fonte grande, instrução "Informe este MAC ao seu revendedor", QR Code com o MAC (ZXing), botão "Já cadastrei — verificar" e "Adicionar playlist manualmente" (nome + URL → `playlists add`)
+- [x] `ExpiredScreen` (status `expired`): mensagem, vencimento, MAC, botão verificar
+- [x] Atualização obrigatória: se `app_version` < `min_app_version`, tela com link `apk_url` — com QR do APK para escanear pelo celular
+- [ ] Navegação por D-pad em todos os botões e campos; teclado virtual funcional no campo de URL — **código pronto** (`BixButton`/`BixTextField` tratam DPAD_CENTER/ENTER e foco); **falta validar em execução**, o emulador não sobe (ver `docs/ANDROID.md` §5)
 
 ## 4. Playlists: Xtream e M3U
 - [ ] Cliente Xtream (`player_api.php`): login, `get_live_categories`, `get_live_streams`; `baseUrl` dinâmica por playlist. Timeout 30 s

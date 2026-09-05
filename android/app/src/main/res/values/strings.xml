@@ -24,16 +24,21 @@
     <string name="playlist_add">Adicionar</string>
     <string name="playlist_invalid_url">URL inválida. Informe um endereço http ou https completo.</string>
     <string name="playlist_added">Playlist adicionada.</string>
+    <string name="playlist_required_fields">Preencha o nome e a URL da playlist.</string>
 
     <!-- Expired -->
     <string name="expired_title">Assinatura vencida</string>
     <string name="expired_message">Entre em contato com seu revendedor para renovar.</string>
     <string name="expired_since">Venceu em %1$s</string>
+    <string name="expired_check">Já renovei — verificar</string>
 
     <!-- Update -->
     <string name="update_title">Atualização necessária</string>
     <string name="update_message">Há uma versão mais recente do aplicativo. Atualize para continuar.</string>
     <string name="update_link">Baixe em: %1$s</string>
+    <string name="update_current_version">Versão instalada: %1$s</string>
+    <string name="update_required_version">Versão mínima: %1$s</string>
+    <string name="update_check_again">Já atualizei — verificar</string>
 
     <!-- Home -->
     <string name="home_live">TV ao vivo</string>
