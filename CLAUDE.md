@@ -8,7 +8,7 @@ A plataforma é neutra: gerencia dispositivos, playlists e personalização. Nun
 ## Stack (decidida — não trocar)
 - **Backend:** Python 3.12, FastAPI, SQLAlchemy 2 (async), Alembic, Pydantic v2, PostgreSQL 16, Redis (cache/rate limit)
 - **Frontend (admin + dashboard):** SvelteKit + TypeScript + Tailwind, uma única aplicação com rotas `/admin` e `/painel`, autenticação por cookie httpOnly com JWT
-- **App:** Kotlin, Jetpack Media3 (ExoPlayer), AndroidX Leanback para TV, Room, Retrofit + Moshi, Coil. Fallback de player: libVLC. Um único módulo com duas activities de entrada (mobile e TV)
+- **App:** Kotlin, **Jetpack Compose** com **Compose for TV** (`androidx.tv:tv-material`, `androidx.tv:tv-foundation`) — **não usar Leanback** (ver `docs/ADR-004-android-ui.md`). Jetpack Media3 (ExoPlayer), Navigation Compose, Hilt, Room, Retrofit + Moshi, DataStore, Coil. Fallback de player: libVLC. Um único módulo com duas activities de entrada (mobile e TV), ambas hospedando Compose
 - **Infra:** Docker Compose (api, web, db, redis, caddy). Deploy no VPS por `docker compose up -d`
 - **Pagamento:** Pix via Mercado Pago (webhook). Abstrair em `services/payments/` para trocar de provedor
 
@@ -32,6 +32,7 @@ A plataforma é neutra: gerencia dispositivos, playlists e personalização. Nun
 - Migrações Alembic para qualquer mudança de schema; nunca `create_all` em produção
 - Testes com pytest + httpx para toda rota; rodar `make test` antes de dar uma tarefa por concluída
 - Mensagens de UI e erros de API voltados ao usuário em **português**. Código, comentários e commits em inglês
+- No app, a base URL vem do build type: `release` aponta para `https://bixplayer.pro` e `debug` para `http://10.0.2.2:8000` (host da máquina visto pelo emulador)
 - Commits pequenos, mensagem `tipo(escopo): descrição` (feat, fix, chore, docs, test)
 
 ## Modelo de dados (núcleo — detalhar em `docs/ADR-001-data-model.md`)
