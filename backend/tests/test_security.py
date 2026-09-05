@@ -39,3 +39,14 @@ def test_mac_generation() -> None:
     assert re.fullmatch(r"02:50:50:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}", mac)
     assert hash_token("abc") == hash_token("abc")
     assert len(hash_token("abc")) == 64
+
+
+def test_cors_origins_parsing() -> None:
+    """An empty CORS_ORIGINS in the .env must be valid (it broke the first deploy)."""
+    from app.core.config import Settings
+
+    assert Settings(cors_origins="").cors_origin_list == []
+    assert Settings(cors_origins="https://a.com, https://b.com ").cors_origin_list == [
+        "https://a.com",
+        "https://b.com",
+    ]

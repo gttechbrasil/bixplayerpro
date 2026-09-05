@@ -31,7 +31,9 @@ class Settings(BaseSettings):
     cookie_name: str = "access_token"
     csrf_cookie_name: str = "csrf_token"
     csrf_header_name: str = "X-CSRF-Token"
-    cors_origins: list[str] = []
+    # Comma separated. Kept as a plain string so that an empty value in the .env is valid
+    # (pydantic-settings would try to JSON-decode a list[str] field and fail on "").
+    cors_origins: str = ""
 
     admin_username: str = "admin"
     admin_password: str = "admin"
@@ -49,13 +51,6 @@ class Settings(BaseSettings):
     # instead of the synthetic reseller address. Leave empty in production.
     mercadopago_test_payer_email: str = ""
 
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def _split_origins(cls, value: object) -> object:
-        if isinstance(value, str):
-            return [o.strip() for o in value.split(",") if o.strip()]
-        return value
-
     @field_validator("mac_prefix")
     @classmethod
     def _validate_prefix(cls, value: str) -> str:
@@ -65,6 +60,10 @@ class Settings(BaseSettings):
         for p in parts:
             int(p, 16)
         return ":".join(parts)
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
     @property
     def is_production(self) -> bool:
