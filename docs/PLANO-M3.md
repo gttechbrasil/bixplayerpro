@@ -33,12 +33,12 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes e
 - [x] `ui/theme`: tokens de cor/tipografia próprios, fonte legível a 3 m, escala de foco padrão
 
 ## 2. Núcleo: identidade, API da plataforma e persistência
-- [ ] `DeviceIdentity`: `ANDROID_ID` com hash SHA-256 → `device_id`
-- [ ] Cliente Retrofit da API da plataforma (`/api/v1/device/*`): `register`, `config`, `playlists add/delete`. Interceptor Bearer com token do DataStore; em 401, re-registra e repete uma vez
-- [ ] DataStore: token, mac_address, último `config` serializado, playlist ativa, período de atualização (padrão 6 h), idioma
-- [ ] Room: `channels`, `categories`, `favorites` (por playlist), `playlist_sync` (última sincronização por playlist)
-- [ ] `ConfigRepository`: `refresh()` chama `config`, persiste, expõe `StateFlow<AppConfig>`; se a rede falhar, usa o cache. Job em `WorkManager` respeita o período de atualização
-- [ ] Testes unitários: parser de resposta, fallback de cache, re-registro em 401
+- [x] `DeviceIdentity`: `ANDROID_ID` com hash SHA-256 → `device_id`
+- [x] Cliente Retrofit da API da plataforma (`/api/v1/device/*`): `register`, `config`, `playlists add/delete`. Interceptor Bearer com token do DataStore; em 401, re-registra e repete uma vez
+- [x] DataStore: token, mac_address, último `config` serializado, playlist ativa, período de atualização (padrão 6 h), idioma — atrás da interface `DeviceStore`, para os testes rodarem sem Android
+- [x] Room: `channels`, `categories`, `favorites` (por playlist), `playlist_sync` — com Paging 3 e inserção em lotes de 500 (última sincronização por playlist)
+- [x] `ConfigRepository`: `refresh()` chama `config`, persiste, expõe `StateFlow<AppConfig>`; se a rede falhar, usa o cache. Job em `WorkManager` respeita o período de atualização
+- [x] Testes unitários: parser de resposta, fallback de cache, re-registro em 401 — 19 testes verdes
 
 ## 3. Boot e ativação
 - [ ] `SplashScreen`: logo (do config, senão padrão), chama `refresh()`, decide rota
