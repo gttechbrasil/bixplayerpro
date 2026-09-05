@@ -174,9 +174,13 @@ sobe só o banco e o Redis nas portas locais.
    para o evento *Pagamentos* e copie a **assinatura secreta** exibida para
    `MERCADOPAGO_WEBHOOK_SECRET`. Sem esse valor a assinatura não é validada, mas o pagamento
    sempre é confirmado consultando a API antes de aprovar.
-4. **Sandbox**: crie um *usuário de teste comprador* em *Contas de teste* e coloque o e-mail dele em
-   `MERCADOPAGO_TEST_PAYER_EMAIL`; ele é usado como `payer.email` nas cobranças. Deixe **vazio em
-   produção** (a API usa `revenda-<id>@<domínio>`).
+4. **Sandbox**: com o *Access Token de teste* (`TEST-…`) o Mercado Pago **recusa** e-mails de usuário
+   de teste (`@testuser.com`) como pagador (403 `Payer email forbidden`) e exige um e-mail comum com
+   domínio válido. Defina `MERCADOPAGO_TEST_PAYER_EMAIL=comprador-teste@exemplo.com` (qualquer
+   endereço com formato válido). Deixe **vazio em produção** (a API usa `revenda-<id>@<domínio>`).
+   Validado em 2026-09-05: `POST /reseller/billing/pix` devolveu `qr_code` e `qr_base64` reais e o
+   polling consultou `GET /v1/payments/{id}`. Observação: `GET /v1/payment_methods` com credenciais de
+   teste pode não listar `pix` mesmo com o Pix funcionando.
 5. `PAYMENT_PROVIDER=mercadopago` (padrão). Para desenvolvimento sem gateway use
    `PAYMENT_PROVIDER=fake`: o Pix é fictício e o pagamento fica pendente até ser aprovado por
    código (usado nos testes).
