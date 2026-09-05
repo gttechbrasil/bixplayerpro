@@ -43,3 +43,9 @@ Thumbs.db
 deploy/data/
 backend/uploads/
 backend/tests/.uploads/
+deploy/.vps.env
+
+# vps deploy credentials
+deploy/.vps.env
+deploy/id_deploy
+deploy/id_deploy.pub
