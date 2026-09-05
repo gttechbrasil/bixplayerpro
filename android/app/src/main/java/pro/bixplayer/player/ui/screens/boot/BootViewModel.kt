@@ -6,9 +6,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import pro.bixplayer.player.BuildConfig
+import pro.bixplayer.player.data.datastore.DevicePreferences
+import pro.bixplayer.player.data.datastore.DeviceStore
 import pro.bixplayer.player.data.repository.ConfigRepository
 import pro.bixplayer.player.domain.model.AppConfig
 import pro.bixplayer.player.domain.model.ConfigState
@@ -27,12 +31,17 @@ sealed interface BootDestination {
 @HiltViewModel
 class BootViewModel @Inject constructor(
     private val repository: ConfigRepository,
+    store: DeviceStore,
 ) : ViewModel() {
 
     private val _destination = MutableStateFlow<BootDestination>(BootDestination.Pending)
     val destination: StateFlow<BootDestination> = _destination.asStateFlow()
 
     val configState: StateFlow<ConfigState> = repository.state
+
+    /** Language chosen in the settings; drives the locale wrapper around the whole graph. */
+    val language: StateFlow<String> = store.language
+        .stateIn(viewModelScope, SharingStarted.Eagerly, DevicePreferences.DEFAULT_LANGUAGE)
 
     init {
         boot()

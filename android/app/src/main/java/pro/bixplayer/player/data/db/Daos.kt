@@ -65,6 +65,83 @@ interface ChannelDao {
     @Query("SELECT * FROM channels WHERE playlistId = :playlistId AND remoteId = :remoteId LIMIT 1")
     suspend fun byRemoteId(playlistId: Long, remoteId: String): ChannelEntity?
 
+    @Query("SELECT * FROM channels WHERE id = :id LIMIT 1")
+    suspend fun byId(id: Long): ChannelEntity?
+
+    /**
+     * Neighbours inside the scope the user was browsing (all / one category / favourites),
+     * so zapping in the player follows the list on screen. [favoritesOnly] is an Int because
+     * Room binds booleans as 0/1 and SQLite has no boolean type.
+     */
+    @Query(
+        """
+        SELECT * FROM channels c
+        WHERE c.playlistId = :playlistId
+          AND (:categoryRemoteId IS NULL OR c.categoryRemoteId = :categoryRemoteId)
+          AND (:favoritesOnly = 0 OR EXISTS(
+                SELECT 1 FROM favorites f
+                WHERE f.playlistId = c.playlistId AND f.channelRemoteId = c.remoteId))
+          AND c.position > :position
+        ORDER BY c.position ASC LIMIT 1
+        """
+    )
+    suspend fun nextInScope(playlistId: Long, categoryRemoteId: String?, favoritesOnly: Int, position: Int): ChannelEntity?
+
+    @Query(
+        """
+        SELECT * FROM channels c
+        WHERE c.playlistId = :playlistId
+          AND (:categoryRemoteId IS NULL OR c.categoryRemoteId = :categoryRemoteId)
+          AND (:favoritesOnly = 0 OR EXISTS(
+                SELECT 1 FROM favorites f
+                WHERE f.playlistId = c.playlistId AND f.channelRemoteId = c.remoteId))
+          AND c.position < :position
+        ORDER BY c.position DESC LIMIT 1
+        """
+    )
+    suspend fun previousInScope(playlistId: Long, categoryRemoteId: String?, favoritesOnly: Int, position: Int): ChannelEntity?
+
+    /** First/last of the scope, used to wrap around at the ends of the list. */
+    @Query(
+        """
+        SELECT * FROM channels c
+        WHERE c.playlistId = :playlistId
+          AND (:categoryRemoteId IS NULL OR c.categoryRemoteId = :categoryRemoteId)
+          AND (:favoritesOnly = 0 OR EXISTS(
+                SELECT 1 FROM favorites f
+                WHERE f.playlistId = c.playlistId AND f.channelRemoteId = c.remoteId))
+        ORDER BY c.position ASC LIMIT 1
+        """
+    )
+    suspend fun firstInScope(playlistId: Long, categoryRemoteId: String?, favoritesOnly: Int): ChannelEntity?
+
+    @Query(
+        """
+        SELECT * FROM channels c
+        WHERE c.playlistId = :playlistId
+          AND (:categoryRemoteId IS NULL OR c.categoryRemoteId = :categoryRemoteId)
+          AND (:favoritesOnly = 0 OR EXISTS(
+                SELECT 1 FROM favorites f
+                WHERE f.playlistId = c.playlistId AND f.channelRemoteId = c.remoteId))
+        ORDER BY c.position DESC LIMIT 1
+        """
+    )
+    suspend fun lastInScope(playlistId: Long, categoryRemoteId: String?, favoritesOnly: Int): ChannelEntity?
+
+    /** Quick list shown by ←/→ in the player: a window of the scope around the current position. */
+    @Query(
+        """
+        SELECT * FROM channels c
+        WHERE c.playlistId = :playlistId
+          AND (:categoryRemoteId IS NULL OR c.categoryRemoteId = :categoryRemoteId)
+          AND (:favoritesOnly = 0 OR EXISTS(
+                SELECT 1 FROM favorites f
+                WHERE f.playlistId = c.playlistId AND f.channelRemoteId = c.remoteId))
+        ORDER BY c.position ASC LIMIT :limit
+        """
+    )
+    suspend fun listInScope(playlistId: Long, categoryRemoteId: String?, favoritesOnly: Int, limit: Int): List<ChannelEntity>
+
     @Query("SELECT * FROM channels WHERE playlistId = :playlistId AND number = :number LIMIT 1")
     suspend fun byNumber(playlistId: Long, number: Int): ChannelEntity?
 

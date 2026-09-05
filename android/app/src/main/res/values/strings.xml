@@ -59,25 +59,46 @@
     <string name="live_favorites">Favoritos</string>
     <string name="live_search">Buscar canal</string>
     <string name="live_no_channels">Nenhum canal nesta categoria.</string>
+    <string name="live_no_favorites">Você ainda não tem favoritos. Foque um canal e pressione MENU.</string>
     <string name="live_favorite_add">Adicionar aos favoritos</string>
     <string name="live_favorite_remove">Remover dos favoritos</string>
+    <string name="live_channels_count">%1$d canais</string>
+    <string name="live_epg_slot">Programação: em breve</string>
+    <string name="live_hints">OK assistir · MENU favoritar · VOLTAR menu</string>
 
     <!-- Settings -->
+    <string name="settings_hint">OK altera a opção</string>
     <string name="settings_playlist">Trocar playlist</string>
     <string name="settings_refresh">Atualizar listas</string>
     <string name="settings_refresh_period">Período de atualização</string>
+    <string name="settings_refresh_hours">A cada %1$d h</string>
     <string name="settings_language">Idioma</string>
+    <string name="settings_language_pt">Português (Brasil)</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_language_es">Español</string>
     <string name="settings_clear_cache">Limpar cache</string>
+    <string name="settings_cache_cleared">Cache limpo. As listas serão baixadas novamente.</string>
     <string name="settings_mac">Endereço MAC</string>
     <string name="settings_version">Versão</string>
     <string name="settings_logout">Sair</string>
     <string name="settings_logout_confirm">Sair do aplicativo e apagar os dados locais?</string>
+    <string name="settings_logout_yes">Sim, sair</string>
 
     <!-- Player -->
     <string name="player_error">Não foi possível reproduzir este canal.</string>
+    <string name="player_error_network">Falha de rede ao abrir o canal.</string>
+    <string name="player_error_http">O servidor do canal recusou a conexão (HTTP %1$d).</string>
+    <string name="player_error_unsupported">Formato de stream não suportado.</string>
+    <string name="player_error_vlc">Motor libVLC ainda não disponível nesta versão.</string>
+    <string name="player_retrying">Reconectando… (%1$d/%2$d)</string>
     <string name="player_audio_track">Áudio</string>
     <string name="player_subtitle_track">Legenda</string>
     <string name="player_subtitle_off">Desativada</string>
+    <string name="player_tracks">Áudio e legendas</string>
+    <string name="player_no_tracks">Este canal não tem faixas alternativas.</string>
+    <string name="player_hints">OK info · ↑↓ canal · ←→ lista · MENU faixas</string>
+    <string name="player_channel_not_found">Canal %1$d não encontrado.</string>
+    <string name="player_typing_channel">Canal %1$s</string>
 
     <!-- Errors -->
     <string name="error_network">Sem conexão com a internet.</string>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="loading">Cargando…</string>
+    <string name="retry">Intentar de nuevo</string>
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="close">Cerrar</string>
+
+    <string name="activation_title">Active su aplicación</string>
+    <string name="activation_instruction">Informe esta MAC a su revendedor</string>
+    <string name="activation_mac_label">Dirección MAC</string>
+    <string name="activation_qr_hint">O apunte la cámara al código QR</string>
+    <string name="activation_check">Ya me registré — verificar</string>
+    <string name="activation_add_playlist">Agregar lista manualmente</string>
+    <string name="activation_checking">Verificando…</string>
+    <string name="activation_not_yet">Aún no encontramos su registro. Intente de nuevo en unos instantes.</string>
+
+    <string name="playlist_name">Nombre de la lista</string>
+    <string name="playlist_url">URL de la lista (M3U o Xtream)</string>
+    <string name="playlist_add">Agregar</string>
+    <string name="playlist_invalid_url">URL inválida. Ingrese una dirección http o https completa.</string>
+    <string name="playlist_added">Lista agregada.</string>
+    <string name="playlist_required_fields">Complete el nombre y la URL de la lista.</string>
+    <string name="playlist_channel_count">%1$d canales sincronizados</string>
+    <string name="playlist_not_synced">Aún no sincronizada</string>
+    <string name="playlist_none">Ninguna lista. Pídala a su revendedor o agregue una.</string>
+    <string name="playlist_remove_hint">MENU elimina</string>
+    <string name="playlist_syncing">Sincronizando canales…</string>
+
+    <string name="expired_title">Suscripción vencida</string>
+    <string name="expired_message">Contacte a su revendedor para renovar.</string>
+    <string name="expired_since">Venció el %1$s</string>
+    <string name="expired_check">Ya renové — verificar</string>
+
+    <string name="update_title">Actualización necesaria</string>
+    <string name="update_message">Hay una versión más reciente de la aplicación. Actualice para continuar.</string>
+    <string name="update_link">Descargue en: %1$s</string>
+    <string name="update_current_version">Versión instalada: %1$s</string>
+    <string name="update_required_version">Versión mínima: %1$s</string>
+    <string name="update_check_again">Ya actualicé — verificar</string>
+
+    <string name="home_live">TV en vivo</string>
+    <string name="home_movies">Películas</string>
+    <string name="home_series">Series</string>
+    <string name="home_settings">Configuración</string>
+    <string name="home_coming_soon">Próximamente</string>
+    <string name="status_active">Activo</string>
+    <string name="status_expires_on">Vence el %1$s</string>
+
+    <string name="live_all">Todos</string>
+    <string name="live_favorites">Favoritos</string>
+    <string name="live_search">Buscar canal</string>
+    <string name="live_no_channels">Ningún canal en esta categoría.</string>
+    <string name="live_no_favorites">Aún no tiene favoritos. Enfoque un canal y presione MENU.</string>
+    <string name="live_favorite_add">Agregar a favoritos</string>
+    <string name="live_favorite_remove">Quitar de favoritos</string>
+    <string name="live_channels_count">%1$d canales</string>
+    <string name="live_epg_slot">Programación: próximamente</string>
+    <string name="live_hints">OK ver · MENU favorito · ATRÁS menú</string>
+
+    <string name="settings_hint">OK cambia la opción</string>
+    <string name="settings_playlist">Cambiar lista</string>
+    <string name="settings_refresh">Actualizar listas</string>
+    <string name="settings_refresh_period">Período de actualización</string>
+    <string name="settings_refresh_hours">Cada %1$d h</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_language_pt">Português (Brasil)</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_language_es">Español</string>
+    <string name="settings_clear_cache">Limpiar caché</string>
+    <string name="settings_cache_cleared">Caché limpiada. Las listas se descargarán de nuevo.</string>
+    <string name="settings_mac">Dirección MAC</string>
+    <string name="settings_version">Versión</string>
+    <string name="settings_logout">Salir</string>
+    <string name="settings_logout_confirm">¿Salir de la aplicación y borrar los datos locales?</string>
+    <string name="settings_logout_yes">Sí, salir</string>
+
+    <string name="player_error">No se pudo reproducir este canal.</string>
+    <string name="player_error_network">Falla de red al abrir el canal.</string>
+    <string name="player_error_http">El servidor del canal rechazó la conexión (HTTP %1$d).</string>
+    <string name="player_error_unsupported">Formato de stream no soportado.</string>
+    <string name="player_error_vlc">El motor libVLC aún no está disponible en esta versión.</string>
+    <string name="player_retrying">Reconectando… (%1$d/%2$d)</string>
+    <string name="player_audio_track">Audio</string>
+    <string name="player_subtitle_track">Subtítulos</string>
+    <string name="player_subtitle_off">Desactivados</string>
+    <string name="player_tracks">Audio y subtítulos</string>
+    <string name="player_no_tracks">Este canal no tiene pistas alternativas.</string>
+    <string name="player_hints">OK info · ↑↓ canal · ←→ lista · MENU pistas</string>
+    <string name="player_channel_not_found">Canal %1$d no encontrado.</string>
+    <string name="player_typing_channel">Canal %1$s</string>
+
+    <string name="error_network">Sin conexión a internet.</string>
+    <string name="error_server">El servidor no respondió. Intente de nuevo.</string>
+    <string name="error_unknown">Ocurrió un error inesperado.</string>
+</resources>

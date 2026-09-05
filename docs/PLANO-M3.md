@@ -55,12 +55,12 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes e
 - [x] Testes unitários: parser M3U (fixtures reais e malformadas), mapeamento Xtream → domínio — 47 testes no total
 
 ## 5. TV ao vivo — layout 1 (`default`)
-- [ ] `HomeScreen` layout `default`: barra superior com logo, status ("Ativo" / vencimento), relógio; menu TV ao vivo / Filmes / Séries / Configurações (Filmes e Séries desabilitados no M3 com aviso "em breve"); fundo do config; banners ativos em carrossel (imagem por URL) se `auto_ads` ou banners cadastrados
-- [ ] `LiveScreen` em 3 colunas: categorias (com "Todos" e "Favoritos") · canais da categoria (logo, nome, número) · painel de preview com o canal focado tocando em miniatura + nome do programa se disponível (EPG é M4 — deixar o slot)
-- [ ] Listas com `TvLazyColumn`/`LazyColumn` paginadas do Room (Paging 3), foco lembrado ao voltar
-- [ ] Favoritar/desfavoritar com botão do controle (tecla de menu ou botão na tela)
-- [ ] Busca de canal por nome com teclado virtual (campo simples; busca global é M4)
-- [ ] `SettingsScreen` (mínimo do M3): trocar playlist, atualizar listas, período de atualização, idioma pt-BR/en/es (strings via `strings.xml`), limpar cache, exibir MAC e versão, sair (limpa DataStore e volta à ativação)
+- [x] `HomeScreen` layout `default`: barra superior com logo, status ("Ativo" / vencimento), relógio; menu TV ao vivo / Filmes / Séries / Configurações (Filmes e Séries desabilitados no M3 com aviso "em breve"); fundo do config; banners ativos em carrossel (imagem por URL) se `auto_ads` ou banners cadastrados
+- [x] `LiveScreen` em 3 colunas: categorias (com "Todos" e "Favoritos") · canais da categoria (logo, nome, número) · painel de preview com o canal focado tocando em miniatura + nome do programa se disponível (EPG é M4 — deixar o slot)
+- [x] Listas com `TvLazyColumn`/`LazyColumn` paginadas do Room (Paging 3), foco lembrado ao voltar
+- [x] Favoritar/desfavoritar com botão do controle (tecla de menu ou botão na tela)
+- [x] Busca de canal por nome com teclado virtual (campo simples; busca global é M4)
+- [x] `SettingsScreen` (mínimo do M3): trocar playlist, atualizar listas, período de atualização, idioma pt-BR/en/es (strings via `strings.xml`), limpar cache, exibir MAC e versão, sair (limpa DataStore e volta à ativação)
 
 ## 6. Player
 - [ ] `PlayerScreen` com Media3: HLS, TS (`DefaultExtractorsFactory` com `TsExtractor` tolerante), MP4, HTTP com redirect; `User-Agent` configurável (padrão do app); buffer ajustado para live (`LiveConfiguration` target offset)

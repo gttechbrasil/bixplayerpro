@@ -15,6 +15,7 @@ import pro.bixplayer.player.data.db.ChannelEntity
 import pro.bixplayer.player.data.db.PlaylistSyncDao
 import pro.bixplayer.player.data.db.PlaylistSyncEntity
 import pro.bixplayer.player.data.playlist.M3uParser
+import pro.bixplayer.player.data.playlist.M3uRemoteIds
 import pro.bixplayer.player.data.playlist.XtreamClient
 import pro.bixplayer.player.data.playlist.XtreamCredentials
 import pro.bixplayer.player.data.playlist.XtreamException
@@ -128,6 +129,7 @@ class PlaylistSyncUseCase @Inject constructor(
 
         val channels = ArrayList<ChannelEntity>()
         val categoryOrder = LinkedHashMap<String, Int>()
+        val ids = M3uRemoteIds()
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
@@ -142,8 +144,8 @@ class PlaylistSyncUseCase @Inject constructor(
                     channels.add(
                         ChannelEntity(
                             playlistId = playlist.id,
-                            // M3U has no ids: the URL is what uniquely identifies the channel.
-                            remoteId = entry.url.hashCode().toString(),
+                            // M3U has no ids; see M3uRemoteIds for why the URL alone is not one.
+                            remoteId = ids.next(entry.name, entry.url),
                             name = entry.name,
                             streamUrl = entry.url,
                             logoUrl = entry.logoUrl,

@@ -32,6 +32,7 @@ import pro.bixplayer.player.data.playlist.XtreamClient
 import pro.bixplayer.player.data.api.dto.DeviceConfigDto
 import pro.bixplayer.player.data.repository.DefaultErrorMessages
 import pro.bixplayer.player.data.repository.ErrorMessages
+import pro.bixplayer.player.player.PlayerMessages
 import pro.bixplayer.player.util.DeviceIdentity
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
@@ -142,6 +143,15 @@ object AppModule {
             server = context.getString(R.string.error_server),
             unknown = context.getString(R.string.error_unknown),
         )
+    @Provides
+    @Singleton
+    fun providePlayerMessages(@ApplicationContext context: Context): PlayerMessages = PlayerMessages(
+        generic = context.getString(R.string.player_error),
+        network = context.getString(R.string.player_error_network),
+        httpStatus = { status -> context.getString(R.string.player_error_http, status) },
+        unsupported = context.getString(R.string.player_error_unsupported),
+        vlcUnavailable = context.getString(R.string.player_error_vlc),
+    )
 }
 
 /**
