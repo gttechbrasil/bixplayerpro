@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- app_name comes from gradle.properties via resValue (white label) -->
+
+    <string name="loading">Carregando…</string>
+    <string name="retry">Tentar novamente</string>
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="close">Fechar</string>
+
+    <!-- Activation -->
+    <string name="activation_title">Ative seu aplicativo</string>
+    <string name="activation_instruction">Informe este MAC ao seu revendedor</string>
+    <string name="activation_mac_label">Endereço MAC</string>
+    <string name="activation_qr_hint">Ou aponte a câmera para o QR Code</string>
+    <string name="activation_check">Já cadastrei — verificar</string>
+    <string name="activation_add_playlist">Adicionar playlist manualmente</string>
+    <string name="activation_checking">Verificando…</string>
+    <string name="activation_not_yet">Ainda não encontramos seu cadastro. Tente de novo em instantes.</string>
+
+    <!-- Playlist form -->
+    <string name="playlist_name">Nome da playlist</string>
+    <string name="playlist_url">URL da playlist (M3U ou Xtream)</string>
+    <string name="playlist_add">Adicionar</string>
+    <string name="playlist_invalid_url">URL inválida. Informe um endereço http ou https completo.</string>
+    <string name="playlist_added">Playlist adicionada.</string>
+
+    <!-- Expired -->
+    <string name="expired_title">Assinatura vencida</string>
+    <string name="expired_message">Entre em contato com seu revendedor para renovar.</string>
+    <string name="expired_since">Venceu em %1$s</string>
+
+    <!-- Update -->
+    <string name="update_title">Atualização necessária</string>
+    <string name="update_message">Há uma versão mais recente do aplicativo. Atualize para continuar.</string>
+    <string name="update_link">Baixe em: %1$s</string>
+
+    <!-- Home -->
+    <string name="home_live">TV ao vivo</string>
+    <string name="home_movies">Filmes</string>
+    <string name="home_series">Séries</string>
+    <string name="home_settings">Configurações</string>
+    <string name="home_coming_soon">Em breve</string>
+    <string name="status_active">Ativo</string>
+    <string name="status_expires_on">Vence em %1$s</string>
+
+    <!-- Live -->
+    <string name="live_all">Todos</string>
+    <string name="live_favorites">Favoritos</string>
+    <string name="live_search">Buscar canal</string>
+    <string name="live_no_channels">Nenhum canal nesta categoria.</string>
+    <string name="live_favorite_add">Adicionar aos favoritos</string>
+    <string name="live_favorite_remove">Remover dos favoritos</string>
+
+    <!-- Settings -->
+    <string name="settings_playlist">Trocar playlist</string>
+    <string name="settings_refresh">Atualizar listas</string>
+    <string name="settings_refresh_period">Período de atualização</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_clear_cache">Limpar cache</string>
+    <string name="settings_mac">Endereço MAC</string>
+    <string name="settings_version">Versão</string>
+    <string name="settings_logout">Sair</string>
+    <string name="settings_logout_confirm">Sair do aplicativo e apagar os dados locais?</string>
+
+    <!-- Player -->
+    <string name="player_error">Não foi possível reproduzir este canal.</string>
+    <string name="player_audio_track">Áudio</string>
+    <string name="player_subtitle_track">Legenda</string>
+    <string name="player_subtitle_off">Desativada</string>
+
+    <!-- Errors -->
+    <string name="error_network">Sem conexão com a internet.</string>
+    <string name="error_server">O servidor não respondeu. Tente novamente.</string>
+    <string name="error_unknown">Ocorreu um erro inesperado.</string>
+</resources>

@@ -25,12 +25,12 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes e
 > TV nem documentar o fluxo por linha de comando pedido neste bloco.
 
 ## 1. Bootstrap do projeto (`/android`)
-- [ ] Projeto Gradle Kotlin DSL, módulo único `app`, minSdk 23, targetSdk 36, `applicationId` configurável por `gradle.properties` (white label muda depois)
-- [ ] Dependências: Compose BOM, tv-material, tv-foundation, Navigation Compose, Hilt, Retrofit + Moshi (codegen), OkHttp + logging, Room, DataStore, Coil, Media3 (exoplayer, exoplayer-hls, ui, session), kotlinx-coroutines, Timber
-- [ ] Duas activities: `TvActivity` (LEANBACK_LAUNCHER, `android.software.leanback` required=false) e `MobileActivity` (LAUNCHER). No M3 a `MobileActivity` só abre a mesma tela de ativação
-- [ ] Arquitetura: `data/` (api, db, repository), `domain/` (models, usecases), `ui/` (screens, components, theme), `player/`. MVVM com StateFlow
-- [ ] Build types `debug` (base URL local, log de rede) e `release` (minify, R8, sem log). Assinatura release por keystore em `keystore.properties` (fora do git)
-- [ ] `ui/theme`: tokens de cor/tipografia próprios, fonte legível a 3 m, escala de foco padrão
+- [x] Projeto Gradle Kotlin DSL, módulo único `app`, minSdk 23, targetSdk 36, `applicationId` configurável por `gradle.properties` (white label muda depois) — Gradle 9.7.1 + AGP 9.4.0; `compileSdk 37` (exigido por várias AndroidX), `targetSdk 36`, `minSdk 23`
+- [x] Dependências: Compose BOM, tv-material, tv-foundation, Navigation Compose, Hilt, Retrofit + Moshi (codegen), OkHttp + logging, Room, DataStore, Coil, Media3 (exoplayer, exoplayer-hls, ui, session), kotlinx-coroutines, Timber — em `gradle/libs.versions.toml`; Navigation fixada em 2.9.8 porque a 2.10 exige minSdk 24
+- [x] Duas activities: `TvActivity` (LEANBACK_LAUNCHER, `android.software.leanback` required=false) e `MobileActivity` (LAUNCHER). No M3 a `MobileActivity` só abre a mesma tela de ativação
+- [x] Arquitetura: `data/` (api, db, repository), `domain/` (models, usecases), `ui/` (screens, components, theme), `player/`. MVVM com StateFlow
+- [x] Build types `debug` (base URL local, log de rede) e `release` (minify, R8, sem log). Assinatura release por keystore em `keystore.properties` (fora do git)
+- [x] `ui/theme`: tokens de cor/tipografia próprios, fonte legível a 3 m, escala de foco padrão
 
 ## 2. Núcleo: identidade, API da plataforma e persistência
 - [ ] `DeviceIdentity`: `ANDROID_ID` com hash SHA-256 → `device_id`
