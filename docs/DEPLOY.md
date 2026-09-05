@@ -16,6 +16,9 @@ curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER && newgrp docker
 ```
 
+> **Instalação em produção já feita.** A seção [§11](#11-instalação-atual-bixplayerpro) descreve
+> exatamente o que foi provisionado no VPS em 05/09/2026, com os caminhos e comandos reais.
+
 ## 2. Primeira instalação
 
 ```bash
@@ -159,6 +162,10 @@ sobe só o banco e o Redis nas portas locais.
 
 - `COOKIE_SECURE=true` e `APP_ENV=production` no VPS
 - `SECRET_KEY` e `FERNET_KEY` únicos por instalação e fora do git
+- SSH somente por chave (`PasswordAuthentication no`), root sem senha (`prohibit-password`)
+- `ufw` com política padrão *deny* e apenas 22/80/443 liberados
+- `fail2ban` ativo na jail `sshd` (5 tentativas, ban de 1 h)
+- `unattended-upgrades` habilitado para correções de segurança
 - Backups testados (restaure em um banco temporário periodicamente)
 - Atualize as imagens base de tempos em tempos: `docker compose pull && docker compose up -d --build`
 
@@ -197,3 +204,128 @@ e são servidas pelo Caddy em `https://SEU_DOMINIO/uploads/...`. Inclua o volume
 ```bash
 docker run --rm -v iptv-platform_uploads:/data -v $PWD/backups:/backup alpine   tar czf /backup/uploads-$(date +%F).tgz -C /data .
 ```
+
+---
+
+## 11. Instalação atual (bixplayer.pro)
+
+Provisionamento executado em **05/09/2026**. Esta seção descreve o servidor em produção.
+
+### 11.1 Servidor
+
+| Item | Valor |
+|---|---|
+| Sistema | Ubuntu 26.04.1 LTS (x86-64), atualizado no provisionamento |
+| Recursos | 4 vCPU · 16 GB RAM · 193 GB de disco |
+| Docker | 29.8.0 com Compose v5.5.1 (repositório oficial da Docker) |
+| Domínio | `bixplayer.pro` (o `www` redireciona 301 para o apex) |
+| TLS | Let's Encrypt, emitido e renovado automaticamente pelo Caddy |
+
+### 11.2 Contas e acesso SSH
+
+- **root**: apenas por chave (`PermitRootLogin prohibit-password`).
+- **deploy**: dono da aplicação, nos grupos `sudo` e `docker`, com `sudo` sem senha
+  (`/etc/sudoers.d/90-deploy`) para o script de deploy funcionar sem interação.
+- Login por senha está **desativado**. O drop-in `/etc/ssh/sshd_config.d/00-hardening.conf`
+  é lido **antes** do `50-cloud-init.conf` (que trazia `PasswordAuthentication yes`), porque no
+  `sshd_config` vale o primeiro valor encontrado para cada diretiva.
+- A chave privada fica em `deploy/id_deploy` (gitignorada, junto com `deploy/.vps.env`).
+
+```bash
+ssh -i deploy/id_deploy deploy@<IP_DA_VPS>
+```
+
+> Se a chave for perdida, o acesso só volta pelo console do provedor. Guarde uma cópia de
+> `deploy/id_deploy` e de `deploy/.vps.env` fora da máquina de desenvolvimento.
+
+### 11.3 Firewall e proteção contra força bruta
+
+```
+ufw: default deny (incoming) / allow (outgoing)
+     22/tcp (SSH) · 80/tcp (HTTP) · 443/tcp + 443/udp (HTTPS e HTTP/3)
+fail2ban: jail sshd, maxretry 5, findtime 10 min, bantime 1 h, backend systemd
+```
+
+### 11.4 Aplicação
+
+- Código em `/home/deploy/app`, clone de `https://github.com/gttechbrasil/bixplayerpro.git`.
+- Configuração em `/home/deploy/app/deploy/.env` (permissão `600`, dono `deploy`), gerada no
+  provisionamento com `POSTGRES_PASSWORD`, `SECRET_KEY`, `FERNET_KEY` e `ADMIN_PASSWORD`
+  aleatórios. **Esse arquivo é a única cópia desses segredos** — inclua-o no backup externo.
+- Stack: `docker compose -f deploy/docker-compose.yml --env-file deploy/.env`.
+
+```bash
+ssh -i deploy/id_deploy deploy@<IP_DA_VPS>
+cd /home/deploy/app
+docker compose -f deploy/docker-compose.yml --env-file deploy/.env ps
+docker compose -f deploy/docker-compose.yml --env-file deploy/.env logs -f api
+```
+
+### 11.5 Deploy de novas versões
+
+Um comando, a partir da máquina de desenvolvimento:
+
+```bash
+./deploy/deploy.sh            # push + pull no servidor + build + migrações + healthcheck
+./deploy/deploy.sh --no-push  # só atualiza o servidor com o que já está no remoto
+./deploy/deploy.sh --logs     # acompanha os logs ao final
+```
+
+O script faz `git push`, atualiza `/home/deploy/app` com `git reset --hard origin/<branch>`,
+recria os containers, aplica `alembic upgrade head`, remove imagens órfãs e valida
+`https://bixplayer.pro/api/v1/health`.
+
+### 11.6 Backup
+
+- Script versionado em `deploy/backup.sh`, instalado em `/home/deploy/backup.sh`.
+- `cron` em `/etc/cron.d/iptv-backup` roda **todo dia às 03:30** como `deploy`.
+- Saída em `/home/deploy/backups`: `db-AAAA-MM-DD-HHMM.sql.gz` (dump lógico) e
+  `uploads-AAAA-MM-DD-HHMM.tgz` (volume de imagens). **Retenção de 7 dias.**
+- O log de cada execução vai para `/home/deploy/backups/backup.log`.
+- As credenciais do banco são lidas do ambiente do próprio container, e não do `.env`
+  (valores com espaço, como `PLATFORM_NAME`, quebram um `source` do arquivo).
+
+```bash
+# rodar sob demanda
+ssh -i deploy/id_deploy deploy@<IP_DA_VPS> /home/deploy/backup.sh
+
+# trazer o backup mais recente para a máquina local
+scp -i deploy/id_deploy deploy@<IP_DA_VPS>:/home/deploy/backups/db-*.sql.gz .
+```
+
+Restauração: veja a §6.
+
+### 11.7 Rotação de logs
+
+- `/etc/docker/daemon.json` limita cada container a **10 MB por arquivo e 5 arquivos**
+  (`json-file`), o que impede o disco de encher com log de container.
+- `/etc/logrotate.d/docker-containers` roda diariamente sobre os arquivos já existentes,
+  com compressão e 5 gerações.
+
+### 11.8 URLs
+
+| Recurso | URL |
+|---|---|
+| Painel administrativo | https://bixplayer.pro/admin |
+| Dashboard do revendedor | https://bixplayer.pro/painel |
+| Healthcheck | https://bixplayer.pro/api/v1/health |
+| Imagens enviadas | https://bixplayer.pro/uploads/… |
+| Webhook do Mercado Pago | https://bixplayer.pro/api/v1/webhooks/mercadopago |
+
+O usuário administrador é `admin`; a senha está em `ADMIN_PASSWORD` no
+`/home/deploy/app/deploy/.env` do servidor.
+
+### 11.9 Verificação pós-deploy
+
+Executada e aprovada em 05/09/2026 (23 verificações):
+
+- HTTPS com certificado válido do Let's Encrypt; `www` e HTTP redirecionando.
+- `GET /api/v1/health` devolvendo `{"status":"ok","database":"ok","redis":"ok"}`.
+- `/api/docs` respondendo 404 (desativado por `APP_ENV=production`).
+- Login do admin, dashboard e leitura do gateway (token de teste mascarado).
+- Criação de revenda pelo admin, login no `/painel` e cadastro de dispositivo.
+- Upload de imagem gravado no volume e servido pelo Caddy em `/uploads` com cache de 1 dia.
+- Geração de Pix real no sandbox do Mercado Pago (QR `br.gov.bcb.pix` + PNG base64) e polling
+  consultando `GET /v1/payments/{id}`.
+- `POST /device/register` gerando MAC no prefixo `02:50:50` e `GET /device/config` respondendo.
+

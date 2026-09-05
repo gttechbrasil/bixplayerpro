@@ -47,7 +47,7 @@ Execute em ordem. Cada bloco termina com testes verdes e commit. Não avance par
 ## 7. Fechamento do M1
 - [x] `docs/API.md` gerado a partir do OpenAPI com exemplos de request/response para todas as rotas
 - [x] `docs/DEPLOY.md`: subir no VPS do zero, variáveis, backup do Postgres
-- [ ] `docker compose up` do zero funciona e o admin loga — **pendente de verificação**: o Docker Desktop desta máquina não sobe; `docker compose config` valida os arquivos e o fluxo equivalente (migração + seed + login) foi verificado com PostgreSQL/Redis locais. Validar no VPS.
+- [x] `docker compose up` do zero funciona e o admin loga — **validado em 05/09/2026** no VPS de produção (Ubuntu 26.04, Docker 29.8): stack subiu do zero, migrações e seed aplicados automaticamente, HTTPS do Caddy com certificado Let's Encrypt e login do admin confirmado em https://bixplayer.pro/admin. Detalhes em `docs/DEPLOY.md` §11.
 - [x] Cobertura de testes das rotas ≥ 80%
 
 ## Ao concluir
