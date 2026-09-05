@@ -25,6 +25,11 @@
     <string name="playlist_invalid_url">URL inválida. Informe um endereço http ou https completo.</string>
     <string name="playlist_added">Playlist adicionada.</string>
     <string name="playlist_required_fields">Preencha o nome e a URL da playlist.</string>
+    <string name="playlist_channel_count">%1$d canais sincronizados</string>
+    <string name="playlist_not_synced">Ainda não sincronizada</string>
+    <string name="playlist_none">Nenhuma playlist. Peça ao seu revendedor ou adicione uma.</string>
+    <string name="playlist_remove_hint">MENU remove</string>
+    <string name="playlist_syncing">Sincronizando canais…</string>
 
     <!-- Expired -->
     <string name="expired_title">Assinatura vencida</string>

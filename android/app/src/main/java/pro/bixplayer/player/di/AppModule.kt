@@ -12,6 +12,8 @@ import dagger.hilt.components.SingletonComponent
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import pro.bixplayer.player.BuildConfig
@@ -26,6 +28,7 @@ import pro.bixplayer.player.data.db.CategoryDao
 import pro.bixplayer.player.data.db.ChannelDao
 import pro.bixplayer.player.data.db.FavoriteDao
 import pro.bixplayer.player.data.db.PlaylistSyncDao
+import pro.bixplayer.player.data.playlist.XtreamClient
 import pro.bixplayer.player.data.api.dto.DeviceConfigDto
 import pro.bixplayer.player.data.repository.DefaultErrorMessages
 import pro.bixplayer.player.data.repository.ErrorMessages
@@ -37,6 +40,11 @@ import timber.log.Timber
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    /** Parsing a 5.000-channel playlist must never touch the main thread. */
+    @Provides
+    @Singleton
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
     @Provides
     @Singleton
@@ -104,6 +112,11 @@ object AppModule {
     @Singleton
     fun provideDeviceApi(retrofit: Retrofit, holder: DeviceApiHolder): DeviceApi =
         retrofit.create(DeviceApi::class.java).also { holder.api = it }
+
+    @Provides
+    @Singleton
+    fun provideXtreamClient(client: OkHttpClient, moshi: Moshi): XtreamClient =
+        XtreamClient(client, moshi)
 
     @Provides
     @Singleton

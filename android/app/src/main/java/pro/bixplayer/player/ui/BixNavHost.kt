@@ -16,6 +16,7 @@ import pro.bixplayer.player.ui.screens.boot.BootDestination
 import pro.bixplayer.player.ui.screens.boot.BootViewModel
 import pro.bixplayer.player.ui.screens.expired.ExpiredScreen
 import pro.bixplayer.player.ui.screens.home.HomeScreen
+import pro.bixplayer.player.ui.screens.playlists.ChangePlaylistScreen
 import pro.bixplayer.player.ui.screens.splash.SplashScreen
 import pro.bixplayer.player.ui.screens.update.UpdateScreen
 
@@ -93,7 +94,14 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
 
         composable(Routes.HOME) {
             // The real home lands in block 5; this keeps the boot flow verifiable end to end.
-            HomeScreen(config = config)
+            HomeScreen(
+                config = config,
+                onChangePlaylist = { navController.navigate(Routes.CHANGE_PLAYLIST) },
+            )
+        }
+
+        composable(Routes.CHANGE_PLAYLIST) {
+            ChangePlaylistScreen(onBack = { navController.popBackStack() })
         }
     }
 }

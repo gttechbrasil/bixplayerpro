@@ -48,11 +48,11 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes e
 - [x] Navegação por D-pad em todos os botões e campos; teclado virtual funcional no campo de URL — **validado no emulador**: foco move com DPAD, OK aciona, IME abre no campo e a ação *Próximo* passa para o campo seguinte
 
 ## 4. Playlists: Xtream e M3U
-- [ ] Cliente Xtream (`player_api.php`): login, `get_live_categories`, `get_live_streams`; `baseUrl` dinâmica por playlist. Timeout 30 s
-- [ ] Parser M3U/M3U8 em streaming (não carregar o arquivo inteiro em memória): `#EXTINF` com `tvg-id`, `tvg-name`, `tvg-logo`, `group-title`; linhas de URL; ignorar entradas inválidas
-- [ ] `PlaylistSyncUseCase`: sincroniza categorias e canais para o Room em transação; marca `playlist_sync`; roda na primeira abertura e quando o usuário pedir "atualizar". Deve suportar 5.000 canais sem travar (teste com fixture gerada)
-- [ ] `ChangePlaylistScreen`: lista de playlists do config, marcação da ativa, troca → resync, "Adicionar" e "Remover" (chamam a API da plataforma)
-- [ ] Testes unitários: parser M3U (fixtures reais e malformadas), mapeamento Xtream → domínio
+- [x] Cliente Xtream (`player_api.php`): login, `get_live_categories`, `get_live_streams`; `baseUrl` dinâmica por playlist. Timeout 30 s
+- [x] Parser M3U/M3U8 em streaming (não carregar o arquivo inteiro em memória): `#EXTINF` com `tvg-id`, `tvg-name`, `tvg-logo`, `group-title`; linhas de URL; ignorar entradas inválidas — também lê `tvg-chno`
+- [x] `PlaylistSyncUseCase`: sincroniza categorias e canais para o Room em transação; marca `playlist_sync`; roda na primeira abertura e quando o usuário pedir "atualizar". Deve suportar 5.000 canais sem travar (teste com fixture gerada) — **validado no emulador** com fixture de 1200 canais servida pela API local; teste unitário cobre 5.000
+- [x] `ChangePlaylistScreen`: lista de playlists do config, marcação da ativa, troca → resync, "Adicionar" e "Remover" (chamam a API da plataforma)
+- [x] Testes unitários: parser M3U (fixtures reais e malformadas), mapeamento Xtream → domínio — 47 testes no total
 
 ## 5. TV ao vivo — layout 1 (`default`)
 - [ ] `HomeScreen` layout `default`: barra superior com logo, status ("Ativo" / vencimento), relógio; menu TV ao vivo / Filmes / Séries / Configurações (Filmes e Séries desabilitados no M3 com aviso "em breve"); fundo do config; banners ativos em carrossel (imagem por URL) se `auto_ads` ou banners cadastrados
