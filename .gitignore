@@ -55,3 +55,4 @@ deploy/downloads/
 
 # Copy of CLAUDE.md that some tools generate; CLAUDE.md is the source
 AGENTS.md
+dump.rdb
