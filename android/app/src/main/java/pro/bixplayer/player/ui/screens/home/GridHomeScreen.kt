@@ -45,6 +45,7 @@ import pro.bixplayer.player.domain.model.AppConfig
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.bixFocusable
+import pro.bixplayer.player.ui.components.onSelect
 
 /** One tile of the grid home. */
 data class GridTile(
@@ -136,14 +137,7 @@ private fun GridTileCard(tile: GridTile, focusRequester: FocusRequester?, modifi
             .clip(shape)
             .background(if (focused) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (tile.enabled && select && event.type == KeyEventType.KeyUp) {
-                    tile.onClick(); true
-                } else {
-                    false
-                }
-            },
+            .onSelect { if (tile.enabled) tile.onClick() },
     ) {
         if (!tile.coverUrl.isNullOrBlank()) {
             AsyncImage(

@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -63,6 +65,9 @@ import pro.bixplayer.player.ui.components.PinGateDialog
 import pro.bixplayer.player.ui.components.rememberPinGate
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
+import pro.bixplayer.player.ui.components.onSelect
+import pro.bixplayer.player.ui.components.tap
+import pro.bixplayer.player.ui.theme.LocalIsTv
 
 /**
  * Movies / series catalogue: categories on the left, a paged 6-column grid of covers on the
@@ -95,15 +100,20 @@ fun CatalogScreen(
         }
     }
 
+    val compact = !LocalIsTv.current
+    val columns = if (compact) 3 else COLUMNS
+    val all = stringResource(R.string.live_all)
+    val favorites = stringResource(R.string.live_favorites)
+
     Box(modifier = Modifier.fillMaxSize()) {
     Row(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(start = 32.dp, end = 32.dp, top = 24.dp, bottom = 16.dp),
+            .padding(start = if (compact) 12.dp else 32.dp, end = if (compact) 12.dp else 32.dp, top = if (compact) 8.dp else 24.dp, bottom = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        CatalogCategoryColumn(
+        if (!compact) CatalogCategoryColumn(
             state = state,
             firstRequester = categoryRequester,
             onSelect = { category ->
@@ -127,6 +137,28 @@ fun CatalogScreen(
                 SortChip(sort = state.sort, onClick = viewModel::cycleSort)
             }
             Spacer(Modifier.height(12.dp))
+            if (compact) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(state.categories, key = { it.key }) { category ->
+                        val label = when (category.key) {
+                            CatalogUiState.KEY_ALL -> all
+                            CatalogUiState.KEY_FAVORITES -> favorites
+                            else -> category.name
+                        }
+                        val selected = category.key == state.selectedKey
+                        Text(
+                            text = (if (category.locked) "🔒 " else "") + label + "  " + category.count,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+                                .onSelect { gate.require(category.locked, R.string.pin_locked_category) { viewModel.selectCategory(category) } }
+                                .padding(horizontal = 14.dp, vertical = 8.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+            }
 
             if (items.itemCount == 0) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -141,10 +173,10 @@ fun CatalogScreen(
                 }
             } else {
                 val gridState = rememberLazyGridState(
-                    initialFirstVisibleItemIndex = (state.focusIndex / COLUMNS * COLUMNS).coerceAtLeast(0),
+                    initialFirstVisibleItemIndex = (state.focusIndex / columns * columns).coerceAtLeast(0),
                 )
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(COLUMNS),
+                    columns = GridCells.Fixed(columns),
                     state = gridState,
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -204,14 +236,7 @@ private fun SortChip(sort: CatalogSort, onClick: () -> Unit) {
             .bixFocusable(focused, scale = 1f, shape = shape)
             .background(MaterialTheme.colorScheme.surface, shape)
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onClick(); true
-                } else {
-                    false
-                }
-            }
+            .onSelect { onClick() }
             .padding(horizontal = 16.dp, vertical = 14.dp),
     )
 }
@@ -270,14 +295,7 @@ private fun CategoryRow(
             .background(container, shape)
             .onFocusChanged { if (it.isFocused && selectOnFocus) onSelect() }
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onSelect(); true
-                } else {
-                    false
-                }
-            }
+            .onSelect { onSelect() }
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(
@@ -316,6 +334,7 @@ fun PosterCard(
             .background(MaterialTheme.colorScheme.surface)
             .onFocusChanged { if (it.isFocused) onFocused() }
             .focusable(interactionSource = interaction)
+            .tap(onOpen)
             .onKeyEvent { event ->
                 if (event.type != KeyEventType.KeyUp) return@onKeyEvent false
                 when (event.key) {

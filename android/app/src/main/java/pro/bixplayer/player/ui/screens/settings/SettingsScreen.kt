@@ -38,12 +38,14 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
+import pro.bixplayer.player.ui.theme.LocalIsTv
 import pro.bixplayer.player.ui.components.BixButton
 import pro.bixplayer.player.ui.components.PinGateDialog
 import pro.bixplayer.player.ui.components.rememberPinGate
 import pro.bixplayer.player.ui.locale.AppLanguages
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
+import pro.bixplayer.player.ui.components.onSelect
 
 /** Settings, M3 minimum. Every row is a focusable line: OK acts, the value shows on the right. */
 @Composable
@@ -82,7 +84,7 @@ fun SettingsScreen(
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            text = stringResource(R.string.settings_hint),
+            text = stringResource(if (LocalIsTv.current) R.string.settings_hint else R.string.settings_hint_touch),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 6.dp),
@@ -243,14 +245,7 @@ private fun SettingRow(
                 shape,
             )
             .focusable(enabled = enabled, interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (enabled && select && event.type == KeyEventType.KeyUp) {
-                    onClick(); true
-                } else {
-                    false
-                }
-            }
+            .onSelect { if (enabled) onClick() }
             .padding(horizontal = 20.dp, vertical = 16.dp),
     ) {
         Text(

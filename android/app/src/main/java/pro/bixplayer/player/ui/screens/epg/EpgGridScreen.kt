@@ -42,6 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import pro.bixplayer.player.ui.theme.LocalIsTv
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.Instant
@@ -53,6 +54,7 @@ import pro.bixplayer.player.data.db.ChannelEntity
 import pro.bixplayer.player.data.db.EpgProgramEntity
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
+import pro.bixplayer.player.ui.components.onSelect
 
 /**
  * Programme guide: channels down the left, a 3-hour timeline across. Each programme is a
@@ -79,33 +81,52 @@ fun EpgGridScreen(
     val zone = remember { ZoneId.systemDefault() }
     val hourFormat = remember { DateTimeFormatter.ofPattern("HH:mm") }
 
+    val compact = !LocalIsTv.current
+    val channelColumn = if (compact) CHANNEL_COLUMN_COMPACT else CHANNEL_COLUMN
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 32.dp, vertical = 20.dp),
+            .padding(horizontal = if (compact) 12.dp else 32.dp, vertical = if (compact) 12.dp else 20.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (compact) {
             Text(
                 text = stringResource(R.string.epg_title),
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-            HeaderChip(text = "◀ 3h", onClick = { viewModel.shiftWindow(-3) })
-            HeaderChip(text = stringResource(R.string.epg_now), onClick = viewModel::jumpToNow)
-            HeaderChip(text = "3h ▶", onClick = { viewModel.shiftWindow(3) })
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                HeaderChip(text = "◀ 3h", onClick = { viewModel.shiftWindow(-3) })
+                HeaderChip(text = stringResource(R.string.epg_now), onClick = viewModel::jumpToNow)
+                HeaderChip(text = "3h ▶", onClick = { viewModel.shiftWindow(3) })
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.epg_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f),
+                )
+                HeaderChip(text = "◀ 3h", onClick = { viewModel.shiftWindow(-3) })
+                HeaderChip(text = stringResource(R.string.epg_now), onClick = viewModel::jumpToNow)
+                HeaderChip(text = "3h ▶", onClick = { viewModel.shiftWindow(3) })
+            }
         }
         Spacer(Modifier.height(12.dp))
 
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-            val timelineWidth = maxWidth - CHANNEL_COLUMN - 8.dp
+            val timelineWidth = maxWidth - channelColumn - 8.dp
             val dpPerMs = timelineWidth.value / EpgGridViewModel.WINDOW_MS.toFloat()
 
             Column {
                 // Half-hour ticks
                 Row(modifier = Modifier.fillMaxWidth().height(28.dp)) {
-                    Spacer(Modifier.width(CHANNEL_COLUMN + 8.dp))
+                    Spacer(Modifier.width(channelColumn + 8.dp))
                     Box(modifier = Modifier.width(timelineWidth).fillMaxHeight()) {
                         var t = state.windowStart
                         while (t < state.windowEnd) {
@@ -138,6 +159,7 @@ fun EpgGridScreen(
                         else -> LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             itemsIndexed(state.rows, key = { _, row -> row.channel.id }) { index, row ->
                                 EpgChannelRow(
+                                    channelColumn = channelColumn,
                                     row = row,
                                     windowStart = state.windowStart,
                                     windowEnd = state.windowEnd,
@@ -156,7 +178,7 @@ fun EpgGridScreen(
 
                     // "Now" marker
                     if (state.now in state.windowStart..state.windowEnd && state.rows.isNotEmpty()) {
-                        val x = CHANNEL_COLUMN + 8.dp + ((state.now - state.windowStart) * dpPerMs).dp
+                        val x = channelColumn + 8.dp + ((state.now - state.windowStart) * dpPerMs).dp
                         Box(
                             modifier = Modifier
                                 .offset(x = x)
@@ -184,14 +206,7 @@ private fun HeaderChip(text: String, onClick: () -> Unit) {
             .bixFocusable(focused, scale = 1f, shape = shape)
             .background(MaterialTheme.colorScheme.surface, shape)
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onClick(); true
-                } else {
-                    false
-                }
-            }
+            .onSelect { onClick() }
             .padding(horizontal = 16.dp, vertical = 10.dp),
     )
 }
@@ -204,18 +219,19 @@ private fun EpgChannelRow(
     now: Long,
     dpPerMs: Float,
     timelineWidth: Dp,
+    channelColumn: Dp,
     firstRequester: FocusRequester?,
     onPlay: () -> Unit,
 ) {
     Row(modifier = Modifier.fillMaxWidth().height(ROW_HEIGHT)) {
         Text(
             text = "${row.channel.number}  ${row.channel.name}",
-            style = MaterialTheme.typography.bodyLarge,
+            style = if (channelColumn < CHANNEL_COLUMN) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
-                .width(CHANNEL_COLUMN)
+                .width(channelColumn)
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
                 .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -278,14 +294,7 @@ private fun ProgrammeCell(
                 },
             )
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onPlay(); true
-                } else {
-                    false
-                }
-            }
+            .onSelect { onPlay() }
             .padding(horizontal = 8.dp, vertical = 6.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
@@ -300,5 +309,6 @@ private fun ProgrammeCell(
 }
 
 private val CHANNEL_COLUMN = 220.dp
+private val CHANNEL_COLUMN_COMPACT = 96.dp
 private val ROW_HEIGHT = 64.dp
 

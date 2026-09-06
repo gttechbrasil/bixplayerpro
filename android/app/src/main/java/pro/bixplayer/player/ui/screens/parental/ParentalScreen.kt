@@ -46,6 +46,8 @@ import pro.bixplayer.player.ui.components.BixButton
 import pro.bixplayer.player.ui.components.PinDialog
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
+import pro.bixplayer.player.ui.components.onSelect
+import pro.bixplayer.player.ui.components.tap
 
 /**
  * Parental control: change the PIN and, per kind, hide categories (they vanish from lists,
@@ -147,14 +149,7 @@ private fun KindChip(label: String, selected: Boolean, onSelect: () -> Unit) {
             .bixFocusable(focused, scale = 1f, shape = shape)
             .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, shape)
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onSelect(); true
-                } else {
-                    false
-                }
-            }
+            .onSelect { onSelect() }
             .padding(horizontal = 18.dp, vertical = 10.dp),
     )
 }
@@ -171,6 +166,7 @@ private fun CategoryRuleRow(category: ParentalCategory, onToggleHidden: () -> Un
             .bixFocusable(focused, scale = BixFocus.SCALE_SMALL, shape = shape)
             .background(if (focused) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface, shape)
             .focusable(interactionSource = interaction)
+            .tap(onToggleHidden)
             .onKeyEvent { event ->
                 if (event.type != KeyEventType.KeyUp) return@onKeyEvent false
                 when (event.key) {

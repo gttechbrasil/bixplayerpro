@@ -36,6 +36,7 @@ import pro.bixplayer.player.R
 import pro.bixplayer.player.domain.model.Playlist
 import pro.bixplayer.player.domain.model.PlaylistType
 import pro.bixplayer.player.ui.components.BixButton
+import pro.bixplayer.player.ui.components.tap
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
 
@@ -144,6 +145,7 @@ private fun PlaylistRow(
             .bixFocusable(focused, scale = BixFocus.SCALE_SMALL, shape = shape)
             .background(MaterialTheme.colorScheme.surface, shape)
             .focusable(interactionSource = interaction)
+            .tap(onSelect)
             .onKeyEvent { event ->
                 if (event.type != KeyEventType.KeyUp) return@onKeyEvent false
                 when (event.key) {

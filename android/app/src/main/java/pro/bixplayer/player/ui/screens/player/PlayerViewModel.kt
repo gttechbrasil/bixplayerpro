@@ -317,6 +317,22 @@ class PlayerViewModel @Inject constructor(
         showOverlay()
     }
 
+    /** Touch scrubbing: accumulate while the finger moves, seek once when it lifts. */
+    fun dragSeekBy(deltaMs: Long) {
+        if (_uiState.value.isLive || !_uiState.value.progress.seekable) return
+        val base = _uiState.value.seekTargetMs ?: session.progress.value.positionMs
+        val target = (base + deltaMs).coerceIn(0L, _uiState.value.progress.durationMs)
+        seekJob?.cancel()
+        _uiState.value = _uiState.value.copy(seekTargetMs = target)
+        showOverlay()
+    }
+
+    fun commitDragSeek() {
+        val target = _uiState.value.seekTargetMs ?: return
+        session.seekTo(target)
+        _uiState.value = _uiState.value.copy(seekTargetMs = null)
+    }
+
     private fun onEnded() {
         if (endedHandled) return
         endedHandled = true

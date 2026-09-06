@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -70,6 +71,9 @@ import pro.bixplayer.player.ui.components.VideoSurface
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.bixFocusable
+import pro.bixplayer.player.ui.components.onSelect
+import pro.bixplayer.player.ui.components.tap
+import pro.bixplayer.player.ui.theme.LocalIsTv
 
 /**
  * Live TV, layout `default`: categories · channels · preview. The focused channel plays in the
@@ -110,6 +114,25 @@ fun LiveScreen(
             runCatching { categoryRequester.requestFocus() }
             focusedOnce = true
         }
+    }
+
+    if (!LocalIsTv.current) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            LiveCompact(
+                state = state,
+                channels = channels,
+                onSelectCategory = { item -> gate.require(item.locked, R.string.pin_locked_category) { viewModel.selectCategory(item) } },
+                onQueryChange = viewModel::setQuery,
+                onOpen = { channel ->
+                    viewModel.onOpenPlayer()
+                    onOpenChannel(channel, viewModel.currentScopeArg())
+                },
+                onToggleFavorite = viewModel::toggleFavorite,
+                onOpenGuide = { onOpenGuide(null) },
+            )
+            PinGateDialog(gate)
+        }
+        return
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -219,6 +242,69 @@ fun LiveScreen(
     }
 }
 
+/** Phone layout: search, a strip of category chips and the channel list; no preview. */
+@Composable
+private fun LiveCompact(
+    state: LiveUiState,
+    channels: androidx.paging.compose.LazyPagingItems<ChannelEntity>,
+    onSelectCategory: (CategoryItem) -> Unit,
+    onQueryChange: (String) -> Unit,
+    onOpen: (ChannelEntity) -> Unit,
+    onToggleFavorite: (ChannelEntity) -> Unit,
+    onOpenGuide: () -> Unit,
+) {
+    val all = stringResource(R.string.live_all)
+    val favorites = stringResource(R.string.live_favorites)
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(modifier = Modifier.weight(1f)) {
+                SearchRow(query = state.query, onQueryChange = onQueryChange, placeholder = stringResource(R.string.live_search), onDone = {})
+            }
+            GuideChip(onClick = onOpenGuide)
+        }
+        Spacer(Modifier.height(8.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(state.categories, key = { it.scope.key }) { item ->
+                val label = when (item.scope) {
+                    ChannelScope.All -> all
+                    ChannelScope.Favorites -> favorites
+                    else -> item.name
+                }
+                val selected = item.scope.key == state.selectedKey
+                Text(
+                    text = (if (item.locked) "🔒 " else "") + label + "  " + item.count,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+                        .onSelect { onSelectCategory(item) }
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        if (channels.itemCount == 0) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = stringResource(R.string.live_no_channels), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxSize()) {
+                items(count = channels.itemCount, key = { index -> channels.peek(index)?.id ?: -index.toLong() }) { index ->
+                    val channel = channels[index] ?: return@items
+                    ChannelRow(
+                        channel = channel,
+                        favorite = channel.remoteId in state.favoriteIds,
+                        focusRequester = remember { FocusRequester() },
+                        onFocused = {},
+                        onOpen = { onOpen(channel) },
+                        onToggleFavorite = { onToggleFavorite(channel) },
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun CategoryColumn(
     state: LiveUiState,
@@ -275,14 +361,7 @@ private fun CategoryRow(
             .background(container, shape)
             .onFocusChanged { if (it.isFocused) onFocused() }
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onSelect(); true
-                } else {
-                    false
-                }
-            }
+            .onSelect { onSelect() }
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(
@@ -327,6 +406,7 @@ private fun ChannelRow(
             )
             .onFocusChanged { if (it.isFocused) onFocused() }
             .focusable(interactionSource = interaction)
+            .tap(onOpen)
             .onKeyEvent { event ->
                 if (event.type != KeyEventType.KeyUp) return@onKeyEvent false
                 when (event.key) {
@@ -509,14 +589,7 @@ private fun GuideChip(onClick: () -> Unit) {
             .bixFocusable(focused, scale = 1f, shape = shape)
             .background(MaterialTheme.colorScheme.surface, shape)
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onClick(); true
-                } else {
-                    false
-                }
-            }
+            .onSelect { onClick() }
             .padding(horizontal = 16.dp, vertical = 10.dp),
     )
 }

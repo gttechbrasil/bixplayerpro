@@ -37,6 +37,25 @@ import pro.bixplayer.player.ui.screens.series.SeriesDetailViewModel
 import pro.bixplayer.player.ui.screens.settings.SettingsScreen
 import pro.bixplayer.player.ui.screens.splash.SplashScreen
 import pro.bixplayer.player.ui.screens.update.UpdateScreen
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import pro.bixplayer.player.ui.screens.playlists.PlaylistViewModel
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.navigation.compose.currentBackStackEntryAsState
+import pro.bixplayer.player.R
+import pro.bixplayer.player.ui.theme.LocalIsTv
 
 /** Routes of the app. Constants so the graph and the tests agree on the strings. */
 object Routes {
@@ -102,8 +121,62 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
         }
     }
 
+    val isTv = LocalIsTv.current
     BixLocale(languageTag = language) {
-        NavHost(navController = navController, startDestination = Routes.SPLASH) {
+        val backStack by navController.currentBackStackEntryAsState()
+        val currentRoute = backStack?.destination?.route
+        val tabRoutes = listOf(Routes.LIVE_PATTERN, Routes.CATALOG_PATTERN, Routes.EPG_PATTERN, Routes.SETTINGS)
+        val showBar = !isTv && currentRoute in tabRoutes
+        // On a phone there is no home screen, so the first sync of the active playlist is
+        // owned here (activity scope) instead of by HomeScreen; a strip above the bar reports it.
+        val phoneSync: PlaylistViewModel? = if (isTv) null else hiltViewModel()
+        val phoneSyncState = phoneSync?.uiState?.collectAsStateWithLifecycle()?.value
+        if (phoneSync != null) {
+            LaunchedEffect(phoneSyncState?.activeId, destination) {
+                if (phoneSyncState?.activeId != null && destination is BootDestination.Go) phoneSync.syncActive()
+            }
+        }
+        val inPlayer = currentRoute?.startsWith(Routes.PLAYER) == true
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            // The player draws edge to edge, under the bars and the camera cutout.
+            contentWindowInsets = if (inPlayer) WindowInsets(0) else ScaffoldDefaults.contentWindowInsets,
+            bottomBar = {
+                if (showBar) {
+                    Column {
+                        val strip = when {
+                            phoneSyncState?.syncing == true -> stringResource(R.string.playlist_syncing)
+                            else -> phoneSyncState?.notice
+                        }
+                        if (strip != null) {
+                            Text(
+                                text = strip,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .padding(vertical = 6.dp, horizontal = 16.dp),
+                            )
+                        }
+                    MobileBottomBar(
+                        current = currentRoute,
+                        currentKind = backStack?.arguments?.getString(CatalogViewModel.ARG_KIND),
+                        onNavigate = { route ->
+                            navController.navigate(route) {
+                                // Live TV is the phone root: every tab replaces whatever sits
+                                // above it, so Filmes -> Séries never reuses the movies entry.
+                                popUpTo(Routes.LIVE_PATTERN) { inclusive = route == Routes.LIVE }
+                                launchSingleTop = true
+                            }
+                        },
+                    )
+                    }
+                }
+            },
+        ) { padding ->
+        NavHost(navController = navController, startDestination = Routes.SPLASH, modifier = Modifier.padding(padding)) {
             composable(Routes.SPLASH) {
                 SplashScreen(
                     logoUrl = config?.logoUrl,
@@ -144,6 +217,16 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
             }
 
             composable(Routes.HOME) {
+                if (!isTv) {
+                    // Phones land on live TV with the bottom bar; the TV home is a menu.
+                    LaunchedEffect(Unit) {
+                        navController.navigate(Routes.LIVE) {
+                            popUpTo(Routes.HOME) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                    return@composable
+                }
                 HomeScreen(
                     config = config,
                     onLive = { navController.navigate(Routes.LIVE) { launchSingleTop = true } },
@@ -258,6 +341,30 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
             composable(Routes.PARENTAL) {
                 ParentalScreen(onBack = { navController.popBackStack() })
             }
+        }
+        }
+    }
+}
+
+/** TV / Filmes / Séries / Guia / Mais. */
+@Composable
+private fun MobileBottomBar(current: String?, currentKind: String?, onNavigate: (String) -> Unit) {
+    data class Tab(val label: String, val icon: String, val route: String, val selected: Boolean)
+    val tabs = listOf(
+        Tab(stringResource(R.string.home_live), "▶", Routes.LIVE, current == Routes.LIVE_PATTERN),
+        Tab(stringResource(R.string.home_movies), "🎬", Routes.catalog(ContentKind.MOVIE), current == Routes.CATALOG_PATTERN && currentKind == ContentKind.MOVIE),
+        Tab(stringResource(R.string.home_series), "📺", Routes.catalog(ContentKind.SERIES), current == Routes.CATALOG_PATTERN && currentKind == ContentKind.SERIES),
+        Tab(stringResource(R.string.live_guide), "▦", Routes.epg(null), current == Routes.EPG_PATTERN),
+        Tab(stringResource(R.string.mobile_more), "⋯", Routes.SETTINGS, current == Routes.SETTINGS),
+    )
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+        tabs.forEach { tab ->
+            NavigationBarItem(
+                selected = tab.selected,
+                onClick = { if (!tab.selected) onNavigate(tab.route) },
+                icon = { Text(tab.icon) },
+                label = { Text(tab.label, maxLines = 1) },
+            )
         }
     }
 }

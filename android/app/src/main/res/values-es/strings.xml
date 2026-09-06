@@ -59,6 +59,7 @@
     <string name="live_hints">OK ver · MENU favorito · ATRÁS menú</string>
 
     <string name="settings_hint">OK cambia la opción</string>
+    <string name="settings_hint_touch">Toca para cambiar la opción</string>
     <string name="settings_playlist">Cambiar lista</string>
     <string name="settings_refresh">Actualizar listas</string>
     <string name="settings_refresh_period">Período de actualización</string>
@@ -152,4 +153,8 @@
     <string name="settings_engine_auto">Automático</string>
     <string name="settings_engine_media3">Media3</string>
     <string name="settings_engine_vlc">VLC</string>
+    <string name="mobile_more">Más</string>
+    <string name="activation_copy_mac">Copiar MAC</string>
+    <string name="activation_share">Compartir</string>
+    <string name="activation_copied">MAC copiada.</string>
 </resources>

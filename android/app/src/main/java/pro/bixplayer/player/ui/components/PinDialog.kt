@@ -41,6 +41,7 @@ import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
 import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.bixFocusable
+import pro.bixplayer.player.ui.components.onSelect
 
 /**
  * Four-digit PIN entry over a scrim. Digits come from the remote's number keys or from the
@@ -167,14 +168,7 @@ private fun KeypadKey(label: String, focusRequester: FocusRequester?, onPress: (
             .bixFocusable(focused, scale = 1.06f, shape = shape)
             .background(if (focused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, shape)
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onPress(); true
-                } else {
-                    false
-                }
-            },
+            .onSelect { onPress() },
         contentAlignment = Alignment.Center,
     ) {
         Text(

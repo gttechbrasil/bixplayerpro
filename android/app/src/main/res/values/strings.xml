@@ -68,6 +68,7 @@
 
     <!-- Settings -->
     <string name="settings_hint">OK altera a opção</string>
+    <string name="settings_hint_touch">Toque para alterar a opção</string>
     <string name="settings_playlist">Trocar playlist</string>
     <string name="settings_refresh">Atualizar listas</string>
     <string name="settings_refresh_period">Período de atualização</string>
@@ -164,4 +165,8 @@
     <string name="settings_engine_auto">Automático</string>
     <string name="settings_engine_media3">Media3</string>
     <string name="settings_engine_vlc">VLC</string>
+    <string name="mobile_more">Mais</string>
+    <string name="activation_copy_mac">Copiar MAC</string>
+    <string name="activation_share">Compartilhar</string>
+    <string name="activation_copied">MAC copiado.</string>
 </resources>

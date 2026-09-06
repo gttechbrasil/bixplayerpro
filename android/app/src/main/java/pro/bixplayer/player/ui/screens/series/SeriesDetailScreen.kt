@@ -52,6 +52,7 @@ import pro.bixplayer.player.ui.components.BixButton
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.util.TimeFormat
+import pro.bixplayer.player.ui.components.onSelect
 
 /** Series detail: cover and synopsis on the left, season chips and the episode list on the right. */
 @Composable
@@ -184,14 +185,7 @@ private fun SeasonChip(label: String, selected: Boolean, onSelect: () -> Unit) {
             .bixFocusable(focused, scale = 1f, shape = shape)
             .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, shape)
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onSelect(); true
-                } else {
-                    false
-                }
-            }
+            .onSelect { onSelect() }
             .padding(horizontal = 18.dp, vertical = 10.dp),
     )
 }
@@ -210,14 +204,7 @@ private fun EpisodeRow(episode: EpisodeEntity, progress: WatchProgressEntity?, o
             .clip(shape)
             .background(if (focused) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onPlay(); true
-                } else {
-                    false
-                }
-            },
+            .onSelect { onPlay() },
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Text(

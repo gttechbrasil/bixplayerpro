@@ -46,6 +46,12 @@ import pro.bixplayer.player.ui.components.BixTextField
 import pro.bixplayer.player.util.QrCode
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import android.content.Intent
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import pro.bixplayer.player.ui.theme.LocalIsTv
 
 /**
  * Shown when the device is not linked to a reseller yet, or is linked but has no playlist.
@@ -63,6 +69,7 @@ fun ActivationScreen(
     val emptyFields = stringResource(R.string.playlist_required_fields)
 
     val checkFocus = remember { FocusRequester() }
+    val compact = !LocalIsTv.current
 
     LaunchedEffect(state.activated) {
         if (state.activated) onActivated()
@@ -76,34 +83,45 @@ fun ActivationScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 64.dp, vertical = 48.dp),
+                .padding(horizontal = if (compact) 20.dp else 64.dp, vertical = if (compact) 24.dp else 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = stringResource(R.string.activation_title),
-                style = MaterialTheme.typography.headlineLarge,
+                style = if (compact) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
             )
             Text(
                 text = stringResource(R.string.activation_instruction),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 8.dp),
             )
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(if (compact) 20.dp else 32.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(48.dp),
-            ) {
-                MacAddressPanel(mac = state.macAddress, modifier = Modifier.weight(1f))
+            if (compact) {
+                // Portrait phone: MAC above the QR, both full width, smaller type.
+                MacAddressPanel(mac = state.macAddress, compact = true, modifier = Modifier.fillMaxWidth())
                 if (state.macAddress.isNotBlank()) {
-                    QrPanel(content = state.macAddress)
+                    Spacer(Modifier.height(20.dp))
+                    QrPanel(content = state.macAddress, compact = true)
+                }
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(48.dp),
+                ) {
+                    MacAddressPanel(mac = state.macAddress, compact = false, modifier = Modifier.weight(1f))
+                    if (state.macAddress.isNotBlank()) {
+                        QrPanel(content = state.macAddress, compact = false)
+                    }
                 }
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(if (compact) 20.dp else 32.dp))
 
             state.notice?.let { notice ->
                 Text(
@@ -122,24 +140,59 @@ fun ActivationScreen(
                 Spacer(Modifier.height(24.dp))
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            ActionButtons(compact = compact) {
                 BixButton(
                     text = if (state.checking) stringResource(R.string.activation_checking)
                     else stringResource(R.string.activation_check),
                     enabled = !state.checking,
                     onClick = { viewModel.check(notYet) },
                     focusRequester = checkFocus,
+                    modifier = if (compact) Modifier.fillMaxWidth() else Modifier,
                 )
                 BixButton(
                     text = stringResource(R.string.activation_add_playlist),
                     primary = false,
                     onClick = { viewModel.togglePlaylistForm() },
+                    modifier = if (compact) Modifier.fillMaxWidth() else Modifier,
                 )
             }
 
+            if (!LocalIsTv.current && state.macAddress.isNotBlank()) {
+                // On a phone the MAC goes to the reseller by clipboard or WhatsApp, not by dictation.
+                val context = LocalContext.current
+                val clipboard = LocalClipboardManager.current
+                val copied = stringResource(R.string.activation_copied)
+                val shareText = stringResource(R.string.activation_instruction) + ": " + state.macAddress
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    BixButton(
+                        text = stringResource(R.string.activation_copy_mac),
+                        primary = false,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            clipboard.setText(AnnotatedString(state.macAddress))
+                            Toast.makeText(context, copied, Toast.LENGTH_SHORT).show()
+                        },
+                    )
+                    BixButton(
+                        text = stringResource(R.string.activation_share),
+                        primary = false,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, shareText)
+                            }
+                            runCatching { context.startActivity(Intent.createChooser(intent, null)) }
+                        },
+                    )
+                }
+            }
+
             if (state.showPlaylistForm) {
-                Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(if (compact) 20.dp else 32.dp))
                 PlaylistForm(
+                    compact = compact,
                     submitting = state.addingPlaylist,
                     onSubmit = { name, url ->
                         viewModel.addPlaylist(name, url, addedMessage) { error ->
@@ -155,8 +208,18 @@ fun ActivationScreen(
     }
 }
 
+/** Two buttons side by side on TV, stacked full-width on a phone. */
 @Composable
-private fun MacAddressPanel(mac: String, modifier: Modifier = Modifier) {
+private fun ActionButtons(compact: Boolean, content: @Composable () -> Unit) {
+    if (compact) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) { content() }
+    } else {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) { content() }
+    }
+}
+
+@Composable
+private fun MacAddressPanel(mac: String, compact: Boolean, modifier: Modifier = Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = stringResource(R.string.activation_mac_label),
@@ -169,23 +232,32 @@ private fun MacAddressPanel(mac: String, modifier: Modifier = Modifier) {
             text = mac.ifBlank { "…" },
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
-            fontSize = 52.sp,
+            fontSize = if (compact) 26.sp else 52.sp,
             color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center,
+            maxLines = 1,
+            softWrap = false,
             modifier = Modifier
+                .then(if (compact) Modifier.fillMaxWidth() else Modifier)
                 .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-                .padding(horizontal = 32.dp, vertical = 20.dp),
+                .padding(horizontal = if (compact) 16.dp else 32.dp, vertical = if (compact) 14.dp else 20.dp),
         )
     }
 }
 
 @Composable
-private fun QrPanel(content: String) {
+private fun QrPanel(content: String, compact: Boolean) {
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
-    // Cap the QR at a quarter of the screen height so it stays sharp on 1080p and on 720p.
-    val sidePx = remember(content, configuration.screenHeightDp) {
-        with(density) { (configuration.screenHeightDp.dp * 0.32f).roundToPx() }
+    // Cap the QR at a third of the screen height on TV so it stays sharp on 1080p and on 720p;
+    // on a phone it follows the width instead so it never spills past the column.
+    val sidePx = remember(content, compact, configuration.screenHeightDp, configuration.screenWidthDp) {
+        val side = if (compact) {
+            minOf(configuration.screenWidthDp * 0.55f, configuration.screenHeightDp * 0.28f).dp
+        } else {
+            configuration.screenHeightDp.dp * 0.32f
+        }
+        with(density) { side.roundToPx() }
     }
     val bitmap = remember(content, sidePx) { QrCode.encode(content, sidePx) }
     if (bitmap == null) return
@@ -213,6 +285,7 @@ private fun QrPanel(content: String) {
 
 @Composable
 private fun PlaylistForm(
+    compact: Boolean,
     submitting: Boolean,
     onSubmit: (name: String, url: String) -> Unit,
 ) {
@@ -223,9 +296,9 @@ private fun PlaylistForm(
 
     Column(
         modifier = Modifier
-            .fillMaxWidth(0.7f)
+            .fillMaxWidth(if (compact) 1f else 0.7f)
             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-            .padding(24.dp)
+            .padding(if (compact) 16.dp else 24.dp)
             // While the on-screen keyboard is open it owns the D-pad, so the only way out of a
             // field is the IME action; padding keeps the button reachable once it closes.
             .imePadding(),

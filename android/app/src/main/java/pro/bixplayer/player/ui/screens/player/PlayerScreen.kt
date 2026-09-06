@@ -72,6 +72,18 @@ import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.util.TimeFormat
+import pro.bixplayer.player.ui.components.onSelect
+import android.content.pm.ActivityInfo
+import android.os.Build
+import android.view.WindowManager
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import pro.bixplayer.player.ui.theme.LocalIsTv
 
 /**
  * Full-screen player, live and VOD. Live: OK toggles the info overlay, ↑/↓ zap inside the
@@ -89,6 +101,38 @@ fun PlayerScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val notFound = stringResource(R.string.player_channel_not_found)
     val rootRequester = remember { FocusRequester() }
+    val isTv = LocalIsTv.current
+    val activity = LocalActivity.current
+
+    // Phones watch in landscape, full screen (bars hidden, video under the camera cutout);
+    // orientation, bars and cutout mode all go back to the system's when leaving.
+    DisposableEffect(isTv) {
+        viewModel.session.inPlayerScreen = true
+        val window = activity?.window
+        val controller = window?.let { WindowCompat.getInsetsController(it, it.decorView) }
+        if (!isTv && activity != null && window != null && controller != null) {
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                window.attributes = window.attributes.apply {
+                    layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
+            }
+        }
+        onDispose {
+            viewModel.session.inPlayerScreen = false
+            if (!isTv && activity != null && window != null && controller != null) {
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                controller.show(WindowInsetsCompat.Type.systemBars())
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    window.attributes = window.attributes.apply {
+                        layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                    }
+                }
+            }
+        }
+    }
 
     // The screen must stay on while something plays, and the decoder must not run in the
     // background: release on stop, resume with the same item on start.
@@ -98,7 +142,8 @@ fun PlayerScreen(
         view.keepScreenOn = true
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_STOP -> viewModel.onBackground()
+                // In PiP the activity stops but the video must keep going.
+                Lifecycle.Event.ON_STOP -> if (!viewModel.session.inPictureInPicture) viewModel.onBackground()
                 Lifecycle.Event.ON_START -> viewModel.onForeground()
                 else -> Unit
             }
@@ -141,6 +186,27 @@ fun PlayerScreen(
             .background(Color.Black)
             .focusRequester(rootRequester)
             .focusable()
+            // Touch: tap shows/hides controls, double tap seeks ±10 s, horizontal drag scrubs.
+            .then(
+                if (isTv) Modifier else Modifier
+                    .pointerInput(state.isLive) {
+                        detectTapGestures(
+                            onTap = { viewModel.toggleOverlay() },
+                            onDoubleTap = { offset -> if (!state.isLive) viewModel.seek(offset.x > size.width / 2) },
+                        )
+                    }
+                    .pointerInput(state.isLive) {
+                        if (state.isLive) return@pointerInput
+                        detectHorizontalDragGestures(
+                            onDragEnd = { viewModel.commitDragSeek() },
+                            onDragCancel = { viewModel.commitDragSeek() },
+                        ) { change, dragAmount ->
+                            change.consume()
+                            // A full-width drag scrubs through 4 minutes.
+                            viewModel.dragSeekBy((dragAmount / size.width * DRAG_FULL_WIDTH_MS).toLong())
+                        }
+                    },
+            )
             .onPreviewKeyEvent { event ->
                 // Panels handle their own keys; the root only acts when nothing is open.
                 if (state.quickListVisible || state.nextEpisode != null) return@onPreviewKeyEvent false
@@ -262,12 +328,13 @@ fun PlayerScreen(
         }
 
         AnimatedVisibility(
-            visible = state.overlayVisible && !state.quickListVisible && !state.tracksVisible && state.nextEpisode == null,
+            visible = state.overlayVisible && !state.quickListVisible && !state.tracksVisible && state.nextEpisode == null &&
+                !viewModel.session.inPictureInPicture,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
-            InfoOverlay(state = state)
+            InfoOverlay(state = state, touch = !isTv, onTogglePause = viewModel::togglePause, onTracks = viewModel::openTracks)
         }
 
         AnimatedVisibility(
@@ -309,8 +376,15 @@ fun PlayerScreen(
     }
 }
 
+private const val DRAG_FULL_WIDTH_MS = 240_000f
+
 @Composable
-private fun InfoOverlay(state: PlayerUiState) {
+private fun InfoOverlay(
+    state: PlayerUiState,
+    touch: Boolean = false,
+    onTogglePause: () -> Unit = {},
+    onTracks: () -> Unit = {},
+) {
     var now by remember { mutableStateOf(LocalTime.now()) }
     LaunchedEffect(state.overlayVisible) {
         while (true) {
@@ -385,11 +459,20 @@ private fun InfoOverlay(state: PlayerUiState) {
         }
 
         Spacer(Modifier.height(8.dp))
-        Text(
-            text = stringResource(if (state.isLive) R.string.player_hints else R.string.player_pause_hint),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (touch) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (!state.isLive) {
+                    BixButton(text = if (state.playback is SessionState.Paused) "▶" else "❚❚", onClick = onTogglePause)
+                }
+                BixButton(text = stringResource(R.string.player_tracks), primary = false, onClick = onTracks)
+            }
+        } else {
+            Text(
+                text = stringResource(if (state.isLive) R.string.player_hints else R.string.player_pause_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -522,14 +605,7 @@ private fun QuickRow(
             .bixFocusable(focused, scale = 1f, shape = shape)
             .background(if (focused) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent, shape)
             .focusable(interactionSource = interaction)
-            .onPreviewKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onSelect(); true
-                } else {
-                    false
-                }
-            }
+            .onSelect { onSelect() }
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
         Text(
@@ -634,14 +710,7 @@ private fun TrackRow(
             .bixFocusable(focused, scale = BixFocus.SCALE_SMALL, shape = shape)
             .background(if (focused) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent, shape)
             .focusable(interactionSource = interaction)
-            .onPreviewKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onSelect(); true
-                } else {
-                    false
-                }
-            }
+            .onSelect { onSelect() }
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
         Text(

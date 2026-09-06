@@ -112,6 +112,14 @@ class PlayerSession @Inject constructor(
     /** Room id of the live channel the player tuned last; the live list re-focuses it on return. */
     val currentChannelId = MutableStateFlow<Long?>(null)
 
+    /** True while PlayerScreen is on screen; the phone activity uses it to decide on PiP. */
+    @Volatile
+    var inPlayerScreen: Boolean = false
+
+    /** In PiP the screen keeps the decoder alive across ON_STOP and hides every overlay. */
+    @Volatile
+    var inPictureInPicture: Boolean = false
+
     /** Position/duration of the current item, refreshed twice a second while something plays. */
     data class Progress(val positionMs: Long, val durationMs: Long, val seekable: Boolean) {
         val fraction: Float get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f

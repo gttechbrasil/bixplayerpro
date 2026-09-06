@@ -67,6 +67,7 @@ import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.BixSuccess
 import pro.bixplayer.player.ui.theme.bixFocusable
+import pro.bixplayer.player.ui.components.onSelect
 
 /**
  * Home, layout `default`: reseller branding on top (logo, status, clock), the four sections in
@@ -316,14 +317,7 @@ private fun MenuCard(
             )
             .alpha(if (enabled) 1f else 0.55f)
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (enabled && select && event.type == KeyEventType.KeyUp) {
-                    onClick(); true
-                } else {
-                    false
-                }
-            }
+            .onSelect { if (enabled) onClick() }
             .padding(horizontal = 20.dp, vertical = 24.dp),
     ) {
         Text(text = icon, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
@@ -378,14 +372,7 @@ private fun ContinueCard(progress: WatchProgressEntity, onOpen: () -> Unit) {
             .clip(shape)
             .background(if (focused) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
             .focusable(interactionSource = interaction)
-            .onKeyEvent { event ->
-                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                if (select && event.type == KeyEventType.KeyUp) {
-                    onOpen(); true
-                } else {
-                    false
-                }
-            },
+            .onSelect { onOpen() },
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(112.dp).background(MaterialTheme.colorScheme.background)) {
             if (!progress.posterUrl.isNullOrBlank()) {

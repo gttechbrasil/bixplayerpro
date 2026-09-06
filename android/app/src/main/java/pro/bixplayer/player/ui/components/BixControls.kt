@@ -75,18 +75,8 @@ fun BixButton(
                 else Modifier
             )
             .focusable(enabled = enabled, interactionSource = interaction)
-            // DPAD_CENTER and ENTER both arrive as key events on a TV remote.
-            .onKeyEvent { event ->
-                val isSelect = event.key == Key.DirectionCenter ||
-                    event.key == Key.Enter ||
-                    event.key == Key.NumPadEnter
-                if (enabled && isSelect && event.type == KeyEventType.KeyUp) {
-                    onClick()
-                    true
-                } else {
-                    false
-                }
-            }
+            // OK/ENTER on a remote, a tap on a phone (see Select.kt).
+            .onSelect { if (enabled) onClick() }
             .padding(horizontal = 28.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {

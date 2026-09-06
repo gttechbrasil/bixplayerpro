@@ -39,10 +39,10 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes, 
 - [x] Ambos os layouts respeitam `logo_url`, `bg_url`, banners e QR
 
 ## 6. Versão celular (`MobileActivity`)
-- [ ] Mesmas ViewModels e repositórios; UI adaptada ao toque e ao retrato: bottom navigation (TV / Filmes / Séries / Guia / Mais), listas verticais, grade de 3 colunas, busca com teclado nativo
-- [ ] Ativação com botão "Copiar MAC" e "Compartilhar" (WhatsApp para o revendedor)
-- [ ] Player: gestos (toque mostra controles, arrastar para seek, duplo toque ±10 s), rotação para paisagem em tela cheia, PiP ao sair do app quando o dispositivo suportar
-- [ ] Validar no AVD de celular; rotação, retorno de background e PiP
+- [x] Mesmas ViewModels e repositórios; UI adaptada ao toque e ao retrato: bottom navigation (TV / Filmes / Séries / Guia / Mais), listas verticais, grade de 3 colunas, busca com teclado nativo
+- [x] Ativação com botão "Copiar MAC" e "Compartilhar" (WhatsApp para o revendedor)
+- [x] Player: gestos (toque mostra controles, arrastar para seek, duplo toque ±10 s), rotação para paisagem em tela cheia, PiP ao sair do app quando o dispositivo suportar
+- [x] Validar no AVD de celular; rotação, retorno de background e PiP
 
 ## 7. libVLC real (fallback)
 - [x] `VlcEngine` com `libvlc-all` (versão estável mais recente), mesma interface `PlayerEngine`; suporte a faixas de áudio/legenda

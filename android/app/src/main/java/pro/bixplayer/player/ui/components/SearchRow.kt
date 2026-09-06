@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.ui.theme.bixFocusable
+import pro.bixplayer.player.ui.components.onSelect
 
 /**
  * Search in two states: a focusable row that only opens the text field (and therefore the
@@ -76,14 +77,7 @@ fun SearchRow(
                 .bixFocusable(focused, scale = 1f, shape = shape)
                 .background(MaterialTheme.colorScheme.surface, shape)
                 .focusable(interactionSource = interaction)
-                .onKeyEvent { event ->
-                    val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                    if (select && event.type == KeyEventType.KeyUp) {
-                        editing = true; true
-                    } else {
-                        false
-                    }
-                }
+                .onSelect { editing = true }
                 .padding(horizontal = 16.dp, vertical = 14.dp),
         ) {
             Text(
