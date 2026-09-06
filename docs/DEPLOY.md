@@ -54,6 +54,7 @@ as configurações padrão. Depois disso acesse `https://SEU_DOMINIO/admin` e fa
 | `PLATFORM_NAME` | sim | Nome exibido no painel e enviado ao app (também editável em Configurações) |
 | `MAC_PREFIX` | não | 3 bytes iniciais dos MACs gerados (padrão `02:50:50`, faixa "localmente administrada") |
 | `LOGIN_RATE_LIMIT`, `LOGIN_RATE_WINDOW` | não | Tentativas de login por IP+usuário e janela em segundos (padrão 10 / 300) |
+| `DEVICE_RATE_WINDOW`, `DEVICE_REGISTER_RATE_LIMIT`, `DEVICE_RATE_LIMIT`, `DEVICE_RATE_LIMIT_IP` | não | Limites dos endpoints públicos do app por janela (padrão 60 s): registros por IP (30), chamadas por dispositivo (20) e `config` por IP (600 — várias TVs saem pelo mesmo IP de operadora). `0` desliga o limite. Excedido → 429 com `Retry-After` |
 | `PAYMENT_PROVIDER` | sim | `mercadopago` (padrão) ou `fake` (desenvolvimento) |
 | `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET` | sim | Credenciais do Pix (§9). Ficam **apenas** no `.env` |
 | `PIX_EXPIRATION_MINUTES` | não | Validade do QR Pix (padrão 30) |
@@ -87,12 +88,39 @@ docker compose exec api python -m app.db.seed   # reexecutar o seed (idempotente
 
 ### Atualizar a versão
 
+A partir da máquina de desenvolvimento, com o repositório clonado e `deploy/.vps.env` +
+`deploy/id_deploy` configurados (§11.5): `./deploy/deploy.sh` faz push, `git reset --hard`
+no servidor, rebuild, migrações e healthcheck. Manualmente:
+
 ```bash
 cd /opt/iptv && git pull
 cd deploy && docker compose up -d --build
 ```
 
 As migrações pendentes são aplicadas automaticamente na subida da `api`.
+
+### Monitoramento e alerta
+
+`deploy/healthcheck-alert.sh` roda no VPS a cada 5 minutos (crontab do usuário `deploy`) e
+confere `https://DOMAIN/api/v1/health`. Quando o health falha ele registra em
+`/home/deploy/healthcheck.log` e avisa **uma vez** (e de novo quando o serviço volta) pelos
+canais configurados em `/home/deploy/alert.env` (arquivo opcional, fora do git):
+
+```bash
+TELEGRAM_BOT_TOKEN=123456:ABC...   # bot criado no @BotFather
+TELEGRAM_CHAT_ID=-1001234567890    # chat ou grupo que recebe os alertas
+ALERT_EMAIL=ops@exemplo.com        # requer o comando `mail` configurado (msmtp/mailutils)
+```
+
+Sem `alert.env` o script só grava no log. Instalação (feita em 06/09/2026):
+
+```bash
+scp -i deploy/id_deploy deploy/healthcheck-alert.sh deploy@<IP>:/home/deploy/
+ssh -i deploy/id_deploy deploy@<IP> 'chmod 750 healthcheck-alert.sh; (crontab -l; echo "*/5 * * * * /home/deploy/healthcheck-alert.sh >> /home/deploy/healthcheck.log 2>&1") | crontab -'
+```
+
+Os containers têm `restart: unless-stopped`; `db`, `redis` e `api` têm healthcheck próprio no
+compose e a `api` só sobe depois de `db` e `redis` saudáveis. Rotação de logs: §11.7.
 
 ## 6. Backup e restauração do PostgreSQL
 
@@ -129,6 +157,17 @@ docker compose start api web
 
 Para restaurar em um banco limpo, recrie o volume antes: `docker compose down -v db` e `docker compose up -d db`.
 
+### Ensaio de restauração
+
+Feito em 06/09/2026 com o dump diário mais recente, restaurado em um banco temporário
+`restore_test` no próprio container (`CREATE DATABASE restore_test` → `gunzip -c dump | psql
+-d restore_test` → comparação de contagens por tabela com o banco vivo → `DROP DATABASE`). As
+contagens bateram (a única diferença foi um registro de `audit_log` gravado depois das 03:30 do
+dump) e a `alembic_version` restaurada é a mesma do banco vivo. O roteiro usado está em
+`deploy/restore-drill.sh`; rode-o como arquivo no servidor (`bash restore-drill.sh`), não por
+`ssh … 'bash -s'` — o `docker compose exec -T` engoliria o restante do script pela stdin.
+Repita o ensaio a cada troca de versão do Postgres ou pelo menos a cada trimestre.
+
 ## 7. Desenvolvimento local sem Docker (Windows/Linux)
 
 Ambiente usado durante o M1 nesta máquina:
@@ -160,7 +199,11 @@ sobe só o banco e o Redis nas portas locais.
 
 ## 8. Checklist de segurança
 
-- `COOKIE_SECURE=true` e `APP_ENV=production` no VPS
+- `COOKIE_SECURE=true` e `APP_ENV=production` no VPS (desativa `/api/docs` **e** `/api/openapi.json`)
+- Cabeçalhos no Caddy: HSTS (1 ano, subdomínios), `X-Content-Type-Options`, `X-Frame-Options`,
+  `Referrer-Policy`, `Permissions-Policy` e CSP no painel; corpo de requisição limitado a 8 MB em `/api`
+- Rate limit nos endpoints públicos do app (`DEVICE_*`) e no login (`LOGIN_*`)
+- Revisão de rotas e achados em [`SECURITY-REVIEW.md`](SECURITY-REVIEW.md)
 - `SECRET_KEY` e `FERNET_KEY` únicos por instalação e fora do git
 - SSH somente por chave (`PasswordAuthentication no`), root sem senha (`prohibit-password`)
 - `ufw` com política padrão *deny* e apenas 22/80/443 liberados

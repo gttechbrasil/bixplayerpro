@@ -24,7 +24,7 @@ Erros seguem o formato `{"detail": {"message": "<texto em português>", "code": 
 | 404 | Registro não encontrado |
 | 409 | Conflito (ex.: `username_taken`) |
 | 422 | Corpo/parâmetros inválidos |
-| 429 | Muitas tentativas de login (`rate_limited`) |
+| 429 | Muitas tentativas de login, ou limite dos endpoints públicos do app excedido (`rate_limited`; a resposta traz `Retry-After` em segundos e `detail.retry_after`) |
 
 ## Paginação
 
@@ -170,6 +170,9 @@ Returns the logged-in actor. Checks the admin cookie first, then the reseller on
 
 Registra o aparelho e devolve MAC + token
 
+Limite: `DEVICE_REGISTER_RATE_LIMIT` chamadas por IP e `DEVICE_RATE_LIMIT` por `device_id` a cada
+`DEVICE_RATE_WINDOW` segundos (padrão 30 / 20 / 60). Acima disso → `429 rate_limited` com `Retry-After`.
+
 **Autenticação:** Sem autenticação.
 
 **Request**
@@ -196,6 +199,9 @@ Registra o aparelho e devolve MAC + token
 Configuração completa para o app (playlists, tema, status)
 
 **Autenticação:** Header `Authorization: Bearer <token>` (token devolvido pelo `POST /device/register`).
+
+Limite: `DEVICE_RATE_LIMIT` chamadas por dispositivo e `DEVICE_RATE_LIMIT_IP` por IP a cada
+`DEVICE_RATE_WINDOW` segundos (padrão 20 / 600 / 60) → `429 rate_limited` com `Retry-After`.
 
 **Response 200**
 
