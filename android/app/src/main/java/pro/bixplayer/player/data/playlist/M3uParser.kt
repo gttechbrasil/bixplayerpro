@@ -17,6 +17,13 @@ data class M3uEntry(
     val number: Int? = null,
 )
 
+/** Attributes of the `#EXTM3U` header line; `url-tvg` / `x-tvg-url` point at the XMLTV guide. */
+data class M3uHeader(val attributes: Map<String, String>) {
+    val epgUrl: String?
+        get() = (attributes["url-tvg"] ?: attributes["x-tvg-url"])
+            ?.split(',')?.firstOrNull()?.trim()?.takeIf { it.startsWith("http", ignoreCase = true) }
+}
+
 /**
  * Streaming parser for M3U / M3U8 playlists.
  *
@@ -33,10 +40,15 @@ object M3uParser {
     private const val BOM = "\uFEFF"
 
     /**
-     * Parses [input] and calls [onEntry] for every valid entry.
-     * Returns how many entries were emitted; [onEntry] may stop the parse by returning false.
+     * Parses [input] and calls [onEntry] for every valid entry; [onHeader] once, if the file
+     * starts with `#EXTM3U`. Returns how many entries were emitted; [onEntry] may stop the
+     * parse by returning false.
      */
-    fun parse(input: InputStream, onEntry: (M3uEntry) -> Boolean): Int {
+    fun parse(
+        input: InputStream,
+        onHeader: (M3uHeader) -> Unit = {},
+        onEntry: (M3uEntry) -> Boolean,
+    ): Int {
         var emitted = 0
         var skipped = 0
         var pendingInfo: ExtInf? = null
@@ -47,6 +59,10 @@ object M3uParser {
                 val line = raw.trim().removePrefix(BOM)
                 when {
                     line.isEmpty() -> Unit
+
+                    line.startsWith("#EXTM3U", ignoreCase = true) -> {
+                        onHeader(M3uHeader(parseAttributes(line.substring("#EXTM3U".length))))
+                    }
 
                     line.startsWith("#EXTINF", ignoreCase = true) -> {
                         pendingInfo = parseExtInf(line)
@@ -114,10 +130,11 @@ object M3uParser {
 
         val head = afterPrefix.substring(0, commaIndex)
         val title = afterPrefix.substring(commaIndex + 1).trim()
-        val attributes = ATTRIBUTE_REGEX.findAll(head)
-            .associate { it.groupValues[1].lowercase() to it.groupValues[2] }
-        return ExtInf(title, attributes)
+        return ExtInf(title, parseAttributes(head))
     }
+
+    private fun parseAttributes(text: String): Map<String, String> =
+        ATTRIBUTE_REGEX.findAll(text).associate { it.groupValues[1].lowercase() to it.groupValues[2] }
 
     /** Only absolute http(s) URLs are playable; relative paths and junk lines are dropped. */
     private fun isPlayableUrl(line: String): Boolean =

@@ -36,6 +36,9 @@ sealed interface SessionState {
 
     /** Retries exhausted; the screen offers a manual retry button. */
     data class Failed(val message: String) : SessionState
+
+    /** A VOD item reached its end. */
+    data object Ended : SessionState
 }
 
 /**
@@ -85,6 +88,7 @@ class PlayerSession @Inject constructor(
             engine is PlaybackState.Buffering -> SessionState.Loading
             engine is PlaybackState.Playing -> SessionState.Playing
             engine is PlaybackState.Paused -> SessionState.Paused
+            engine is PlaybackState.Ended -> SessionState.Ended
             else -> SessionState.Idle
         }
     }.stateIn(scope, SharingStarted.Eagerly, SessionState.Idle)
@@ -92,6 +96,17 @@ class PlayerSession @Inject constructor(
     /** URL the user asked for; survives a background release so [onForeground] can resume. */
     private val _currentUrl = MutableStateFlow<String?>(null)
     val currentUrl: StateFlow<String?> = _currentUrl.asStateFlow()
+
+    /** Room id of the live channel the player tuned last; the live list re-focuses it on return. */
+    val currentChannelId = MutableStateFlow<Long?>(null)
+
+    /** Position/duration of the current item, refreshed twice a second while something plays. */
+    data class Progress(val positionMs: Long, val durationMs: Long, val seekable: Boolean) {
+        val fraction: Float get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
+    }
+
+    private val _progress = MutableStateFlow(Progress(0L, 0L, false))
+    val progress: StateFlow<Progress> = _progress.asStateFlow()
 
     private var attempt = 0
     private var retryJob: Job? = null
@@ -102,7 +117,24 @@ class PlayerSession @Inject constructor(
                 if (state is PlaybackState.Error) onEngineError(state)
             }
         }
+        scope.launch {
+            while (true) {
+                val engine = _engine.value
+                val next = Progress(engine.positionMs, engine.durationMs, engine.isSeekable)
+                if (next != _progress.value) _progress.value = next
+                delay(PROGRESS_TICK_MS)
+            }
+        }
     }
+
+    fun seekTo(positionMs: Long) {
+        _engine.value.seekTo(positionMs)
+        _progress.value = Progress(positionMs, _engine.value.durationMs, _engine.value.isSeekable)
+    }
+
+    fun seekBy(deltaMs: Long) = seekTo(_engine.value.positionMs + deltaMs)
+
+    val isPlaying: Boolean get() = engineState.value is PlaybackState.Playing
 
     fun play(url: String) {
         if (url == _currentUrl.value && state.value !is SessionState.Failed && _retrying.value == null) {
@@ -192,5 +224,6 @@ class PlayerSession @Inject constructor(
     companion object {
         const val MAX_RETRIES = 2
         const val RETRY_BASE_MS = 1_500L
+        const val PROGRESS_TICK_MS = 500L
     }
 }

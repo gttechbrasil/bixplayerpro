@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -54,7 +56,9 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
+import pro.bixplayer.player.data.db.WatchProgressEntity
 import pro.bixplayer.player.domain.model.AppConfig
+import pro.bixplayer.player.util.TimeFormat
 import pro.bixplayer.player.ui.screens.playlists.PlaylistViewModel
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.BixScrim
@@ -70,10 +74,15 @@ import pro.bixplayer.player.ui.theme.bixFocusable
 fun HomeScreen(
     config: AppConfig?,
     onLive: () -> Unit,
+    onMovies: () -> Unit,
+    onSeries: () -> Unit,
     onSettings: () -> Unit,
+    onResume: (kind: String, id: Long) -> Unit,
     viewModel: PlaylistViewModel = hiltViewModel(),
+    homeViewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val home by homeViewModel.uiState.collectAsStateWithLifecycle()
 
     // First sync happens as soon as the device is usable; it is a no-op when already synced.
     LaunchedEffect(state.activeId) {
@@ -132,17 +141,17 @@ fun HomeScreen(
                 MenuCard(
                     title = stringResource(R.string.home_movies),
                     icon = "🎬",
-                    subtitle = stringResource(R.string.home_coming_soon),
-                    enabled = false,
-                    onClick = {},
+                    subtitle = stringResource(R.string.home_movies_count, home.movieCount),
+                    enabled = home.movieCount > 0,
+                    onClick = onMovies,
                     modifier = Modifier.weight(1f),
                 )
                 MenuCard(
                     title = stringResource(R.string.home_series),
                     icon = "📺",
-                    subtitle = stringResource(R.string.home_coming_soon),
-                    enabled = false,
-                    onClick = {},
+                    subtitle = stringResource(R.string.home_series_count, home.seriesCount),
+                    enabled = home.seriesCount > 0,
+                    onClick = onSeries,
                     modifier = Modifier.weight(1f),
                 )
                 MenuCard(
@@ -161,6 +170,14 @@ fun HomeScreen(
                     text = notice,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
+                )
+            }
+
+            if (home.continueWatching.isNotEmpty()) {
+                Spacer(Modifier.height(24.dp))
+                ContinueWatchingRow(
+                    items = home.continueWatching,
+                    onOpen = { progress -> homeViewModel.resolve(progress, onResume) },
                 )
             }
 
@@ -295,6 +312,75 @@ private fun MenuCard(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+/** "Continuar assistindo": one card per movie or series, most recent first. */
+@Composable
+private fun ContinueWatchingRow(
+    items: List<WatchProgressEntity>,
+    onOpen: (WatchProgressEntity) -> Unit,
+) {
+    Column {
+        Text(
+            text = stringResource(R.string.home_continue_watching),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Spacer(Modifier.height(10.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            items(items, key = { it.kind + it.itemRemoteId }) { progress ->
+                ContinueCard(progress = progress, onOpen = { onOpen(progress) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContinueCard(progress: WatchProgressEntity, onOpen: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val focused by interaction.collectIsFocusedAsState()
+    val shape = RoundedCornerShape(10.dp)
+    Column(
+        modifier = Modifier
+            .width(200.dp)
+            .bixFocusable(focused, scale = BixFocus.SCALE_SMALL, shape = shape)
+            .clip(shape)
+            .background(if (focused) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
+            .focusable(interactionSource = interaction)
+            .onKeyEvent { event ->
+                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
+                if (select && event.type == KeyEventType.KeyUp) {
+                    onOpen(); true
+                } else {
+                    false
+                }
+            },
+    ) {
+        Box(modifier = Modifier.fillMaxWidth().height(112.dp).background(MaterialTheme.colorScheme.background)) {
+            if (!progress.posterUrl.isNullOrBlank()) {
+                AsyncImage(model = progress.posterUrl, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            }
+            val fraction = if (progress.durationMs > 0) (progress.positionMs.toFloat() / progress.durationMs).coerceIn(0f, 1f) else 0f
+            Box(modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.25f)))
+            Box(modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth(fraction).height(4.dp).background(MaterialTheme.colorScheme.primary))
+        }
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+            Text(
+                text = progress.title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = progress.subtitle ?: TimeFormat.clock(progress.positionMs),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 

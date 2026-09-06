@@ -65,6 +65,15 @@ interface PlayerEngine {
     /** Stops and unloads the media, keeping the engine ready for the next [prepare]. */
     fun stop()
 
+    /** Current position and duration in ms; duration is 0 or negative for live streams. */
+    val positionMs: Long
+    val durationMs: Long
+
+    /** True when the loaded media has a known, finite duration (VOD). */
+    val isSeekable: Boolean
+
+    fun seekTo(positionMs: Long)
+
     fun selectTrack(option: TrackOption)
 
     fun disableSubtitles()

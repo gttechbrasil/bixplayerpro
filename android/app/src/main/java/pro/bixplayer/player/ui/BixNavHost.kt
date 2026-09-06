@@ -12,18 +12,25 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import pro.bixplayer.player.BuildConfig
+import pro.bixplayer.player.data.db.ContentKind
 import pro.bixplayer.player.domain.model.ConfigState
 import pro.bixplayer.player.ui.locale.BixLocale
 import pro.bixplayer.player.ui.screens.activation.ActivationScreen
 import pro.bixplayer.player.ui.screens.boot.BootDestination
 import pro.bixplayer.player.ui.screens.boot.BootViewModel
+import pro.bixplayer.player.ui.screens.catalog.CatalogScreen
+import pro.bixplayer.player.ui.screens.catalog.CatalogViewModel
 import pro.bixplayer.player.ui.screens.expired.ExpiredScreen
 import pro.bixplayer.player.ui.screens.home.HomeScreen
 import pro.bixplayer.player.ui.screens.live.LiveScreen
+import pro.bixplayer.player.ui.screens.movies.MovieDetailScreen
+import pro.bixplayer.player.ui.screens.movies.MovieDetailViewModel
 import pro.bixplayer.player.ui.screens.player.PlayerScreen
 import pro.bixplayer.player.ui.screens.player.PlayerViewModel
 import pro.bixplayer.player.ui.screens.player.ZapScope
 import pro.bixplayer.player.ui.screens.playlists.ChangePlaylistScreen
+import pro.bixplayer.player.ui.screens.series.SeriesDetailScreen
+import pro.bixplayer.player.ui.screens.series.SeriesDetailViewModel
 import pro.bixplayer.player.ui.screens.settings.SettingsScreen
 import pro.bixplayer.player.ui.screens.splash.SplashScreen
 import pro.bixplayer.player.ui.screens.update.UpdateScreen
@@ -39,11 +46,28 @@ object Routes {
     const val PLAYER = "player"
     const val SETTINGS = "settings"
     const val CHANGE_PLAYLIST = "change_playlist"
+    const val CATALOG = "catalog"
+    const val MOVIE = "movie"
+    const val SERIES = "series"
 
-    const val PLAYER_PATTERN = "$PLAYER/{${PlayerViewModel.ARG_CHANNEL_ID}}?${PlayerViewModel.ARG_SCOPE}={${PlayerViewModel.ARG_SCOPE}}"
+    const val PLAYER_PATTERN =
+        "$PLAYER/{${PlayerViewModel.ARG_KIND}}/{${PlayerViewModel.ARG_ID}}" +
+            "?${PlayerViewModel.ARG_SCOPE}={${PlayerViewModel.ARG_SCOPE}}&${PlayerViewModel.ARG_RESUME}={${PlayerViewModel.ARG_RESUME}}"
+    const val CATALOG_PATTERN = "$CATALOG/{${CatalogViewModel.ARG_KIND}}"
+    const val MOVIE_PATTERN = "$MOVIE/{${MovieDetailViewModel.ARG_MOVIE_ID}}"
+    const val SERIES_PATTERN = "$SERIES/{${SeriesDetailViewModel.ARG_SERIES_ID}}"
 
     fun player(channelId: Long, scopeKey: String): String =
-        "$PLAYER/$channelId?${PlayerViewModel.ARG_SCOPE}=${ZapScope.encode(scopeKey)}"
+        "$PLAYER/${ContentKind.LIVE}/$channelId?${PlayerViewModel.ARG_SCOPE}=${ZapScope.encode(scopeKey)}"
+
+    fun playerVod(kind: String, id: Long, resume: Boolean): String =
+        "$PLAYER/$kind/$id?${PlayerViewModel.ARG_RESUME}=${if (resume) "1" else "0"}"
+
+    fun catalog(kind: String): String = "$CATALOG/$kind"
+
+    fun movie(id: Long): String = "$MOVIE/$id"
+
+    fun series(id: Long): String = "$SERIES/$id"
 }
 
 @Composable
@@ -111,7 +135,10 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
                 HomeScreen(
                     config = config,
                     onLive = { navController.navigate(Routes.LIVE) { launchSingleTop = true } },
+                    onMovies = { navController.navigate(Routes.catalog(ContentKind.MOVIE)) { launchSingleTop = true } },
+                    onSeries = { navController.navigate(Routes.catalog(ContentKind.SERIES)) { launchSingleTop = true } },
                     onSettings = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } },
+                    onResume = { kind, id -> navController.navigate(Routes.playerVod(kind, id, resume = true)) },
                 )
             }
 
@@ -125,13 +152,53 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
             }
 
             composable(
+                route = Routes.CATALOG_PATTERN,
+                arguments = listOf(navArgument(CatalogViewModel.ARG_KIND) { type = NavType.StringType }),
+            ) { entry ->
+                val kind = entry.arguments?.getString(CatalogViewModel.ARG_KIND) ?: ContentKind.MOVIE
+                CatalogScreen(
+                    onOpen = { item ->
+                        navController.navigate(if (kind == ContentKind.SERIES) Routes.series(item.id) else Routes.movie(item.id))
+                    },
+                )
+            }
+
+            composable(
+                route = Routes.MOVIE_PATTERN,
+                arguments = listOf(navArgument(MovieDetailViewModel.ARG_MOVIE_ID) { type = NavType.LongType }),
+            ) {
+                MovieDetailScreen(
+                    onPlay = { movie, resume ->
+                        navController.navigate(Routes.playerVod(ContentKind.MOVIE, movie.id, resume))
+                    },
+                )
+            }
+
+            composable(
+                route = Routes.SERIES_PATTERN,
+                arguments = listOf(navArgument(SeriesDetailViewModel.ARG_SERIES_ID) { type = NavType.LongType }),
+            ) {
+                SeriesDetailScreen(
+                    onPlayEpisode = { episode ->
+                        navController.navigate(Routes.playerVod(ContentKind.EPISODE, episode.id, resume = true))
+                    },
+                )
+            }
+
+            composable(
                 route = Routes.PLAYER_PATTERN,
                 arguments = listOf(
-                    navArgument(PlayerViewModel.ARG_CHANNEL_ID) { type = NavType.LongType },
+                    navArgument(PlayerViewModel.ARG_KIND) { type = NavType.StringType },
+                    navArgument(PlayerViewModel.ARG_ID) { type = NavType.LongType },
                     navArgument(PlayerViewModel.ARG_SCOPE) {
                         type = NavType.StringType
                         nullable = true
                         defaultValue = ZapScope.ALL
+                    },
+                    navArgument(PlayerViewModel.ARG_RESUME) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = "0"
                     },
                 ),
             ) {

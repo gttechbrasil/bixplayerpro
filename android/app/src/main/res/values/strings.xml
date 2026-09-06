@@ -104,4 +104,32 @@
     <string name="error_network">Sem conexão com a internet.</string>
     <string name="error_server">O servidor não respondeu. Tente novamente.</string>
     <string name="error_unknown">Ocorreu um erro inesperado.</string>
+
+    <!-- Catalogue (movies / series) -->
+    <string name="catalog_search_movies">Buscar filme</string>
+    <string name="catalog_search_series">Buscar série</string>
+    <string name="catalog_empty">Nada por aqui.</string>
+    <string name="catalog_no_favorites">Você ainda não tem favoritos. Foque um título e pressione MENU.</string>
+    <string name="catalog_sort_provider">Ordem: original</string>
+    <string name="catalog_sort_recent">Ordem: recentes</string>
+    <string name="catalog_sort_az">Ordem: A–Z</string>
+    <string name="movie_watch">Assistir</string>
+    <string name="movie_continue">Continuar de %1$s</string>
+    <string name="movie_restart">Assistir do início</string>
+    <string name="movie_no_details">O provedor não enviou sinopse para este título.</string>
+    <string name="movie_director">Direção</string>
+    <string name="movie_cast">Elenco</string>
+    <string name="home_continue_watching">Continuar assistindo</string>
+    <string name="home_movies_count">%1$d filmes</string>
+    <string name="home_series_count">%1$d séries</string>
+    <string name="player_pause_hint">OK pausa · ←→ avança/volta · MENU faixas</string>
+    <string name="player_next_episode_in">Próximo episódio em %1$d s</string>
+    <string name="player_next_episode_now">Assistir agora</string>
+    <string name="detail_favorite_add">★ Favoritar</string>
+    <string name="detail_favorite_remove">★ Favoritado</string>
+    <string name="series_season">Temporada %1$d</string>
+    <string name="series_continue">Continuar T%1$d E%2$d</string>
+    <string name="series_continue_at">Continuar T%1$d E%2$d de %3$s</string>
+    <string name="series_no_episodes">Nenhum episódio disponível.</string>
+    <string name="series_watched">Assistido</string>
 </resources>

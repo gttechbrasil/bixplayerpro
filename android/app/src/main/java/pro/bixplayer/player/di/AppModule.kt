@@ -25,6 +25,13 @@ import pro.bixplayer.player.data.datastore.DevicePreferences
 import pro.bixplayer.player.data.datastore.DeviceStore
 import pro.bixplayer.player.data.db.BixDatabase
 import pro.bixplayer.player.data.db.CategoryDao
+import pro.bixplayer.player.data.db.CategoryRuleDao
+import pro.bixplayer.player.data.db.EpgDao
+import pro.bixplayer.player.data.db.EpisodeDao
+import pro.bixplayer.player.data.db.MovieDao
+import pro.bixplayer.player.data.db.SeriesDao
+import pro.bixplayer.player.data.db.SyncDao
+import pro.bixplayer.player.data.db.WatchProgressDao
 import pro.bixplayer.player.data.db.ChannelDao
 import pro.bixplayer.player.data.db.FavoriteDao
 import pro.bixplayer.player.data.db.PlaylistSyncDao
@@ -135,6 +142,20 @@ object AppModule {
     @Provides fun provideFavoriteDao(db: BixDatabase): FavoriteDao = db.favoriteDao()
 
     @Provides fun providePlaylistSyncDao(db: BixDatabase): PlaylistSyncDao = db.playlistSyncDao()
+
+    @Provides fun provideMovieDao(db: BixDatabase): MovieDao = db.movieDao()
+
+    @Provides fun provideSeriesDao(db: BixDatabase): SeriesDao = db.seriesDao()
+
+    @Provides fun provideEpisodeDao(db: BixDatabase): EpisodeDao = db.episodeDao()
+
+    @Provides fun provideWatchProgressDao(db: BixDatabase): WatchProgressDao = db.watchProgressDao()
+
+    @Provides fun provideEpgDao(db: BixDatabase): EpgDao = db.epgDao()
+
+    @Provides fun provideCategoryRuleDao(db: BixDatabase): CategoryRuleDao = db.categoryRuleDao()
+
+    @Provides fun provideSyncDao(db: BixDatabase): SyncDao = db.syncDao()
 
     @Provides
     @Singleton

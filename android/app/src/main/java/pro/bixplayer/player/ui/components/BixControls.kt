@@ -90,7 +90,7 @@ fun BixButton(
             .padding(horizontal = 28.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, style = MaterialTheme.typography.labelLarge, color = content)
+        Text(text = text, style = MaterialTheme.typography.labelLarge, color = content, maxLines = 1, softWrap = false)
     }
 }
 

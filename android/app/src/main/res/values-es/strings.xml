@@ -93,4 +93,31 @@
     <string name="error_network">Sin conexión a internet.</string>
     <string name="error_server">El servidor no respondió. Intente de nuevo.</string>
     <string name="error_unknown">Ocurrió un error inesperado.</string>
+
+    <string name="catalog_search_movies">Buscar película</string>
+    <string name="catalog_search_series">Buscar serie</string>
+    <string name="catalog_empty">Nada por aquí.</string>
+    <string name="catalog_no_favorites">Aún no tiene favoritos. Enfoque un título y presione MENU.</string>
+    <string name="catalog_sort_provider">Orden: original</string>
+    <string name="catalog_sort_recent">Orden: recientes</string>
+    <string name="catalog_sort_az">Orden: A–Z</string>
+    <string name="movie_watch">Ver</string>
+    <string name="movie_continue">Continuar desde %1$s</string>
+    <string name="movie_restart">Ver desde el inicio</string>
+    <string name="movie_no_details">El proveedor no envió sinopsis para este título.</string>
+    <string name="movie_director">Dirección</string>
+    <string name="movie_cast">Reparto</string>
+    <string name="home_continue_watching">Seguir viendo</string>
+    <string name="home_movies_count">%1$d películas</string>
+    <string name="home_series_count">%1$d series</string>
+    <string name="player_pause_hint">OK pausa · ←→ adelantar/retroceder · MENU pistas</string>
+    <string name="player_next_episode_in">Próximo episodio en %1$d s</string>
+    <string name="player_next_episode_now">Ver ahora</string>
+    <string name="detail_favorite_add">★ Favorito</string>
+    <string name="detail_favorite_remove">★ Favorito ✓</string>
+    <string name="series_season">Temporada %1$d</string>
+    <string name="series_continue">Continuar T%1$d E%2$d</string>
+    <string name="series_continue_at">Continuar T%1$d E%2$d desde %3$s</string>
+    <string name="series_no_episodes">Ningún episodio disponible.</string>
+    <string name="series_watched">Visto</string>
 </resources>

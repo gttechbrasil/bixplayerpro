@@ -39,6 +39,12 @@ class VlcEngine(private val messages: PlayerMessages) : PlayerEngine {
         _state.value = PlaybackState.Idle
     }
 
+    override val positionMs: Long = 0L
+    override val durationMs: Long = 0L
+    override val isSeekable: Boolean = false
+
+    override fun seekTo(positionMs: Long) = Unit
+
     override fun selectTrack(option: TrackOption) = Unit
 
     override fun disableSubtitles() = Unit

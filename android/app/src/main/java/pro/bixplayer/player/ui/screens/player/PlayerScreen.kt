@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
@@ -69,11 +71,14 @@ import pro.bixplayer.player.ui.components.VideoSurface
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.bixFocusable
+import pro.bixplayer.player.util.TimeFormat
 
 /**
- * Full-screen player. All input is the D-pad: OK toggles the info overlay, ↑/↓ zap inside the
- * list the user came from, ←/→ open the quick channel list, MENU opens audio/subtitle tracks,
- * digits tune by number and BACK closes whatever is open before leaving the screen.
+ * Full-screen player, live and VOD. Live: OK toggles the info overlay, ↑/↓ zap inside the
+ * list the user came from, ←/→ open the quick channel list, digits tune by number. VOD: OK
+ * pauses, ←/→ seek 10 s (more while held), the overlay shows the progress bar and an episode
+ * end offers the next one. MENU opens audio/subtitle tracks and BACK closes whatever is open
+ * before leaving the screen.
  */
 @OptIn(UnstableApi::class)
 @Composable
@@ -85,8 +90,8 @@ fun PlayerScreen(
     val notFound = stringResource(R.string.player_channel_not_found)
     val rootRequester = remember { FocusRequester() }
 
-    // The screen must stay on while a channel plays, and the decoder must not run in the
-    // background: release on stop, resume with the same channel on start.
+    // The screen must stay on while something plays, and the decoder must not run in the
+    // background: release on stop, resume with the same item on start.
     val view = LocalView.current
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -106,17 +111,23 @@ fun PlayerScreen(
         }
     }
 
+    LaunchedEffect(state.finished) {
+        if (state.finished) onExit()
+    }
+
     // BACK closes whatever is open, then the overlay, and only then leaves the screen.
     BackHandler {
         when {
             state.quickListVisible -> viewModel.closeQuickList()
             state.tracksVisible -> viewModel.closeTracks()
+            state.nextEpisode != null -> viewModel.cancelNextEpisode()
             state.overlayVisible && state.playback is SessionState.Playing -> viewModel.hideOverlay()
             else -> onExit()
         }
     }
 
-    val anyPanel = state.quickListVisible || state.tracksVisible || state.playback is SessionState.Failed
+    val anyPanel = state.quickListVisible || state.tracksVisible || state.nextEpisode != null ||
+        state.playback is SessionState.Failed
     LaunchedEffect(anyPanel) {
         if (!anyPanel) {
             delay(50)
@@ -131,27 +142,41 @@ fun PlayerScreen(
             .focusRequester(rootRequester)
             .focusable()
             .onPreviewKeyEvent { event ->
-                if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
                 // Panels handle their own keys; the root only acts when nothing is open.
-                if (state.quickListVisible) return@onPreviewKeyEvent false
+                if (state.quickListVisible || state.nextEpisode != null) return@onPreviewKeyEvent false
                 if (state.tracksVisible) {
-                    return@onPreviewKeyEvent if (event.key == Key.Menu) {
+                    return@onPreviewKeyEvent if (event.key == Key.Menu && event.type == KeyEventType.KeyUp) {
                         viewModel.closeTracks(); true
                     } else {
                         false
                     }
                 }
+                // VOD seeking reacts to KeyDown (with repeats) so a held key keeps moving.
+                if (!state.isLive && event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.DirectionLeft || event.key == Key.DirectionRight)
+                ) {
+                    viewModel.seek(event.key == Key.DirectionRight)
+                    return@onPreviewKeyEvent true
+                }
+                if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
                 when (event.key) {
-                    Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> {
-                        if (state.playback is SessionState.Failed) false else { viewModel.toggleOverlay(); true }
+                    Key.DirectionCenter, Key.Enter, Key.NumPadEnter, Key.MediaPlayPause -> {
+                        when {
+                            state.playback is SessionState.Failed -> false
+                            state.isLive -> { viewModel.toggleOverlay(); true }
+                            else -> { viewModel.togglePause(); true }
+                        }
                     }
-                    Key.DirectionUp, Key.ChannelUp -> { viewModel.previous(); true }
-                    Key.DirectionDown, Key.ChannelDown -> { viewModel.next(); true }
-                    Key.DirectionLeft, Key.DirectionRight -> { viewModel.openQuickList(); true }
+                    Key.MediaPlay, Key.MediaPause -> { if (!state.isLive) viewModel.togglePause(); true }
+                    Key.DirectionUp, Key.ChannelUp -> { if (state.isLive) viewModel.previous() else viewModel.showOverlay(); true }
+                    Key.DirectionDown, Key.ChannelDown -> { if (state.isLive) viewModel.next() else viewModel.showOverlay(); true }
+                    Key.DirectionLeft, Key.DirectionRight -> { if (state.isLive) viewModel.openQuickList(); true }
+                    Key.MediaFastForward -> { viewModel.seek(true); true }
+                    Key.MediaRewind -> { viewModel.seek(false); true }
                     Key.Menu, Key.Captions -> { viewModel.openTracks(); true }
                     else -> {
                         val ch = event.utf16CodePoint.toChar()
-                        if (ch in '0'..'9') {
+                        if (state.isLive && ch in '0'..'9') {
                             viewModel.typeDigit(ch) { number -> notFound.format(number) }
                             true
                         } else {
@@ -171,6 +196,12 @@ fun PlayerScreen(
             SessionState.Loading -> CircularProgressIndicator(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.align(Alignment.Center),
+            )
+            SessionState.Paused -> Text(
+                text = "❚❚",
+                style = MaterialTheme.typography.displayMedium,
+                color = Color.White,
+                modifier = Modifier.align(Alignment.Center).background(BixScrim, RoundedCornerShape(16.dp)).padding(24.dp),
             )
             is SessionState.Retrying -> Text(
                 text = stringResource(R.string.player_retrying, playback.attempt, playback.max),
@@ -217,7 +248,7 @@ fun PlayerScreen(
         }
 
         AnimatedVisibility(
-            visible = state.overlayVisible && !state.quickListVisible && !state.tracksVisible,
+            visible = state.overlayVisible && !state.quickListVisible && !state.tracksVisible && state.nextEpisode == null,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter),
@@ -251,6 +282,16 @@ fun PlayerScreen(
                 onSubtitlesOff = viewModel::disableSubtitles,
             )
         }
+
+        state.nextEpisode?.let { next ->
+            NextEpisodePanel(
+                title = "T${next.season} E${next.episode}  ·  ${next.title}",
+                secondsLeft = state.nextCountdown ?: 0,
+                onPlay = viewModel::playNextEpisode,
+                onCancel = viewModel::cancelNextEpisode,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(40.dp),
+            )
+        }
     }
 }
 
@@ -263,7 +304,7 @@ private fun InfoOverlay(state: PlayerUiState) {
             delay(10_000)
         }
     }
-    val channel = state.channel
+    val item = state.item
 
     Column(
         modifier = Modifier
@@ -272,25 +313,28 @@ private fun InfoOverlay(state: PlayerUiState) {
             .padding(horizontal = 48.dp, vertical = 32.dp),
     ) {
         Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = channel?.number?.toString().orEmpty(),
-                style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Spacer(Modifier.width(20.dp))
+            if (state.isLive) {
+                Text(
+                    text = state.channel?.number?.toString().orEmpty(),
+                    style = MaterialTheme.typography.displayMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.width(20.dp))
+            }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = channel?.name.orEmpty(),
+                    text = item?.title.orEmpty(),
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = listOfNotNull(
-                        state.categoryName?.takeIf { it.isNotBlank() },
-                        stringResource(R.string.live_epg_slot),
-                    ).joinToString("  ·  "),
+                    text = if (state.isLive) {
+                        listOfNotNull(item?.subtitle?.takeIf { it.isNotBlank() }, stringResource(R.string.live_epg_slot)).joinToString("  ·  ")
+                    } else {
+                        item?.subtitle.orEmpty()
+                    },
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -303,12 +347,75 @@ private fun InfoOverlay(state: PlayerUiState) {
                 color = Color.White,
             )
         }
+
+        if (!state.isLive) {
+            Spacer(Modifier.height(16.dp))
+            val position = state.seekTargetMs ?: state.progress.positionMs
+            val duration = state.progress.durationMs
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = TimeFormat.clock(position),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (state.seekTargetMs != null) MaterialTheme.colorScheme.primary else Color.White,
+                )
+                Spacer(Modifier.width(16.dp))
+                LinearProgressIndicator(
+                    progress = { if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f },
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = Color.White.copy(alpha = 0.25f),
+                    modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
+                )
+                Spacer(Modifier.width(16.dp))
+                Text(text = TimeFormat.clock(duration), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            }
+        }
+
         Spacer(Modifier.height(8.dp))
         Text(
-            text = stringResource(R.string.player_hints),
+            text = stringResource(if (state.isLive) R.string.player_hints else R.string.player_pause_hint),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+@Composable
+private fun NextEpisodePanel(
+    title: String,
+    secondsLeft: Int,
+    onPlay: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val playRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        delay(50)
+        runCatching { playRequester.requestFocus() }
+    }
+    Column(
+        modifier = modifier
+            .width(460.dp)
+            .background(Color(0xF0101524), RoundedCornerShape(16.dp))
+            .padding(24.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.player_next_episode_in, secondsLeft),
+            style = MaterialTheme.typography.titleLarge,
+            color = Color.White,
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+        Spacer(Modifier.height(16.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            BixButton(text = stringResource(R.string.player_next_episode_now), onClick = onPlay, focusRequester = playRequester)
+            BixButton(text = stringResource(R.string.cancel), primary = false, onClick = onCancel)
+        }
     }
 }
 

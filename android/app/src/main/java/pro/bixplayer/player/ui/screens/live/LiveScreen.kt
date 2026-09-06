@@ -48,7 +48,6 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -60,7 +59,7 @@ import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
 import pro.bixplayer.player.data.db.ChannelEntity
 import pro.bixplayer.player.player.SessionState
-import pro.bixplayer.player.ui.components.BixTextField
+import pro.bixplayer.player.ui.components.SearchRow
 import pro.bixplayer.player.ui.components.VideoSurface
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.BixScrim
@@ -123,6 +122,7 @@ fun LiveScreen(
             SearchRow(
                 query = state.query,
                 onQueryChange = viewModel::setQuery,
+                placeholder = stringResource(R.string.live_search),
                 onDone = { runCatching { channelColumnRequester.requestFocus() } },
             )
             Spacer(Modifier.height(12.dp))
@@ -143,6 +143,14 @@ fun LiveScreen(
                 val listState = rememberLazyListState(
                     initialFirstVisibleItemIndex = state.channelIndex.coerceAtLeast(0),
                 )
+                // After zapping in the player the playing channel may be far from the last row.
+                LaunchedEffect(Unit) {
+                    viewModel.focusRequests.collect { index ->
+                        runCatching { listState.scrollToItem((index - 2).coerceAtLeast(0)) }
+                        delay(120)
+                        rowRequesters[index]?.let { runCatching { it.requestFocus() } }
+                    }
+                }
                 LazyColumn(
                     state = listState,
                     verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -188,71 +196,6 @@ fun LiveScreen(
             modifier = Modifier.width(340.dp).fillMaxHeight(),
             viewModel = viewModel,
         )
-    }
-}
-
-/**
- * Search in two states: a focusable row that only opens the text field (and therefore the
- * keyboard) on OK. Landing on a plain text field with the D-pad would pop the keyboard every
- * time the user overshoots the top of the list.
- */
-@Composable
-private fun SearchRow(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onDone: () -> Unit,
-) {
-    var editing by remember { mutableStateOf(query.isNotEmpty()) }
-    val fieldRequester = remember { FocusRequester() }
-    LaunchedEffect(editing) {
-        if (editing) {
-            delay(50)
-            runCatching { fieldRequester.requestFocus() }
-        }
-    }
-
-    if (editing) {
-        BixTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            label = stringResource(R.string.live_search),
-            imeAction = ImeAction.Done,
-            focusRequester = fieldRequester,
-            onImeAction = {
-                if (query.isEmpty()) editing = false
-                onDone()
-            },
-        )
-    } else {
-        val interaction = remember { MutableInteractionSource() }
-        val focused by interaction.collectIsFocusedAsState()
-        val shape = RoundedCornerShape(10.dp)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .bixFocusable(focused, scale = 1f, shape = shape)
-                .background(MaterialTheme.colorScheme.surface, shape)
-                .focusable(interactionSource = interaction)
-                .onKeyEvent { event ->
-                    val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
-                    if (select && event.type == KeyEventType.KeyUp) {
-                        editing = true; true
-                    } else {
-                        false
-                    }
-                }
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-        ) {
-            Text(
-                text = "🔍  " + query.ifEmpty { stringResource(R.string.live_search) },
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (query.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
     }
 }
 

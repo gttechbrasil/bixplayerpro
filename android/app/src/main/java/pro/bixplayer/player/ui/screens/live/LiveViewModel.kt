@@ -12,7 +12,10 @@ import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -28,6 +31,7 @@ import pro.bixplayer.player.data.datastore.DeviceStore
 import pro.bixplayer.player.data.db.CategoryDao
 import pro.bixplayer.player.data.db.ChannelDao
 import pro.bixplayer.player.data.db.ChannelEntity
+import pro.bixplayer.player.data.db.ContentKind
 import pro.bixplayer.player.data.db.FavoriteDao
 import pro.bixplayer.player.data.db.FavoriteEntity
 import pro.bixplayer.player.player.PlayerSession
@@ -149,6 +153,10 @@ class LiveViewModel @Inject constructor(
     /** Whether the user left towards the player; then the preview must keep playing. */
     private var openingPlayer = false
 
+    /** Row index the screen must scroll to and focus (after zapping inside the player). */
+    private val _focusRequests = MutableSharedFlow<Int>(extraBufferCapacity = 1)
+    val focusRequests: SharedFlow<Int> = _focusRequests.asSharedFlow()
+
     init {
         // The preview follows the focused row, with a short delay so fast scrolling does not
         // start one connection per channel.
@@ -183,10 +191,10 @@ class LiveViewModel @Inject constructor(
 
     fun toggleFavorite(channel: ChannelEntity) {
         viewModelScope.launch {
-            if (favoriteDao.isFavorite(channel.playlistId, channel.remoteId)) {
-                favoriteDao.remove(channel.playlistId, channel.remoteId)
+            if (favoriteDao.isFavorite(channel.playlistId, ContentKind.LIVE, channel.remoteId)) {
+                favoriteDao.remove(channel.playlistId, ContentKind.LIVE, channel.remoteId)
             } else {
-                favoriteDao.add(FavoriteEntity(channel.playlistId, channel.remoteId))
+                favoriteDao.add(FavoriteEntity(channel.playlistId, ContentKind.LIVE, channel.remoteId))
             }
         }
     }
@@ -204,7 +212,29 @@ class LiveViewModel @Inject constructor(
 
     fun onScreenResumed() {
         openingPlayer = false
-        focusedChannel.value?.let { session.play(it.streamUrl) }
+        viewModelScope.launch {
+            followPlayerChannel()
+            focusedChannel.value?.let { session.play(it.streamUrl) }
+        }
+    }
+
+    /**
+     * Zapping inside the player changes the channel without touching this list; when the user
+     * comes back, the row of the channel that is actually playing takes the focus.
+     */
+    private suspend fun followPlayerChannel() {
+        val playingId = session.currentChannelId.value ?: return
+        val current = focusedChannel.value
+        if (current?.id == playingId || query.value.isNotBlank()) return
+        val channel = channelDao.byId(playingId) ?: return
+        val s = scope.value
+        val category = (s as? ChannelScope.Category)?.remoteId
+        if (category != null && channel.categoryRemoteId != category) return
+        val favoritesOnly = if (s is ChannelScope.Favorites) 1 else 0
+        val index = channelDao.indexInScope(channel.playlistId, category, favoritesOnly, channel.position)
+        focusedChannel.value = channel
+        setChannelIndex(index)
+        _focusRequests.tryEmit(index)
     }
 
     /** Leaving to anywhere but the player stops the preview so the decoder is not left running. */

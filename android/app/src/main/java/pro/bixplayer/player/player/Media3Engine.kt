@@ -152,6 +152,21 @@ class Media3Engine(
         _state.value = PlaybackState.Idle
     }
 
+    override val positionMs: Long
+        get() = player?.currentPosition?.coerceAtLeast(0L) ?: 0L
+
+    override val durationMs: Long
+        get() = player?.duration?.takeIf { it != C.TIME_UNSET && it > 0 } ?: 0L
+
+    override val isSeekable: Boolean
+        get() = player?.let { it.isCurrentMediaItemSeekable && !it.isCurrentMediaItemLive && durationMs > 0 } ?: false
+
+    override fun seekTo(positionMs: Long) {
+        val exo = player ?: return
+        val max = durationMs.takeIf { it > 0 } ?: Long.MAX_VALUE
+        exo.seekTo(positionMs.coerceIn(0L, max))
+    }
+
     override fun selectTrack(option: TrackOption) {
         val exo = player ?: return
         val (groupIndex, trackIndex) = option.id.split(':').map { it.toInt() }
