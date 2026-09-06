@@ -35,6 +35,14 @@ class ResellerUpdate(BaseModel):
             raise ValueError("tema inválido")
         return v
 
+    @field_validator("logo_url", "bg_url")
+    @classmethod
+    def _http_only(cls, v: str | None) -> str | None:
+        v = (v or "").strip() or None
+        if v is not None and not v.lower().startswith(("http://", "https://")):
+            raise ValueError("informe uma URL http(s) completa")
+        return v
+
 
 class ResellerOut(ORMModel):
     id: int

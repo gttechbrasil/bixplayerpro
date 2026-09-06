@@ -1,11 +1,12 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy import func, select
 
 from app.core.deps import CurrentDevice, DbSession, get_client_ip
 from app.core.exceptions import bad_request, forbidden, not_found
-from app.models import Playlist
+from app.core.ratelimit import device_with_rate_limit, limit_device_register
+from app.models import Device, Playlist
 from app.schemas.common import Message
 from app.schemas.device import (
     DeviceConfig,
@@ -29,6 +30,7 @@ MSG_NOT_REGISTERED = "Dispositivo não cadastrado. Informe o MAC ao seu revended
     "/register",
     summary="Registra o aparelho e devolve MAC + token",
     response_model=DeviceRegisterResponse,
+    dependencies=[Depends(limit_device_register)],
 )
 async def register(body: DeviceRegisterRequest, db: DbSession) -> DeviceRegisterResponse:
     device, token = await register_device(db, body.device_id, body.app_type, body.app_version)
@@ -41,7 +43,7 @@ async def register(body: DeviceRegisterRequest, db: DbSession) -> DeviceRegister
     summary="Configuração completa para o app (playlists, tema, status)",
     response_model=DeviceConfig,
 )
-async def config(device: CurrentDevice, db: DbSession) -> DeviceConfig:
+async def config(db: DbSession, device: Device = Depends(device_with_rate_limit)) -> DeviceConfig:
     device.last_seen_at = datetime.now(UTC)
     settings_values = await get_all_settings(db)
     result = await build_config(db, device, settings_values)

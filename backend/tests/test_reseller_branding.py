@@ -176,3 +176,15 @@ async def test_profile_and_password_change(
         "/api/v1/auth/reseller/login", json={"username": "revenda", "password": "novasenha1"}
     )
     assert login.status_code == 200
+
+
+async def test_branding_urls_must_be_http(reseller_client) -> None:
+    resp = await reseller_client.put(
+        "/api/v1/reseller/branding", json={"logo_url": "javascript:alert(1)"}
+    )
+    assert resp.status_code == 422
+    resp = await reseller_client.put(
+        "/api/v1/reseller/branding", json={"bg_url": "https://cdn.exemplo.com/fundo.jpg"}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["bg_url"] == "https://cdn.exemplo.com/fundo.jpg"

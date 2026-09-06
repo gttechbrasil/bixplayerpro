@@ -21,7 +21,7 @@ from __future__ import annotations
 import argparse
 import random
 import urllib.request
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 CATEGORIES = [
@@ -34,9 +34,29 @@ CATEGORIES = [
     "Variedades",
     "Abertos",
 ]
-MOVIE_GENRES = ["Ação", "Comédia", "Drama", "Terror", "Ficção", "Animação", "Romance", "Suspense", "Aventura", "Nacional"]
+MOVIE_GENRES = [
+    "Ação",
+    "Comédia",
+    "Drama",
+    "Terror",
+    "Ficção",
+    "Animação",
+    "Romance",
+    "Suspense",
+    "Aventura",
+    "Nacional",
+]
 SERIES_GENRES = ["Drama", "Comédia", "Crime", "Ficção", "Animes"]
-PROGRAMMES = ["Jornal", "Novela", "Filme da Tarde", "Esporte Total", "Documentário", "Desenhos", "Show ao Vivo", "Debate"]
+PROGRAMMES = [
+    "Jornal",
+    "Novela",
+    "Filme da Tarde",
+    "Esporte Total",
+    "Documentário",
+    "Desenhos",
+    "Show ao Vivo",
+    "Debate",
+]
 
 # Mux's public HLS test stream (Big Buck Bunny, multi-bitrate) and four of its TS segments.
 PUBLIC_HLS = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
@@ -50,7 +70,9 @@ PUBLIC_MP4 = "https://filesamples.com/samples/video/mp4/sample_640x360.mp4"
 PUBLIC_WMV = "https://filesamples.com/samples/video/wmv/sample_640x360.wmv"
 
 
-def build_playlist(host: str, channels: int, movies: int, series: int, epg_channels: int, with_epg: bool) -> str:
+def build_playlist(
+    host: str, channels: int, movies: int, series: int, epg_channels: int, with_epg: bool
+) -> str:
     header = "#EXTM3U"
     if with_epg:
         header += f' url-tvg="{host}/uploads/epg.xml"'
@@ -104,13 +126,15 @@ def build_playlist(host: str, channels: int, movies: int, series: int, epg_chann
 
 def build_epg(epg_channels: int) -> str:
     """XMLTV with 30-minute programmes from -6 h to +48 h, aligned to the half hour."""
-    now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    now = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
     start = now - timedelta(hours=6)
     end = now + timedelta(hours=48)
     fmt = "%Y%m%d%H%M%S +0000"
     out = ['<?xml version="1.0" encoding="UTF-8"?>', '<tv generator-info-name="bix-fixture">']
     for n in range(1, epg_channels + 1):
-        out.append(f'  <channel id="canal{n}.br"><display-name>Canal {n} HD</display-name></channel>')
+        out.append(
+            f'  <channel id="canal{n}.br"><display-name>Canal {n} HD</display-name></channel>'
+        )
     rng = random.Random(7)
     for n in range(1, epg_channels + 1):
         t = start
@@ -151,15 +175,29 @@ def download_samples(fixture_dir: Path) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--host", default="http://10.0.2.2:8000", help="base URL of the local API as the device sees it")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--host",
+        default="http://10.0.2.2:8000",
+        help="base URL of the local API as the device sees it",
+    )
     parser.add_argument("--channels", type=int, default=1200)
     parser.add_argument("--movies", type=int, default=2000)
-    parser.add_argument("--series", type=int, default=50, help="shows; each has 3 seasons x 8 episodes")
-    parser.add_argument("--epg-channels", type=int, default=200, help="channels that get a tvg-id and guide data")
+    parser.add_argument(
+        "--series", type=int, default=50, help="shows; each has 3 seasons x 8 episodes"
+    )
+    parser.add_argument(
+        "--epg-channels", type=int, default=200, help="channels that get a tvg-id and guide data"
+    )
     parser.add_argument("--no-epg", action="store_true")
     parser.add_argument("--out", type=Path, default=Path("uploads/fixture.m3u"))
-    parser.add_argument("--download-sample", action="store_true", help="fetch uploads/fixture/sample.ts and sample.mp4")
+    parser.add_argument(
+        "--download-sample",
+        action="store_true",
+        help="fetch uploads/fixture/sample.ts and sample.mp4",
+    )
     args = parser.parse_args()
 
     host = args.host.rstrip("/")

@@ -6,12 +6,19 @@ from fastapi import HTTPException, status
 
 
 class ApiError(HTTPException):
-    def __init__(self, status_code: int, message: str, code: str | None = None, **extra: Any):
+    def __init__(
+        self,
+        status_code: int,
+        message: str,
+        code: str | None = None,
+        headers: dict[str, str] | None = None,
+        **extra: Any,
+    ):
         detail: dict[str, Any] = {"message": message}
         if code:
             detail["code"] = code
         detail.update(extra)
-        super().__init__(status_code=status_code, detail=detail)
+        super().__init__(status_code=status_code, detail=detail, headers=headers)
 
 
 def bad_request(message: str, code: str = "bad_request", **extra: Any) -> ApiError:

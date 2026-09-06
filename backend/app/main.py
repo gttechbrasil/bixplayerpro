@@ -30,7 +30,7 @@ def create_app() -> FastAPI:
         version="1.0.0",
         docs_url=None if settings.is_production else "/api/docs",
         redoc_url=None,
-        openapi_url="/api/openapi.json",
+        openapi_url=None if settings.is_production else "/api/openapi.json",
         lifespan=lifespan,
     )
 

@@ -88,6 +88,14 @@ class BrandingUpdate(BaseModel):
         v = (v or "").strip()
         return v or None
 
+    @field_validator("logo_url", "bg_url")
+    @classmethod
+    def _http_only(cls, v: str | None) -> str | None:
+        # Rendered as <img src> in the panel and loaded by the app: only http(s) URLs.
+        if v is not None and not v.lower().startswith(("http://", "https://")):
+            raise ValueError("informe uma URL http(s) completa")
+        return v
+
 
 class UploadResult(BaseModel):
     url: str

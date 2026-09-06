@@ -42,6 +42,13 @@ class Settings(BaseSettings):
     upload_dir: str = "./uploads"
     login_rate_limit: int = 10
     login_rate_window: int = 300
+    # Public device endpoints (see app/core/ratelimit.py). Per window of `device_rate_window` s:
+    # `device_register_rate_limit` registrations per IP, `device_rate_limit` calls per device
+    # and `device_rate_limit_ip` config calls per IP (many TVs share one CGNAT address).
+    device_rate_window: int = 60
+    device_register_rate_limit: int = 30
+    device_rate_limit: int = 20
+    device_rate_limit_ip: int = 600
 
     payment_provider: Literal["mercadopago", "fake"] = "mercadopago"
     pix_expiration_minutes: int = 30
