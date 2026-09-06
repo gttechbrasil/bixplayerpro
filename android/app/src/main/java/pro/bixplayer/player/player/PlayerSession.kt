@@ -60,7 +60,19 @@ class PlayerSession @Inject constructor(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private val media3 = Media3Engine(context, messages)
-    private val vlc = VlcEngine(messages)
+    private val vlc = VlcEngine(context, messages)
+
+    /** `null` = automatic (Media3 first, VLC when Media3 cannot decode); else forced. */
+    @Volatile
+    var preference: EngineKind? = null
+
+    /** True while the current item plays on VLC because Media3 gave up ("Modo de compatibilidade"). */
+    private val _compatibilityMode = MutableStateFlow(false)
+    val compatibilityMode: StateFlow<Boolean> = _compatibilityMode.asStateFlow()
+
+    /** libVLC player of the active engine, for the VLC surface; null while Media3 is active. */
+    val vlcPlayer: org.videolan.libvlc.MediaPlayer?
+        get() = (_engine.value as? VlcEngine)?.vlcPlayer
 
     private val _engine = MutableStateFlow<PlayerEngine>(media3)
 
@@ -144,7 +156,17 @@ class PlayerSession @Inject constructor(
         cancelRetry()
         attempt = 0
         _currentUrl.value = url
+        // A new item starts on the preferred engine; the fallback is decided per item.
+        _compatibilityMode.value = false
+        switchEngine(if (preference == EngineKind.VLC) vlc else media3)
         _engine.value.prepare(url)
+    }
+
+    private fun switchEngine(next: PlayerEngine) {
+        if (next === _engine.value) return
+        _engine.value.release()
+        _engine.value = next
+        Timber.i("player engine -> %s", if (next === vlc) EngineKind.VLC else EngineKind.MEDIA3)
     }
 
     /** "Tentar novamente": restarts the automatic cycle for the same URL. */
@@ -186,14 +208,14 @@ class PlayerSession @Inject constructor(
         _engine.value.prepare(url)
     }
 
-    /** Engine switch for the M4 (libVLC fallback). Kept here so the screens never care. */
+    /** Manual engine switch, keeping the current item. */
     fun useEngine(kind: EngineKind) {
         val next = if (kind == EngineKind.VLC) vlc else media3
         if (next === _engine.value) return
         val url = _currentUrl.value
-        _engine.value.release()
-        _engine.value = next
-        Timber.i("player engine -> %s", kind)
+        cancelRetry()
+        attempt = 0
+        switchEngine(next)
         if (url != null) next.prepare(url)
     }
 
@@ -201,6 +223,14 @@ class PlayerSession @Inject constructor(
         val url = _currentUrl.value ?: return
         if (attempt >= MAX_RETRIES) {
             _retrying.value = null
+            if (_engine.value === media3 && preference != EngineKind.MEDIA3 && isDecodeOrSourceError(error.code)) {
+                // Media3 cannot handle the stream itself (not the network): hand it to libVLC.
+                Timber.i("media3 gave up with %d, falling back to vlc for %s", error.code, UrlRedactor.redact(url))
+                _compatibilityMode.value = true
+                switchEngine(vlc)
+                vlc.prepare(url)
+                return
+            }
             Timber.w("playback failed after %d retries: %s", MAX_RETRIES, error.message)
             return
         }
@@ -222,6 +252,12 @@ class PlayerSession @Inject constructor(
     }
 
     companion object {
+        /**
+         * Media3 error codes: 2xxx are I/O (network, HTTP status), 3xxx parsing, 4xxx decoding,
+         * 5xxx audio track, 6xxx DRM. Only what the engine itself rejects justifies a fallback.
+         */
+        fun isDecodeOrSourceError(code: Int): Boolean = code in 3000..5999
+
         const val MAX_RETRIES = 2
         const val RETRY_BASE_MS = 1_500L
         const val PROGRESS_TICK_MS = 500L

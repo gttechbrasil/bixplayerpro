@@ -188,9 +188,23 @@ fun PlayerScreen(
     ) {
         VideoSurface(
             player = viewModel.session.player,
+            vlcPlayer = viewModel.session.vlcPlayer,
             modifier = Modifier.fillMaxSize(),
             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT,
         )
+
+        if (state.compatibilityMode) {
+            Text(
+                text = stringResource(R.string.player_compat_mode),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(24.dp)
+                    .background(BixScrim, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+            )
+        }
 
         when (val playback = state.playback) {
             SessionState.Loading -> CircularProgressIndicator(

@@ -64,6 +64,17 @@ android {
 		}
 	}
 
+	// libVLC ships four ABIs; per-ABI APKs keep each install small while the universal one
+	// remains the single download link for TV boxes of unknown architecture.
+	splits {
+		abi {
+			isEnable = true
+			reset()
+			include("armeabi-v7a", "arm64-v8a", "x86_64")
+			isUniversalApk = true
+		}
+	}
+
 	buildFeatures {
 		compose = true
 		buildConfig = true
@@ -164,10 +175,15 @@ dependencies {
 	implementation(libs.media3.ui)
 	implementation(libs.media3.session)
 
+	// libVLC fallback engine (ADR-006); native libs for arm/x86, split per ABI below.
+	implementation(libs.libvlc)
+
 	testImplementation(libs.junit)
 	testImplementation(libs.coroutines.test)
 	testImplementation(libs.mockwebserver)
 	testImplementation(libs.turbine)
 	testImplementation(libs.truth)
 	testImplementation(libs.room.testing)
+	// android.jar stubs XmlPullParserFactory; the real pull parser is needed to unit-test XMLTV.
+	testImplementation(libs.kxml2)
 }

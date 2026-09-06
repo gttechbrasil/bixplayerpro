@@ -130,6 +130,17 @@ fun SettingsScreen(
                 onClick = viewModel::toggleLayout,
             )
             SettingRow(
+                title = stringResource(R.string.settings_engine),
+                value = stringResource(
+                    when (state.engine) {
+                        "vlc" -> R.string.settings_engine_vlc
+                        "media3" -> R.string.settings_engine_media3
+                        else -> R.string.settings_engine_auto
+                    },
+                ),
+                onClick = viewModel::cycleEngine,
+            )
+            SettingRow(
                 title = stringResource(R.string.settings_language),
                 value = languageName(state.language),
                 onClick = viewModel::cycleLanguage,

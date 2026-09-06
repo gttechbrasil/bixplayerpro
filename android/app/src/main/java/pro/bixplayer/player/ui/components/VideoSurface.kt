@@ -21,7 +21,25 @@ fun VideoSurface(
     player: Player?,
     modifier: Modifier = Modifier,
     resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
+    vlcPlayer: org.videolan.libvlc.MediaPlayer? = null,
 ) {
+    if (vlcPlayer != null) {
+        // libVLC draws into its own layout; attach on the way in, detach on the way out.
+        AndroidView(
+            modifier = modifier,
+            factory = { context ->
+                org.videolan.libvlc.util.VLCVideoLayout(context).apply {
+                    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                    setBackgroundColor(android.graphics.Color.BLACK)
+                }
+            },
+            update = { layout ->
+                if (!vlcPlayer.vlcVout.areViewsAttached()) vlcPlayer.attachViews(layout, null, false, false)
+            },
+            onRelease = { runCatching { vlcPlayer.detachViews() } },
+        )
+        return
+    }
     AndroidView(
         modifier = modifier,
         factory = { context ->

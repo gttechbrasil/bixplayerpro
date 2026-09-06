@@ -5,12 +5,13 @@ import java.io.ByteArrayInputStream
 import org.junit.Test
 import pro.bixplayer.player.data.epg.XmltvParser
 import pro.bixplayer.player.data.epg.XmltvProgramme
+import org.kxml2.io.KXmlParser
 
 class XmltvParserTest {
 
     private fun parse(xml: String, from: Long = Long.MIN_VALUE, to: Long = Long.MAX_VALUE): List<XmltvProgramme> {
         val out = ArrayList<XmltvProgramme>()
-        XmltvParser.parse(ByteArrayInputStream(xml.toByteArray()), from, to) { out.add(it); true }
+        XmltvParser.parse(ByteArrayInputStream(xml.toByteArray()), from, to, ::KXmlParser) { out.add(it); true }
         return out
     }
 
@@ -70,7 +71,7 @@ class XmltvParserTest {
             append("</tv>")
         }
         var seen = 0
-        val emitted = XmltvParser.parse(ByteArrayInputStream(big.toByteArray())) { seen++; seen < 10 }
+        val emitted = XmltvParser.parse(ByteArrayInputStream(big.toByteArray()), newParser = ::KXmlParser) { seen++; seen < 10 }
         assertThat(emitted).isEqualTo(10)
     }
 }

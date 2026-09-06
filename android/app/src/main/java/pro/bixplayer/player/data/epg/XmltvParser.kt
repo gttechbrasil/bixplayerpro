@@ -33,9 +33,10 @@ object XmltvParser {
         input: InputStream,
         from: Long = Long.MIN_VALUE,
         to: Long = Long.MAX_VALUE,
+        newParser: () -> XmlPullParser = ::platformParser,
         onProgramme: (XmltvProgramme) -> Boolean,
     ): Int {
-        val parser = XmlPullParserFactory.newInstance().apply { isNamespaceAware = false }.newPullParser()
+        val parser = newParser()
         parser.setInput(input, null)
 
         var emitted = 0
@@ -84,6 +85,10 @@ object XmltvParser {
         if (skipped > 0) Timber.w("xmltv: %d programas ignorados, %d válidos", skipped, emitted)
         return emitted
     }
+
+    /** The platform parser (kxml2 on Android); unit tests inject kxml2 directly. */
+    private fun platformParser(): XmlPullParser =
+        XmlPullParserFactory.newInstance().apply { isNamespaceAware = false }.newPullParser()
 
     private val formats = ThreadLocal.withInitial {
         listOf("yyyyMMddHHmmss Z", "yyyyMMddHHmmss", "yyyyMMddHHmm Z", "yyyyMMddHHmm").map {

@@ -36,6 +36,9 @@ data class SettingsUiState(
     /** Effective home layout name (`default` | `grid`). */
     val layout: String = "default",
     val layoutFromPanel: Boolean = true,
+    /** `auto` | `media3` | `vlc` for the active playlist. */
+    val engine: String = "auto",
+    val activePlaylistId: Long? = null,
     val macAddress: String = "",
     val version: String = BuildConfig.VERSION_NAME,
     val syncing: Boolean = false,
@@ -101,6 +104,22 @@ class SettingsViewModel @Inject constructor(
             store.setRefreshHours(next)
             ConfigRefreshWorker.schedule(context, store)
         }
+    }
+
+    init {
+        viewModelScope.launch {
+            store.activePlaylistId.collect { id ->
+                _uiState.value = _uiState.value.copy(activePlaylistId = id)
+                if (id != null) store.playerEngine(id).collect { _uiState.value = _uiState.value.copy(engine = it) }
+            }
+        }
+    }
+
+    fun cycleEngine() {
+        val id = _uiState.value.activePlaylistId ?: return
+        val order = listOf("auto", "media3", "vlc")
+        val next = order[(order.indexOf(_uiState.value.engine) + 1) % order.size]
+        viewModelScope.launch { store.setPlayerEngine(id, next) }
     }
 
     /** Local layout switch; the panel's choice returns on the next config refresh. */

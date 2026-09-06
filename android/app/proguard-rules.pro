@@ -30,6 +30,11 @@
 -keep class androidx.media3.** { *; }
 -dontwarn androidx.media3.**
 
+# --- libVLC -----------------------------------------------------------------------
+# JNI callbacks are resolved by name.
+-keep class org.videolan.libvlc.** { *; }
+-dontwarn org.videolan.**
+
 # --- Room ---------------------------------------------------------------------------
 -keep class * extends androidx.room.RoomDatabase { <init>(); }
 

@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import pro.bixplayer.player.data.db.CategoryDao
+import pro.bixplayer.player.data.datastore.DeviceStore
 import pro.bixplayer.player.data.db.ChannelDao
 import pro.bixplayer.player.data.db.ChannelEntity
 import pro.bixplayer.player.data.db.ContentKind
@@ -99,6 +100,8 @@ data class PlayerUiState(
     val nextCountdown: Int? = null,
     /** The movie ended: the screen leaves on its own. */
     val finished: Boolean = false,
+    /** Playing on libVLC after Media3 gave up on the stream. */
+    val compatibilityMode: Boolean = false,
 ) {
     val isLive: Boolean get() = item?.isLive != false
     val channel: ChannelEntity? get() = (item as? PlaybackItem.Live)?.channel
@@ -113,6 +116,7 @@ class PlayerViewModel @Inject constructor(
     private val seriesDao: SeriesDao,
     private val episodeDao: EpisodeDao,
     private val progressDao: WatchProgressDao,
+    private val store: DeviceStore,
     val session: PlayerSession,
 ) : ViewModel() {
 
@@ -135,12 +139,13 @@ class PlayerViewModel @Inject constructor(
     private var endedHandled = false
 
     init {
-        combine(session.state, session.tracks, session.progress) { playback, tracks, progress ->
-            Triple(playback, tracks, progress)
-        }.onEach { (playback, tracks, progress) ->
+        combine(session.state, session.tracks, session.progress, session.compatibilityMode) { playback, tracks, progress, compat ->
+            Quad(playback, tracks, progress, compat)
+        }.onEach { (playback, tracks, progress, compat) ->
             _uiState.value = _uiState.value.copy(
                 playback = playback,
                 progress = progress,
+                compatibilityMode = compat,
                 audioTracks = tracks.filter { it.type == TrackType.AUDIO },
                 subtitleTracks = tracks.filter { it.type == TrackType.SUBTITLE },
             )
@@ -149,6 +154,7 @@ class PlayerViewModel @Inject constructor(
         }.launchIn(viewModelScope)
 
         viewModelScope.launch {
+            applyEnginePreference()
             when (kind) {
                 ContentKind.MOVIE -> movieDao.byId(itemId)?.let { start(PlaybackItem.Movie(it)) }
                 ContentKind.EPISODE -> episodeDao.byId(itemId)?.let { ep ->
@@ -169,6 +175,18 @@ class PlayerViewModel @Inject constructor(
             }
         }
     }
+
+    /** Settings → Player: automático / Media3 / VLC, per playlist. */
+    private suspend fun applyEnginePreference() {
+        val playlistId = store.currentActivePlaylistId() ?: return
+        session.preference = when (store.currentPlayerEngine(playlistId)) {
+            "vlc" -> PlayerSession.EngineKind.VLC
+            "media3" -> PlayerSession.EngineKind.MEDIA3
+            else -> null
+        }
+    }
+
+    private data class Quad<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
 
     // ---- live ------------------------------------------------------------------------------
 

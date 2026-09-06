@@ -45,10 +45,10 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes, 
 - [ ] Validar no AVD de celular; rotação, retorno de background e PiP
 
 ## 7. libVLC real (fallback)
-- [ ] `VlcEngine` com `libvlc-all` (versão estável mais recente), mesma interface `PlayerEngine`; suporte a faixas de áudio/legenda
-- [ ] Regra de fallback: Media3 falha com erro de fonte/decodificação após os 2 retries → troca para VLC no mesmo canal, sem sair da tela, com aviso discreto "Modo de compatibilidade"
-- [ ] Configurações → Player: Automático (padrão) / Media3 / VLC, por playlist
-- [ ] Testar com um TS com codec não suportado pelo Media3 no emulador (gerar fixture com áudio AC-3 ou vídeo MPEG-2)
+- [x] `VlcEngine` com `libvlc-all` (versão estável mais recente), mesma interface `PlayerEngine`; suporte a faixas de áudio/legenda
+- [x] Regra de fallback: Media3 falha com erro de fonte/decodificação após os 2 retries → troca para VLC no mesmo canal, sem sair da tela, com aviso discreto "Modo de compatibilidade"
+- [x] Configurações → Player: Automático (padrão) / Media3 / VLC, por playlist
+- [x] Testar com um TS com codec não suportado pelo Media3 no emulador (gerar fixture com áudio AC-3 ou vídeo MPEG-2)
 - [ ] Impacto no tamanho do APK documentado; se passar de 40 MB, avaliar ABI splits (armeabi-v7a, arm64-v8a, x86_64)
 
 ## 8. Fechamento do M4

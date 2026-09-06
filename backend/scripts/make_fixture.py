@@ -3,8 +3,8 @@
 The output is an M3U with `--channels` live channels over eight categories, `--movies`
 movies over ten genres, `--series` shows with three seasons of eight episodes each, and two
 malformed entries the parser must skip. Channels 1-3 point at a public HLS test stream,
-channels 4-6 at a local MPEG-TS sample served by the API's static `/uploads` route, the rest
-at URLs that return 404 (to exercise the player's retry/error path). Movies and episodes point
+channels 4-6 at a local MPEG-TS sample served by the API's static `/uploads` route, channel 7
+at a WMV file (exercises the libVLC fallback), the rest at URLs that return 404 (to exercise the player's retry/error path). Movies and episodes point
 at a local MP4 sample. `--epg` also writes an XMLTV guide covering -6 h..+48 h for the first
 `--epg-channels` channels, and the playlist header advertises it through `url-tvg`.
 
@@ -46,6 +46,8 @@ PUBLIC_TS_SEGMENTS = [
 ]
 # Small public MP4 (~30 s, H.264/AAC) used for every movie and episode.
 PUBLIC_MP4 = "https://filesamples.com/samples/video/mp4/sample_640x360.mp4"
+# WMV (ASF) sample for the libVLC fallback test: Media3 ships no ASF extractor.
+PUBLIC_WMV = "https://filesamples.com/samples/video/wmv/sample_640x360.wmv"
 
 
 def build_playlist(host: str, channels: int, movies: int, series: int, epg_channels: int, with_epg: bool) -> str:
@@ -61,6 +63,10 @@ def build_playlist(host: str, channels: int, movies: int, series: int, epg_chann
             url = PUBLIC_HLS
         elif n <= 6:
             url = f"{host}/uploads/fixture/sample.ts"
+        elif n == 7:
+            # ASF/WMV bytes served as .ts: Media3 has no ASF extractor, so it fails and libVLC
+            # takes over (a .wmv extension would classify the entry as a movie instead).
+            url = f"{host}/uploads/fixture/compat.ts"
         else:
             url = f"{host}/fake/stream/{n}.ts"
         tvg_id = f'tvg-id="canal{n}.br" ' if n <= epg_channels or not with_epg else ""
@@ -141,6 +147,7 @@ def download_samples(fixture_dir: Path) -> None:
             with _open(url, 60) as response:
                 out.write(response.read())
     download(PUBLIC_MP4, fixture_dir / "sample.mp4")
+    download(PUBLIC_WMV, fixture_dir / "compat.ts")
 
 
 def main() -> None:

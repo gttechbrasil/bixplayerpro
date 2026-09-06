@@ -79,7 +79,7 @@
     <string name="player_error_network">Falla de red al abrir el canal.</string>
     <string name="player_error_http">El servidor del canal rechazó la conexión (HTTP %1$d).</string>
     <string name="player_error_unsupported">Formato de stream no soportado.</string>
-    <string name="player_error_vlc">El motor libVLC aún no está disponible en esta versión.</string>
+    <string name="player_error_vlc">Falló el motor de compatibilidad (libVLC).</string>
     <string name="player_retrying">Reconectando… (%1$d/%2$d)</string>
     <string name="player_audio_track">Audio</string>
     <string name="player_subtitle_track">Subtítulos</string>
@@ -147,4 +147,9 @@
     <string name="settings_layout">Diseño de la pantalla inicial</string>
     <string name="settings_layout_default">Estándar</string>
     <string name="settings_layout_grid">Cuadrícula</string>
+    <string name="player_compat_mode">Modo de compatibilidad</string>
+    <string name="settings_engine">Reproductor</string>
+    <string name="settings_engine_auto">Automático</string>
+    <string name="settings_engine_media3">Media3</string>
+    <string name="settings_engine_vlc">VLC</string>
 </resources>

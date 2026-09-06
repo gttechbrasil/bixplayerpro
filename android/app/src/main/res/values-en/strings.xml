@@ -79,7 +79,7 @@
     <string name="player_error_network">Network failure while opening the channel.</string>
     <string name="player_error_http">The channel server refused the connection (HTTP %1$d).</string>
     <string name="player_error_unsupported">Unsupported stream format.</string>
-    <string name="player_error_vlc">The libVLC engine is not available in this version yet.</string>
+    <string name="player_error_vlc">The compatibility engine (libVLC) failed.</string>
     <string name="player_retrying">Reconnecting… (%1$d/%2$d)</string>
     <string name="player_audio_track">Audio</string>
     <string name="player_subtitle_track">Subtitles</string>
@@ -147,4 +147,9 @@
     <string name="settings_layout">Home layout</string>
     <string name="settings_layout_default">Default</string>
     <string name="settings_layout_grid">Grid</string>
+    <string name="player_compat_mode">Compatibility mode</string>
+    <string name="settings_engine">Player</string>
+    <string name="settings_engine_auto">Automatic</string>
+    <string name="settings_engine_media3">Media3</string>
+    <string name="settings_engine_vlc">VLC</string>
 </resources>
