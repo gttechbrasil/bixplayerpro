@@ -53,6 +53,7 @@ class ConfigRepository @Inject constructor(
         return try {
             val dto = api.config()
             prefs.saveConfig(configAdapter.toJson(dto))
+            prefs.setLayoutOverride(null)
             val config = AppConfig.from(dto)
             reconcileActivePlaylist(config)
             ConfigState.Ready(config).also { _state.value = it }

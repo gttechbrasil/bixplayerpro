@@ -58,8 +58,11 @@ import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
 import pro.bixplayer.player.data.db.WatchProgressEntity
 import pro.bixplayer.player.domain.model.AppConfig
+import pro.bixplayer.player.domain.model.AppLayout
 import pro.bixplayer.player.util.TimeFormat
 import pro.bixplayer.player.ui.screens.playlists.PlaylistViewModel
+import pro.bixplayer.player.ui.components.PinGateDialog
+import pro.bixplayer.player.ui.components.rememberPinGate
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.BixSuccess
@@ -74,8 +77,10 @@ import pro.bixplayer.player.ui.theme.bixFocusable
 fun HomeScreen(
     config: AppConfig?,
     onLive: () -> Unit,
+    onFavorites: () -> Unit,
     onMovies: () -> Unit,
     onSeries: () -> Unit,
+    onGuide: () -> Unit,
     onSettings: () -> Unit,
     onResume: (kind: String, id: Long) -> Unit,
     viewModel: PlaylistViewModel = hiltViewModel(),
@@ -83,10 +88,34 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val home by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val gate = rememberPinGate()
+    val protected = gate.playlistProtected(home.playlistId)
+    fun guarded(action: () -> Unit) = gate.require(protected, R.string.pin_protected_playlist, action)
 
     // First sync happens as soon as the device is usable; it is a no-op when already synced.
     LaunchedEffect(state.activeId) {
         if (state.activeId != null) viewModel.syncActive()
+    }
+
+    val layout = home.layoutOverride?.let { AppLayout.from(it) } ?: config?.layout ?: AppLayout.DEFAULT
+    if (layout == AppLayout.GRID) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            GridHomeScreen(
+                config = config,
+                tiles = listOf(
+                    GridTile(stringResource(R.string.home_live), stringResource(R.string.live_channels_count, home.channelCount), "▶", null, true) { guarded(onLive) },
+                    GridTile(stringResource(R.string.home_movies), stringResource(R.string.home_movies_count, home.movieCount), "🎬", home.movieCover, home.movieCount > 0) { guarded(onMovies) },
+                    GridTile(stringResource(R.string.home_series), stringResource(R.string.home_series_count, home.seriesCount), "📺", home.seriesCover, home.seriesCount > 0) { guarded(onSeries) },
+                    GridTile(stringResource(R.string.live_favorites), stringResource(R.string.home_favorites_count, home.favoriteCount), "★", null, true) { guarded(onFavorites) },
+                    GridTile(stringResource(R.string.epg_title), stringResource(R.string.home_guide_hint), "▦", null, true) { guarded(onGuide) },
+                    GridTile(stringResource(R.string.home_settings), config?.macAddress.orEmpty(), "⚙", null, true, onSettings),
+                ),
+                banners = config?.banners.orEmpty().map { it.url to it.title },
+                notice = state.notice,
+            )
+            PinGateDialog(gate)
+        }
+        return
     }
 
     val liveRequester = remember { FocusRequester() }
@@ -135,7 +164,7 @@ fun HomeScreen(
                     },
                     enabled = true,
                     focusRequester = liveRequester,
-                    onClick = onLive,
+                    onClick = { guarded(onLive) },
                     modifier = Modifier.weight(1f),
                 )
                 MenuCard(
@@ -143,7 +172,7 @@ fun HomeScreen(
                     icon = "🎬",
                     subtitle = stringResource(R.string.home_movies_count, home.movieCount),
                     enabled = home.movieCount > 0,
-                    onClick = onMovies,
+                    onClick = { guarded(onMovies) },
                     modifier = Modifier.weight(1f),
                 )
                 MenuCard(
@@ -151,7 +180,7 @@ fun HomeScreen(
                     icon = "📺",
                     subtitle = stringResource(R.string.home_series_count, home.seriesCount),
                     enabled = home.seriesCount > 0,
-                    onClick = onSeries,
+                    onClick = { guarded(onSeries) },
                     modifier = Modifier.weight(1f),
                 )
                 MenuCard(
@@ -177,7 +206,7 @@ fun HomeScreen(
                 Spacer(Modifier.height(24.dp))
                 ContinueWatchingRow(
                     items = home.continueWatching,
-                    onOpen = { progress -> homeViewModel.resolve(progress, onResume) },
+                    onOpen = { progress -> guarded { homeViewModel.resolve(progress, onResume) } },
                 )
             }
 
@@ -188,6 +217,7 @@ fun HomeScreen(
                 BannerCarousel(banners = banners.map { it.url to it.title })
             }
         }
+        PinGateDialog(gate)
     }
 }
 

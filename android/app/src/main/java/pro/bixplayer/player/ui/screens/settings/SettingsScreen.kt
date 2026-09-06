@@ -5,6 +5,7 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,6 +39,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
 import pro.bixplayer.player.ui.components.BixButton
+import pro.bixplayer.player.ui.components.PinGateDialog
+import pro.bixplayer.player.ui.components.rememberPinGate
 import pro.bixplayer.player.ui.locale.AppLanguages
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
@@ -46,11 +49,13 @@ import pro.bixplayer.player.ui.theme.bixFocusable
 @Composable
 fun SettingsScreen(
     onChangePlaylist: () -> Unit,
+    onParental: () -> Unit,
     onLoggedOut: () -> Unit,
     onBack: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val gate = rememberPinGate()
     val channelsUpdated = stringResource(R.string.playlist_channel_count)
     val cacheCleared = stringResource(R.string.settings_cache_cleared)
 
@@ -64,6 +69,7 @@ fun SettingsScreen(
         runCatching { firstRequester.requestFocus() }
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -119,9 +125,19 @@ fun SettingsScreen(
                 onClick = viewModel::cycleRefreshPeriod,
             )
             SettingRow(
+                title = stringResource(R.string.settings_layout),
+                value = stringResource(if (state.layout == "grid") R.string.settings_layout_grid else R.string.settings_layout_default),
+                onClick = viewModel::toggleLayout,
+            )
+            SettingRow(
                 title = stringResource(R.string.settings_language),
                 value = languageName(state.language),
                 onClick = viewModel::cycleLanguage,
+            )
+            SettingRow(
+                title = stringResource(R.string.settings_parental),
+                value = "🔒",
+                onClick = { gate.require(true, null, onParental) },
             )
             SettingRow(
                 title = stringResource(R.string.settings_clear_cache),
@@ -180,6 +196,8 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(20.dp))
         BixButton(text = stringResource(R.string.close), primary = false, onClick = onBack)
+    }
+    PinGateDialog(gate)
     }
 }
 

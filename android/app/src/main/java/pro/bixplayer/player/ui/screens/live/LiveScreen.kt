@@ -55,11 +55,17 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
 import pro.bixplayer.player.data.db.ChannelEntity
+import pro.bixplayer.player.data.db.EpgProgramEntity
 import pro.bixplayer.player.player.SessionState
 import pro.bixplayer.player.ui.components.SearchRow
+import pro.bixplayer.player.ui.components.PinGateDialog
+import pro.bixplayer.player.ui.components.rememberPinGate
 import pro.bixplayer.player.ui.components.VideoSurface
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.BixScrim
@@ -73,11 +79,13 @@ import pro.bixplayer.player.ui.theme.bixFocusable
 @Composable
 fun LiveScreen(
     onOpenChannel: (channel: ChannelEntity, scopeArg: String) -> Unit,
+    onOpenGuide: (channel: ChannelEntity?) -> Unit,
     onBack: () -> Unit,
     viewModel: LiveViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val channels = viewModel.channels.collectAsLazyPagingItems()
+    val gate = rememberPinGate()
 
     val channelColumnRequester = remember { FocusRequester() }
     val categoryRequester = remember { FocusRequester() }
@@ -104,17 +112,26 @@ fun LiveScreen(
         }
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Row(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .onKeyEvent { event ->
+                // Remotes with a GUIDE key open the grid from anywhere on this screen.
+                if (event.type == KeyEventType.KeyUp && event.key == Key.Guide) {
+                    onOpenGuide(state.focusedChannel); true
+                } else {
+                    false
+                }
+            }
             .padding(start = 32.dp, end = 32.dp, top = 24.dp, bottom = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         CategoryColumn(
             state = state,
             firstRequester = categoryRequester,
-            onSelect = viewModel::selectCategory,
+            onSelect = { item -> gate.require(item.locked, R.string.pin_locked_category) { viewModel.selectCategory(item) } },
             modifier = Modifier.width(200.dp).fillMaxHeight(),
         )
 
@@ -195,7 +212,10 @@ fun LiveScreen(
             state = state,
             modifier = Modifier.width(340.dp).fillMaxHeight(),
             viewModel = viewModel,
+            onOpenGuide = { onOpenGuide(state.focusedChannel) },
         )
+    }
+    PinGateDialog(gate)
     }
 }
 
@@ -217,11 +237,12 @@ private fun CategoryColumn(
                 else -> item.name
             }
             CategoryRow(
-                label = label,
+                label = if (item.locked) "🔒 $label" else label,
                 count = item.count,
                 selected = item.scope.key == state.selectedKey,
                 focusRequester = if (index == 0) firstRequester else null,
-                onFocused = { onSelect(item) },
+                onFocused = { if (!item.locked) onSelect(item) },
+                onSelect = { onSelect(item) },
             )
         }
     }
@@ -234,6 +255,7 @@ private fun CategoryRow(
     selected: Boolean,
     focusRequester: FocusRequester?,
     onFocused: () -> Unit,
+    onSelect: () -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
@@ -253,6 +275,14 @@ private fun CategoryRow(
             .background(container, shape)
             .onFocusChanged { if (it.isFocused) onFocused() }
             .focusable(interactionSource = interaction)
+            .onKeyEvent { event ->
+                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
+                if (select && event.type == KeyEventType.KeyUp) {
+                    onSelect(); true
+                } else {
+                    false
+                }
+            }
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(
@@ -367,6 +397,7 @@ private fun ChannelLogo(url: String?, name: String, size: Dp) {
 private fun PreviewPanel(
     state: LiveUiState,
     viewModel: LiveViewModel,
+    onOpenGuide: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val channel = state.focusedChannel
@@ -411,20 +442,83 @@ private fun PreviewPanel(
                 )
             }
             Spacer(Modifier.height(12.dp))
-            // EPG slot: the M4 fills it with the current programme.
-            Text(
-                text = stringResource(R.string.live_epg_slot),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            EpgSlot(now = state.nowProgramme, next = state.nextProgramme)
         }
         Spacer(Modifier.weight(1f))
+        GuideChip(onClick = onOpenGuide)
+        Spacer(Modifier.height(10.dp))
         Text(
             text = stringResource(R.string.live_hints),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+}
+
+/** Current programme with its progress, then the next one; a hint when the guide is empty. */
+@Composable
+private fun EpgSlot(now: EpgProgramEntity?, next: EpgProgramEntity?) {
+    val timeFormat = remember { DateTimeFormatter.ofPattern("HH:mm") }
+    val zone = remember { ZoneId.systemDefault() }
+    fun hhmm(ms: Long) = Instant.ofEpochMilli(ms).atZone(zone).format(timeFormat)
+    if (now == null && next == null) {
+        Text(
+            text = stringResource(R.string.live_epg_slot),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        return
+    }
+    now?.let { programme ->
+        Text(
+            text = stringResource(R.string.live_now, hhmm(programme.startAt), programme.title),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        val total = (programme.endAt - programme.startAt).coerceAtLeast(1L)
+        val fraction = ((System.currentTimeMillis() - programme.startAt).toFloat() / total).coerceIn(0f, 1f)
+        Spacer(Modifier.height(6.dp))
+        Box(modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = 0.2f))) {
+            Box(modifier = Modifier.fillMaxWidth(fraction).height(4.dp).background(MaterialTheme.colorScheme.primary))
+        }
+    }
+    next?.let { programme ->
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = stringResource(R.string.live_next, hhmm(programme.startAt), programme.title),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun GuideChip(onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val focused by interaction.collectIsFocusedAsState()
+    val shape = RoundedCornerShape(10.dp)
+    Text(
+        text = stringResource(R.string.live_guide),
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier
+            .bixFocusable(focused, scale = 1f, shape = shape)
+            .background(MaterialTheme.colorScheme.surface, shape)
+            .focusable(interactionSource = interaction)
+            .onKeyEvent { event ->
+                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
+                if (select && event.type == KeyEventType.KeyUp) {
+                    onClick(); true
+                } else {
+                    false
+                }
+            }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+    )
 }
 
 @Composable

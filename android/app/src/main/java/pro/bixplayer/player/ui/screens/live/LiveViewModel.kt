@@ -29,9 +29,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import pro.bixplayer.player.data.datastore.DeviceStore
 import pro.bixplayer.player.data.db.CategoryDao
+import pro.bixplayer.player.data.db.CategoryRuleDao
 import pro.bixplayer.player.data.db.ChannelDao
 import pro.bixplayer.player.data.db.ChannelEntity
 import pro.bixplayer.player.data.db.ContentKind
+import pro.bixplayer.player.data.db.EpgDao
+import pro.bixplayer.player.data.db.EpgProgramEntity
 import pro.bixplayer.player.data.db.FavoriteDao
 import pro.bixplayer.player.data.db.FavoriteEntity
 import pro.bixplayer.player.player.PlayerSession
@@ -66,6 +69,7 @@ data class CategoryItem(
     val scope: ChannelScope,
     val name: String,
     val count: Int,
+    val locked: Boolean = false,
 )
 
 data class LiveUiState(
@@ -78,6 +82,9 @@ data class LiveUiState(
     val preview: SessionState = SessionState.Idle,
     /** Index of the channel row that should take focus when the list gets it. */
     val channelIndex: Int = 0,
+    /** Current and next programme of the focused channel, when the guide has them. */
+    val nowProgramme: EpgProgramEntity? = null,
+    val nextProgramme: EpgProgramEntity? = null,
 )
 
 /**
@@ -91,8 +98,10 @@ class LiveViewModel @Inject constructor(
     private val savedState: SavedStateHandle,
     store: DeviceStore,
     categoryDao: CategoryDao,
+    ruleDao: CategoryRuleDao,
     private val channelDao: ChannelDao,
     private val favoriteDao: FavoriteDao,
+    private val epgDao: EpgDao,
     val session: PlayerSession,
 ) : ViewModel() {
 
@@ -109,18 +118,32 @@ class LiveViewModel @Inject constructor(
         .map { it.toSet() }
 
     private val categories: Flow<List<CategoryItem>> = playlistId.filterNotNull()
-        .flatMapLatest { id -> combine(categoryDao.observeByPlaylist(id), favoriteIds) { cats, favs -> cats to favs } }
-        .map { (cats, favs) ->
-            buildList {
-                add(CategoryItem(ChannelScope.All, "", cats.sumOf { it.channelCount }))
-                add(CategoryItem(ChannelScope.Favorites, "", favs.size))
-                cats.forEach { add(CategoryItem(ChannelScope.Category(it.remoteId, it.name), it.name, it.channelCount)) }
+        .flatMapLatest { id ->
+            combine(categoryDao.observeByPlaylist(id), favoriteIds, ruleDao.observeByPlaylist(id)) { cats, favs, rules ->
+                val byId = rules.filter { it.kind == ContentKind.LIVE }.associateBy { it.remoteId }
+                val visible = cats.filter { byId[it.remoteId]?.hidden != true }
+                buildList {
+                    add(CategoryItem(ChannelScope.All, "", visible.sumOf { it.channelCount }))
+                    add(CategoryItem(ChannelScope.Favorites, "", favs.size))
+                    visible.forEach {
+                        add(CategoryItem(ChannelScope.Category(it.remoteId, it.name), it.name, it.channelCount, byId[it.remoteId]?.locked == true))
+                    }
+                }
             }
         }
 
+    /** Now/next for the focused channel; empty when it has no EPG id or the guide is not synced. */
+    private val nowNext: Flow<List<EpgProgramEntity>> = focusedChannel.flatMapLatest { channel ->
+        val epgId = channel?.epgChannelId
+        if (channel == null || epgId == null) flowOf(emptyList())
+        else epgDao.observeUpcoming(channel.playlistId, epgId, System.currentTimeMillis(), 2)
+    }
+
     val uiState: StateFlow<LiveUiState> = combine(
-        playlistId, categories, scope, favoriteIds, focusedChannel, query, session.state, channelIndex,
+        playlistId, categories, scope, favoriteIds, focusedChannel, query, session.state, channelIndex, nowNext,
     ) { values ->
+        @Suppress("UNCHECKED_CAST")
+        val programmes = values[8] as List<EpgProgramEntity>
         @Suppress("UNCHECKED_CAST")
         LiveUiState(
             playlistId = values[0] as Long?,
@@ -131,6 +154,8 @@ class LiveViewModel @Inject constructor(
             query = values[5] as String,
             preview = values[6] as SessionState,
             channelIndex = values[7] as Int,
+            nowProgramme = programmes.firstOrNull { it.startAt <= System.currentTimeMillis() },
+            nextProgramme = programmes.firstOrNull { it.startAt > System.currentTimeMillis() },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LiveUiState())
 
@@ -248,7 +273,7 @@ class LiveViewModel @Inject constructor(
     }
 
     private fun restoreScope(): ChannelScope {
-        val key = savedState.get<String>(KEY_SCOPE) ?: return ChannelScope.All
+        val key = savedState.get<String>(KEY_SCOPE) ?: savedState.get<String>("scope") ?: return ChannelScope.All
         return when {
             key == ChannelScope.KEY_FAVORITES -> ChannelScope.Favorites
             key.startsWith("cat:") -> ChannelScope.Category(

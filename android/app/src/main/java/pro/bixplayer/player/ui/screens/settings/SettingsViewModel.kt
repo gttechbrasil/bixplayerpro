@@ -22,6 +22,7 @@ import pro.bixplayer.player.data.datastore.DeviceStore
 import pro.bixplayer.player.data.db.BixDatabase
 import pro.bixplayer.player.data.repository.ConfigRepository
 import pro.bixplayer.player.data.work.ConfigRefreshWorker
+import pro.bixplayer.player.data.work.EpgSyncWorker
 import pro.bixplayer.player.domain.model.ConfigState
 import pro.bixplayer.player.domain.usecase.PlaylistSyncUseCase
 import pro.bixplayer.player.domain.usecase.SyncResult
@@ -32,6 +33,9 @@ import timber.log.Timber
 data class SettingsUiState(
     val refreshHours: Long = 6,
     val language: String = AppLanguages.PT_BR,
+    /** Effective home layout name (`default` | `grid`). */
+    val layout: String = "default",
+    val layoutFromPanel: Boolean = true,
     val macAddress: String = "",
     val version: String = BuildConfig.VERSION_NAME,
     val syncing: Boolean = false,
@@ -58,13 +62,15 @@ class SettingsViewModel @Inject constructor(
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
-        combine(store.refreshHours, store.language, store.macAddress) { hours, language, mac ->
-            Triple(hours, language, mac)
-        }.onEach { (hours, language, mac) ->
+        combine(store.refreshHours, store.language, store.macAddress, store.layoutOverride, repository.state) { values ->
+            val override = values[3] as String?
+            val panel = ((values[4] as? ConfigState.Ready)?.config?.layout ?: pro.bixplayer.player.domain.model.AppLayout.DEFAULT).name.lowercase()
             _uiState.value = _uiState.value.copy(
-                refreshHours = hours,
-                language = language,
-                macAddress = mac.orEmpty(),
+                refreshHours = values[0] as Long,
+                language = values[1] as String,
+                macAddress = (values[2] as String?).orEmpty(),
+                layout = override ?: panel,
+                layoutFromPanel = override == null,
             )
         }.launchIn(viewModelScope)
     }
@@ -78,7 +84,10 @@ class SettingsViewModel @Inject constructor(
             val playlist = config?.playlists?.firstOrNull { it.id == activeId } ?: return@launch
             _uiState.value = _uiState.value.copy(syncing = true, notice = null)
             val notice = when (val result = syncUseCase.sync(playlist)) {
-                is SyncResult.Success -> onDone(result.channels)
+                is SyncResult.Success -> {
+                    EpgSyncWorker.syncNow(context, playlist.id, force = true)
+                    onDone(result.channels)
+                }
                 is SyncResult.Failure -> result.message
             }
             _uiState.value = _uiState.value.copy(syncing = false, notice = notice)
@@ -92,6 +101,12 @@ class SettingsViewModel @Inject constructor(
             store.setRefreshHours(next)
             ConfigRefreshWorker.schedule(context, store)
         }
+    }
+
+    /** Local layout switch; the panel's choice returns on the next config refresh. */
+    fun toggleLayout() {
+        val next = if (_uiState.value.layout == "grid") "default" else "grid"
+        viewModelScope.launch { store.setLayoutOverride(next) }
     }
 
     fun cycleLanguage() {

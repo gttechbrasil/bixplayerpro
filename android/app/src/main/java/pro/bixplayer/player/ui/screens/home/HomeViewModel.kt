@@ -29,6 +29,10 @@ data class HomeUiState(
     val seriesCount: Int = 0,
     val favoriteCount: Int = 0,
     val continueWatching: List<WatchProgressEntity> = emptyList(),
+    /** `default` | `grid` chosen on this device, or null to follow the panel. */
+    val layoutOverride: String? = null,
+    val movieCover: String? = null,
+    val seriesCover: String? = null,
 )
 
 /** Counts and "continue watching" for both home layouts. Sync itself stays in PlaylistViewModel. */
@@ -38,7 +42,7 @@ class HomeViewModel @Inject constructor(
     store: DeviceStore,
     syncDao: PlaylistSyncDao,
     private val movieDao: MovieDao,
-    seriesDao: SeriesDao,
+    private val seriesDao: SeriesDao,
     private val episodeDao: EpisodeDao,
     favoriteDao: FavoriteDao,
     progressDao: WatchProgressDao,
@@ -64,14 +68,19 @@ class HomeViewModel @Inject constructor(
             seriesDao.observeCount(id),
             favoriteDao.observeCount(id),
             progressDao.observeContinueWatching(id, CONTINUE_LIMIT),
-        ) { sync, movies, series, favorites, progress ->
+            store.layoutOverride,
+        ) { values ->
+            @Suppress("UNCHECKED_CAST")
             HomeUiState(
                 playlistId = id,
-                channelCount = sync?.channelCount ?: 0,
-                movieCount = movies,
-                seriesCount = series,
-                favoriteCount = favorites,
-                continueWatching = progress,
+                channelCount = (values[0] as pro.bixplayer.player.data.db.PlaylistSyncEntity?)?.channelCount ?: 0,
+                movieCount = values[1] as Int,
+                seriesCount = values[2] as Int,
+                favoriteCount = values[3] as Int,
+                continueWatching = values[4] as List<WatchProgressEntity>,
+                layoutOverride = values[5] as String?,
+                movieCover = movieDao.recent(id, 1).firstOrNull()?.posterUrl,
+                seriesCover = seriesDao.recent(id, 1).firstOrNull()?.coverUrl,
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())

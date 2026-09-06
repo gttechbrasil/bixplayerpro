@@ -38,12 +38,16 @@ class DevicePreferences @Inject constructor(
         val REFRESH_HOURS = longPreferencesKey("refresh_hours")
         val LANGUAGE = stringPreferencesKey("language")
         val ONBOARDED = booleanPreferencesKey("onboarded")
+        val PIN = stringPreferencesKey("parental_pin")
+        val LAYOUT = stringPreferencesKey("layout_override")
+        fun engine(playlistId: Long) = stringPreferencesKey("engine_$playlistId")
     }
 
     companion object {
         /** Default period of the background configuration refresh. */
         const val DEFAULT_REFRESH_HOURS = 6L
         const val DEFAULT_LANGUAGE = "pt-BR"
+        const val ENGINE_AUTO = "auto"
     }
 
     /** DataStore surfaces read errors as IOException; treat them as "no data yet". */
@@ -58,12 +62,19 @@ class DevicePreferences @Inject constructor(
     override val refreshHours: Flow<Long> = prefs.map { it[Keys.REFRESH_HOURS] ?: DEFAULT_REFRESH_HOURS }
     override val language: Flow<String> = prefs.map { it[Keys.LANGUAGE] ?: DEFAULT_LANGUAGE }
     val onboarded: Flow<Boolean> = prefs.map { it[Keys.ONBOARDED] ?: false }
+    override val pin: Flow<String?> = prefs.map { it[Keys.PIN] }
+    override val layoutOverride: Flow<String?> = prefs.map { it[Keys.LAYOUT] }
 
     override suspend fun currentToken(): String? = token.first()
     override suspend fun currentMacAddress(): String? = macAddress.first()
     override suspend fun currentConfigJson(): String? = configJson.first()
     override suspend fun currentActivePlaylistId(): Long? = activePlaylistId.first()
     override suspend fun currentRefreshHours(): Long = refreshHours.first()
+    override suspend fun currentPin(): String? = pin.first()
+    override suspend fun currentLayoutOverride(): String? = layoutOverride.first()
+
+    override fun playerEngine(playlistId: Long): Flow<String> = prefs.map { it[Keys.engine(playlistId)] ?: ENGINE_AUTO }
+    override suspend fun currentPlayerEngine(playlistId: Long): String = playerEngine(playlistId).first()
 
     override suspend fun saveCredentials(token: String, macAddress: String) {
         context.dataStore.edit {
@@ -91,6 +102,18 @@ class DevicePreferences @Inject constructor(
 
     override suspend fun setLanguage(tag: String) {
         context.dataStore.edit { it[Keys.LANGUAGE] = tag }
+    }
+
+    override suspend fun setPin(pin: String?) {
+        context.dataStore.edit { if (pin == null) it.remove(Keys.PIN) else it[Keys.PIN] = pin }
+    }
+
+    override suspend fun setLayoutOverride(layout: String?) {
+        context.dataStore.edit { if (layout == null) it.remove(Keys.LAYOUT) else it[Keys.LAYOUT] = layout }
+    }
+
+    override suspend fun setPlayerEngine(playlistId: Long, engine: String) {
+        context.dataStore.edit { it[Keys.engine(playlistId)] = engine }
     }
 
     suspend fun setOnboarded(value: Boolean) {

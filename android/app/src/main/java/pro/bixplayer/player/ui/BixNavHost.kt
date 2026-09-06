@@ -20,12 +20,15 @@ import pro.bixplayer.player.ui.screens.boot.BootDestination
 import pro.bixplayer.player.ui.screens.boot.BootViewModel
 import pro.bixplayer.player.ui.screens.catalog.CatalogScreen
 import pro.bixplayer.player.ui.screens.catalog.CatalogViewModel
+import pro.bixplayer.player.ui.screens.epg.EpgGridScreen
+import pro.bixplayer.player.ui.screens.epg.EpgGridViewModel
 import pro.bixplayer.player.ui.screens.expired.ExpiredScreen
 import pro.bixplayer.player.ui.screens.home.HomeScreen
 import pro.bixplayer.player.ui.screens.live.LiveScreen
 import pro.bixplayer.player.ui.screens.movies.MovieDetailScreen
 import pro.bixplayer.player.ui.screens.movies.MovieDetailViewModel
 import pro.bixplayer.player.ui.screens.player.PlayerScreen
+import pro.bixplayer.player.ui.screens.parental.ParentalScreen
 import pro.bixplayer.player.ui.screens.player.PlayerViewModel
 import pro.bixplayer.player.ui.screens.player.ZapScope
 import pro.bixplayer.player.ui.screens.playlists.ChangePlaylistScreen
@@ -43,12 +46,17 @@ object Routes {
     const val UPDATE = "update"
     const val HOME = "home"
     const val LIVE = "live"
+    const val LIVE_PATTERN = "live?scope={scope}"
+
+    fun live(scope: String? = null): String = if (scope == null) LIVE else "$LIVE?scope=$scope"
     const val PLAYER = "player"
     const val SETTINGS = "settings"
     const val CHANGE_PLAYLIST = "change_playlist"
     const val CATALOG = "catalog"
     const val MOVIE = "movie"
     const val SERIES = "series"
+    const val EPG = "epg"
+    const val PARENTAL = "parental"
 
     const val PLAYER_PATTERN =
         "$PLAYER/{${PlayerViewModel.ARG_KIND}}/{${PlayerViewModel.ARG_ID}}" +
@@ -68,6 +76,10 @@ object Routes {
     fun movie(id: Long): String = "$MOVIE/$id"
 
     fun series(id: Long): String = "$SERIES/$id"
+
+    const val EPG_PATTERN = "$EPG?${EpgGridViewModel.ARG_CHANNEL_ID}={${EpgGridViewModel.ARG_CHANNEL_ID}}"
+
+    fun epg(channelId: Long?): String = "$EPG?${EpgGridViewModel.ARG_CHANNEL_ID}=${channelId ?: -1L}"
 }
 
 @Composable
@@ -135,19 +147,36 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
                 HomeScreen(
                     config = config,
                     onLive = { navController.navigate(Routes.LIVE) { launchSingleTop = true } },
+                    onFavorites = { navController.navigate(Routes.live(ZapScope.FAVORITES)) { launchSingleTop = true } },
                     onMovies = { navController.navigate(Routes.catalog(ContentKind.MOVIE)) { launchSingleTop = true } },
                     onSeries = { navController.navigate(Routes.catalog(ContentKind.SERIES)) { launchSingleTop = true } },
+                    onGuide = { navController.navigate(Routes.epg(null)) { launchSingleTop = true } },
                     onSettings = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } },
                     onResume = { kind, id -> navController.navigate(Routes.playerVod(kind, id, resume = true)) },
                 )
             }
 
-            composable(Routes.LIVE) {
+            composable(
+                route = Routes.LIVE_PATTERN,
+                arguments = listOf(navArgument("scope") { type = NavType.StringType; nullable = true; defaultValue = null }),
+            ) {
                 LiveScreen(
                     onOpenChannel = { channel, scopeKey ->
                         navController.navigate(Routes.player(channel.id, scopeKey)) { launchSingleTop = true }
                     },
+                    onOpenGuide = { channel -> navController.navigate(Routes.epg(channel?.id)) { launchSingleTop = true } },
                     onBack = { navController.popBackStack() },
+                )
+            }
+
+            composable(
+                route = Routes.EPG_PATTERN,
+                arguments = listOf(navArgument(EpgGridViewModel.ARG_CHANNEL_ID) { type = NavType.LongType; defaultValue = -1L }),
+            ) {
+                EpgGridScreen(
+                    onPlayChannel = { channel ->
+                        navController.navigate(Routes.player(channel.id, ZapScope.ALL)) { launchSingleTop = true }
+                    },
                 )
             }
 
@@ -208,6 +237,7 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     onChangePlaylist = { navController.navigate(Routes.CHANGE_PLAYLIST) },
+                    onParental = { navController.navigate(Routes.PARENTAL) },
                     onLoggedOut = {
                         // Everything local is gone: boot again, which re-registers the device and
                         // lands on the activation screen (or home, if the platform still knows it).
@@ -223,6 +253,10 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
 
             composable(Routes.CHANGE_PLAYLIST) {
                 ChangePlaylistScreen(onBack = { navController.popBackStack() })
+            }
+
+            composable(Routes.PARENTAL) {
+                ParentalScreen(onBack = { navController.popBackStack() })
             }
         }
     }

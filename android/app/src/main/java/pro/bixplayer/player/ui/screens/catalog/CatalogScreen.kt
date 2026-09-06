@@ -59,6 +59,8 @@ import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
 import pro.bixplayer.player.data.db.ContentKind
 import pro.bixplayer.player.ui.components.SearchRow
+import pro.bixplayer.player.ui.components.PinGateDialog
+import pro.bixplayer.player.ui.components.rememberPinGate
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
 
@@ -69,11 +71,11 @@ import pro.bixplayer.player.ui.theme.bixFocusable
 @Composable
 fun CatalogScreen(
     onOpen: (CatalogItem) -> Unit,
-    onLockedCategory: (CatalogCategory, () -> Unit) -> Unit = { _, proceed -> proceed() },
     viewModel: CatalogViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val items = viewModel.items.collectAsLazyPagingItems()
+    val gate = rememberPinGate()
 
     val gridRequester = remember { FocusRequester() }
     val categoryRequester = remember { FocusRequester() }
@@ -93,6 +95,7 @@ fun CatalogScreen(
         }
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Row(
         modifier = Modifier
             .fillMaxSize()
@@ -104,8 +107,7 @@ fun CatalogScreen(
             state = state,
             firstRequester = categoryRequester,
             onSelect = { category ->
-                if (category.locked) onLockedCategory(category) { viewModel.selectCategory(category) }
-                else viewModel.selectCategory(category)
+                gate.require(category.locked, R.string.pin_locked_category) { viewModel.selectCategory(category) }
             },
             modifier = Modifier.width(220.dp).fillMaxHeight(),
         )
@@ -178,6 +180,8 @@ fun CatalogScreen(
                 }
             }
         }
+    }
+    PinGateDialog(gate)
     }
 }
 

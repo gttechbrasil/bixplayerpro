@@ -21,22 +21,22 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes, 
 - [x] Player: ao terminar um episódio, oferecer o próximo (contagem regressiva 10 s, cancelável)
 
 ## 3. EPG
-- [ ] Xtream: `get_short_epg` para o painel de prévia (agora/próximo) e `xmltv.php` para a grade; M3U: `url-tvg` do cabeçalho `#EXTM3U` quando presente
-- [ ] Parser XMLTV em streaming (SAX/XmlPullParser), gravando em Room `epg_programs` com janela de −6 h a +48 h; descarte do que sair da janela; sync em WorkManager a cada 12 h e sob demanda
-- [ ] Preencher o slot de EPG da tela de TV ao vivo: programa atual, próximo, barra de progresso
-- [ ] `EpgGridScreen`: grade horizontal por canal (linha do tempo de 3 h visível), navegação por D-pad, tocar ao apertar OK; acessível pelo botão "Guia" na TV ao vivo e por tecla GUIDE do controle quando existir
-- [ ] Casamento canal↔programa por `tvg-id` (M3U) ou `epg_channel_id` (Xtream)
+- [x] Xtream: `get_short_epg` para o painel de prévia (agora/próximo) e `xmltv.php` para a grade; M3U: `url-tvg` do cabeçalho `#EXTM3U` quando presente
+- [x] Parser XMLTV em streaming (SAX/XmlPullParser), gravando em Room `epg_programs` com janela de −6 h a +48 h; descarte do que sair da janela; sync em WorkManager a cada 12 h e sob demanda
+- [x] Preencher o slot de EPG da tela de TV ao vivo: programa atual, próximo, barra de progresso
+- [x] `EpgGridScreen`: grade horizontal por canal (linha do tempo de 3 h visível), navegação por D-pad, tocar ao apertar OK; acessível pelo botão "Guia" na TV ao vivo e por tecla GUIDE do controle quando existir
+- [x] Casamento canal↔programa por `tvg-id` (M3U) ou `epg_channel_id` (Xtream)
 
 ## 4. Controle parental (PIN)
-- [ ] PIN de 4 dígitos vindo do config (`pin`); padrão `0000`; alterável em Configurações com confirmação do PIN atual (salvo localmente; não há endpoint no painel para isso na v1)
-- [ ] Bloqueio por playlist (`is_protected` do config) e por categoria (lista local escolhida pelo usuário em Configurações → Controle parental)
-- [ ] Diálogo de PIN com teclado numérico navegável por D-pad; desbloqueio válido pela sessão do app
-- [ ] Ocultar categorias (Configurações) — persistido por playlist; some das listas, EPG e busca
+- [x] PIN de 4 dígitos vindo do config (`pin`); padrão `0000`; alterável em Configurações com confirmação do PIN atual (salvo localmente; não há endpoint no painel para isso na v1)
+- [x] Bloqueio por playlist (`is_protected` do config) e por categoria (lista local escolhida pelo usuário em Configurações → Controle parental)
+- [x] Diálogo de PIN com teclado numérico navegável por D-pad; desbloqueio válido pela sessão do app
+- [x] Ocultar categorias (Configurações) — persistido por playlist; some das listas, EPG e busca
 
 ## 5. Layout 2 (`grid`)
-- [ ] Home alternativa: sem menu lateral; blocos grandes em grade (TV ao vivo, Filmes, Séries, Favoritos, Guia, Configurações) com contagem e capa de destaque em cada bloco; banners embaixo
-- [ ] Mesmas telas internas; só a home muda. Troca por `theme` do config e por "Alterar layout" em Configurações (a escolha do painel vence a local no próximo `config`)
-- [ ] Ambos os layouts respeitam `logo_url`, `bg_url`, banners e QR
+- [x] Home alternativa: sem menu lateral; blocos grandes em grade (TV ao vivo, Filmes, Séries, Favoritos, Guia, Configurações) com contagem e capa de destaque em cada bloco; banners embaixo
+- [x] Mesmas telas internas; só a home muda. Troca por `theme` do config e por "Alterar layout" em Configurações (a escolha do painel vence a local no próximo `config`)
+- [x] Ambos os layouts respeitam `logo_url`, `bg_url`, banners e QR
 
 ## 6. Versão celular (`MobileActivity`)
 - [ ] Mesmas ViewModels e repositórios; UI adaptada ao toque e ao retrato: bottom navigation (TV / Filmes / Séries / Guia / Mais), listas verticais, grade de 3 colunas, busca com teclado nativo

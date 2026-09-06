@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
+import pro.bixplayer.player.data.work.EpgSyncWorker
 import javax.inject.Inject
 import timber.log.Timber
 
@@ -23,5 +24,6 @@ class BixApplication : Application(), Configuration.Provider {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
+        EpgSyncWorker.schedulePeriodic(this)
     }
 }

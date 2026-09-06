@@ -1,8 +1,10 @@
 package pro.bixplayer.player.ui.screens.playlists
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,6 +13,7 @@ import kotlinx.coroutines.launch
 import pro.bixplayer.player.data.datastore.DeviceStore
 import pro.bixplayer.player.data.db.PlaylistSyncDao
 import pro.bixplayer.player.data.repository.ConfigRepository
+import pro.bixplayer.player.data.work.EpgSyncWorker
 import pro.bixplayer.player.domain.model.ConfigState
 import pro.bixplayer.player.domain.model.Playlist
 import pro.bixplayer.player.domain.usecase.PlaylistSyncUseCase
@@ -29,6 +32,7 @@ data class PlaylistUiState(
 
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val repository: ConfigRepository,
     private val syncUseCase: PlaylistSyncUseCase,
     private val syncDao: PlaylistSyncDao,
@@ -72,6 +76,7 @@ class PlaylistViewModel @Inject constructor(
             when (val result = syncUseCase.sync(playlist)) {
                 is SyncResult.Success -> {
                     Timber.i("sync ok: %d canais, %d categorias", result.channels, result.categories)
+                    EpgSyncWorker.syncNow(context, playlist.id, force = force)
                     _uiState.value = _uiState.value.copy(
                         syncing = false,
                         channelCount = result.channels,
