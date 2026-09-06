@@ -90,7 +90,9 @@ docker compose exec api python -m app.db.seed   # reexecutar o seed (idempotente
 
 A partir da máquina de desenvolvimento, com o repositório clonado e `deploy/.vps.env` +
 `deploy/id_deploy` configurados (§11.5): `./deploy/deploy.sh` faz push, `git reset --hard`
-no servidor, rebuild, migrações e healthcheck. Manualmente:
+no servidor, rebuild, migrações e healthcheck. Quando o `Caddyfile` muda, o script também
+reinicia o `caddy`: o arquivo é um bind mount somente leitura e o `git reset` cria um inode
+novo que o processo em execução não enxerga (`caddy reload` não basta). Manualmente:
 
 ```bash
 cd /opt/iptv && git pull

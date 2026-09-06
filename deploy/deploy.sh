@@ -63,6 +63,7 @@ if [ "$PUSH" = 1 ]; then
 fi
 
 echo "==> atualizando o código no servidor"
+PREVIOUS="$(ssh_run "cd $REMOTE_DIR && git rev-parse HEAD" | tr -d '')"
 ssh_run "cd $REMOTE_DIR && git fetch --quiet origin && git reset --hard origin/$BRANCH && git log -1 --oneline"
 
 if [ -n "$APK" ]; then
@@ -73,6 +74,15 @@ fi
 
 echo "==> rebuild e subida dos serviços"
 ssh_run "cd $REMOTE_DIR && docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build"
+
+# The Caddyfile is a read-only bind mount: `git reset` replaces the file (new inode) and the
+# running Caddy keeps the old one until the container restarts (`caddy reload` does not see it).
+if ssh_run "cd $REMOTE_DIR && git diff --quiet $PREVIOUS HEAD -- deploy/Caddyfile" >/dev/null 2>&1; then
+	:
+else
+	echo "==> Caddyfile mudou: reiniciando o caddy"
+	ssh_run "cd $REMOTE_DIR && docker compose -f deploy/docker-compose.yml --env-file deploy/.env restart caddy"
+fi
 
 echo "==> migrações"
 ssh_run "cd $REMOTE_DIR && docker compose -f deploy/docker-compose.yml --env-file deploy/.env exec -T api alembic upgrade head"
