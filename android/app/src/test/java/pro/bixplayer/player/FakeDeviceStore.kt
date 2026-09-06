@@ -2,6 +2,7 @@ package pro.bixplayer.player
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import pro.bixplayer.player.data.datastore.DeviceStore
 
 /** In-memory [DeviceStore] so the data layer can be tested without Android. */
@@ -42,7 +43,7 @@ class FakeDeviceStore(
     override suspend fun currentRefreshHours(): Long = _refreshHours.value
     override suspend fun currentPin(): String? = _pin.value
     override suspend fun currentLayoutOverride(): String? = _layout.value
-    override fun playerEngine(playlistId: Long): Flow<String> = kotlinx.coroutines.flow.map(_engines) { it[playlistId] ?: "auto" }
+    override fun playerEngine(playlistId: Long): Flow<String> = _engines.map { it[playlistId] ?: "auto" }
     override suspend fun currentPlayerEngine(playlistId: Long): String = _engines.value[playlistId] ?: "auto"
 
     override suspend fun saveCredentials(token: String, macAddress: String) {
