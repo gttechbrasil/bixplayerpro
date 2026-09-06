@@ -61,6 +61,9 @@ android {
 			if (keystoreProperties.isNotEmpty()) {
 				signingConfig = signingConfigs.getByName("release")
 			}
+			// TV boxes are ARM; x86 stays debug-only (emulator), which also keeps the universal
+			// release APK — the /downloads link — at half the size.
+			ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
 		}
 	}
 
@@ -88,6 +91,9 @@ android {
 	}
 
 	packaging {
+		// libvlc.so alone is 46 MB per ABI when stored; compressing native libs (extracted at
+		// install) roughly halves the download, which matters more than install size on a TV box.
+		jniLibs { useLegacyPackaging = true }
 		resources.excludes += setOf(
 			"/META-INF/{AL2.0,LGPL2.1}",
 			"/META-INF/DEPENDENCIES",
