@@ -4,6 +4,10 @@
 	encode zstd gzip
 
 	handle /api/* {
+		# Largest legitimate body is the 2 MB branding upload.
+		request_body {
+			max_size 8MB
+		}
 		reverse_proxy api:8000
 	}
 
@@ -23,13 +27,18 @@
 	}
 
 	handle {
+		# SvelteKit needs inline scripts/styles (hydration data, theme bootstrap); images may
+		# come from any http(s) origin because banners and logos are URLs typed by resellers.
+		header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
 		reverse_proxy web:3000
 	}
 
 	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
 		-Server
 	}
 
