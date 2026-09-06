@@ -49,13 +49,13 @@ Execute em ordem. Cada bloco termina com build verde, testes unitários verdes, 
 - [x] Regra de fallback: Media3 falha com erro de fonte/decodificação após os 2 retries → troca para VLC no mesmo canal, sem sair da tela, com aviso discreto "Modo de compatibilidade"
 - [x] Configurações → Player: Automático (padrão) / Media3 / VLC, por playlist
 - [x] Testar com um TS com codec não suportado pelo Media3 no emulador (gerar fixture com áudio AC-3 ou vídeo MPEG-2)
-- [ ] Impacto no tamanho do APK documentado; se passar de 40 MB, avaliar ABI splits (armeabi-v7a, arm64-v8a, x86_64)
+- [x] Impacto no tamanho do APK documentado; se passar de 40 MB, avaliar ABI splits (armeabi-v7a, arm64-v8a, x86_64)
 
 ## 8. Fechamento do M4
-- [ ] Fluxo completo nos dois AVDs: ativação → TV → filme com continuar assistindo → série com próximo episódio → guia → PIN → troca de layout → fallback VLC. Capturas em `docs/screens/android/m4/`
-- [ ] Sync completo com fixture grande (1.200 canais + 20.000 filmes + 500 séries + EPG de 48 h) em menos de 60 s no AVD, sem ANR
-- [ ] Testes unitários verdes (parsers XMLTV e SxxExx, regras de fallback, PIN); lint sem erros; release assinado e publicado em `/downloads/app.apk` com `min_app_version` atualizado no admin
-- [ ] `docs/ANDROID.md` atualizado; `docs/API.md` sem mudanças (nenhum endpoint novo no painel neste marco — se precisar de algum, pare e me consulte)
+- [x] Fluxo completo nos dois AVDs: ativação → TV → filme com continuar assistindo → série com próximo episódio → guia → PIN → troca de layout → fallback VLC. Capturas em `docs/screens/android/m4/`
+- [x] Sync completo com fixture grande (1.200 canais + 20.000 filmes + 500 séries + EPG de 48 h) em menos de 60 s no AVD, sem ANR
+- [x] Testes unitários verdes (parsers XMLTV e SxxExx, regras de fallback, PIN); lint sem erros; release assinado e publicado em `/downloads/app.apk` com `min_app_version` atualizado no admin
+- [x] `docs/ANDROID.md` atualizado; `docs/API.md` sem mudanças (nenhum endpoint novo no painel neste marco — se precisar de algum, pare e me consulte)
 
 ## Ao concluir
 Apresente o que foi entregue, pendências, decisões em ADR e o que precisa ser validado em hardware real. Então aguarde `docs/PLANO-M5.md` (testes integrados, homologação com o cliente, documentação e entrega).
