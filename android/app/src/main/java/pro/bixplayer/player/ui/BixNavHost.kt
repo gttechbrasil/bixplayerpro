@@ -43,6 +43,15 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import pro.bixplayer.player.ui.components.requestFocusSafely
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.background
@@ -127,6 +136,9 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
         val currentRoute = backStack?.destination?.route
         val tabRoutes = listOf(Routes.LIVE_PATTERN, Routes.CATALOG_PATTERN, Routes.EPG_PATTERN, Routes.SETTINGS)
         val showBar = !isTv && currentRoute in tabRoutes
+        // D-pad safety net for the phone UI on a box (M5-017): MENU moves the focus to the
+        // bottom bar, which a long list would otherwise never let the D-pad reach.
+        val barRequester = remember { FocusRequester() }
         // On a phone there is no home screen, so the first sync of the active playlist is
         // owned here (activity scope) instead of by HomeScreen; a strip above the bar reports it.
         val phoneSync: PlaylistViewModel? = if (isTv) null else hiltViewModel()
@@ -141,6 +153,13 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
         }
         val inPlayer = currentRoute?.startsWith(Routes.PLAYER) == true
         Scaffold(
+            modifier = Modifier.onPreviewKeyEvent { event ->
+                if (showBar && event.type == KeyEventType.KeyUp && event.key == Key.Menu) {
+                    barRequester.requestFocusSafely()
+                } else {
+                    false
+                }
+            },
             containerColor = MaterialTheme.colorScheme.background,
             // The player draws edge to edge, under the bars and the camera cutout.
             contentWindowInsets = if (inPlayer) WindowInsets(0) else ScaffoldDefaults.contentWindowInsets,
@@ -164,6 +183,7 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
                             )
                         }
                     MobileBottomBar(
+                        focusRequester = barRequester,
                         current = currentRoute,
                         currentKind = backStack?.arguments?.getString(CatalogViewModel.ARG_KIND),
                         onNavigate = { route ->
@@ -351,7 +371,12 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
 
 /** TV / Filmes / Séries / Guia / Mais. */
 @Composable
-private fun MobileBottomBar(current: String?, currentKind: String?, onNavigate: (String) -> Unit) {
+private fun MobileBottomBar(
+    focusRequester: FocusRequester,
+    current: String?,
+    currentKind: String?,
+    onNavigate: (String) -> Unit,
+) {
     data class Tab(val label: String, val icon: String, val route: String, val selected: Boolean)
     val tabs = listOf(
         Tab(stringResource(R.string.home_live), "▶", Routes.LIVE, current == Routes.LIVE_PATTERN),
@@ -364,6 +389,7 @@ private fun MobileBottomBar(current: String?, currentKind: String?, onNavigate: 
         tabs.forEach { tab ->
             NavigationBarItem(
                 selected = tab.selected,
+                modifier = if (tab.selected) Modifier.focusRequester(focusRequester) else Modifier,
                 onClick = { if (!tab.selected) onNavigate(tab.route) },
                 icon = { Text(tab.icon) },
                 label = { Text(tab.label, maxLines = 1) },
