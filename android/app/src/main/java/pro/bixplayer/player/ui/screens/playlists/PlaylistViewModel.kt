@@ -43,7 +43,9 @@ class PlaylistViewModel @Inject constructor(
     val uiState: StateFlow<PlaylistUiState> = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch { reload() }
+        // Follows the config instead of reading it once: the phone nav host creates this view
+        // model before the first boot finishes, so the playlists arrive after construction.
+        viewModelScope.launch { repository.state.collect { reload() } }
     }
 
     private suspend fun reload() {

@@ -20,6 +20,7 @@ Anexo I com desvio), **baixa** (cosmético, melhoria de robustez). Status: `aber
 | M5-009 | Limpeza (bloco 0) | baixa | Resíduos de demonstração em produção: revenda `revenda01`, dispositivo `AA:BB:CC:00:11:22` ("Cliente Demo") com playlist `http://servidor.exemplo`, 2 Pix pendentes do sandbox (R$ 35,00, 05/09/2026). | aberta — remover junto com a revenda de teste no bloco 3 (com você) |
 | M5-010 | Validação M4 (emulador) | baixa | A tecla **GUIDE** do controle não chega ao app no emulador (`KEYCODE_GUIDE` é interceptado pelo sistema); o guia abre pelo chip "Guia". Confirmar em TV box real com controle físico. | aberta — depende do bloco 1 |
 | M5-011 | Validação M4 (emulador) | baixa | PiP, recorte da câmera (notch) e o giro de 180° do player no celular só foram testados no emulador; decodificação libVLC só em x86_64. | aberta — depende do bloco 1 |
+| M5-012 | Marca (bloco 3) | média | No celular, o primeiro boot após a ativação não sincronizava a playlist (a `PlaylistViewModel` hospedada no nav host lia o config uma única vez, antes de ele chegar); a lista só aparecia ao reabrir o app. | corrigida — a view model segue `repository.state`; validado com instalação limpa no AVD |
 
 ## Como abrir uma issue
 

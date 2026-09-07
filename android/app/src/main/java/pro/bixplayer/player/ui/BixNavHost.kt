@@ -132,7 +132,10 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
         val phoneSync: PlaylistViewModel? = if (isTv) null else hiltViewModel()
         val phoneSyncState = phoneSync?.uiState?.collectAsStateWithLifecycle()?.value
         if (phoneSync != null) {
-            LaunchedEffect(phoneSyncState?.activeId, destination) {
+            // Keyed on the playlist count too: on the first boot after activation the active id
+            // can arrive before the config's playlist list, and syncActive() returns silently
+            // when it cannot find the playlist yet.
+            LaunchedEffect(phoneSyncState?.activeId, phoneSyncState?.playlists?.size, destination) {
                 if (phoneSyncState?.activeId != null && destination is BootDestination.Go) phoneSync.syncActive()
             }
         }
