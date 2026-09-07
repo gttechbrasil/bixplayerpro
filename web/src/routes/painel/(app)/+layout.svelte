@@ -6,6 +6,8 @@
 	import Renewal from '$lib/components/Renewal.svelte';
 	import Sidebar, { type NavGroup } from '$lib/components/Sidebar.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+	import Button from '$lib/components/Button.svelte';
+	import { firstTimeThisSession, renewalNudge } from '$lib/renewalNudge';
 	import { toast } from '$lib/stores/toast.svelte';
 	import type { Plans } from '$lib/types';
 
@@ -34,6 +36,14 @@
 
 	let renewOpen = $state(false);
 	let plans = $state<Plans | null>(null);
+
+	// Expiration nudges: banner at 3 days or less, modal once per session at 1 day or less.
+	// Expired resellers are already redirected to /painel/renovar by the layout load.
+	const nudge = $derived(data.user.is_expired ? null : renewalNudge(data.user.expires_at));
+	let nudgeOpen = $state(false);
+	$effect(() => {
+		if (nudge?.level === 'modal' && firstTimeThisSession(nudge.sessionKey)) nudgeOpen = true;
+	});
 
 	async function openRenewal() {
 		try {
@@ -89,10 +99,43 @@
 			>
 		</header>
 		<main class="flex-1 overflow-y-auto p-6">
-			<div class="mx-auto max-w-7xl">{@render children()}</div>
+			<div class="mx-auto max-w-7xl">
+				{#if nudge && nudge.level !== 'none'}
+					<div
+						class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100"
+						role="status"
+						data-testid="renewal-banner"
+					>
+						<p>
+							<strong>{nudge.message}.</strong>
+							Renove para manter seus clientes assistindo sem interrupção.
+						</p>
+						<Button size="sm" onclick={openRenewal}>Renovar agora</Button>
+					</div>
+				{/if}
+				{@render children()}
+			</div>
 		</main>
 	</div>
 </div>
+
+{#if nudge}
+	<Modal bind:open={nudgeOpen} title={nudge.message} size="sm">
+		<p class="text-sm text-slate-600 dark:text-slate-300">
+			Depois do vencimento o painel fica restrito à renovação e os apps dos seus clientes passam a
+			mostrar "Expirado". Renove agora por Pix; a confirmação é automática.
+		</p>
+		{#snippet footer()}
+			<Button variant="secondary" onclick={() => (nudgeOpen = false)}>Depois</Button>
+			<Button
+				onclick={() => {
+					nudgeOpen = false;
+					openRenewal();
+				}}>Renovar agora</Button
+			>
+		{/snippet}
+	</Modal>
+{/if}
 
 <Modal bind:open={renewOpen} title="Renovar revenda">
 	{#if plans}

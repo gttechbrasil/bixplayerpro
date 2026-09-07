@@ -90,6 +90,12 @@ abertura.
 
 ![Renovar](screens/web/painel-09-renovar.png)
 
+Faltando **3 dias ou menos** para o vencimento, o painel mostra um aviso no topo de todas as
+telas com o botão **Renovar agora**; com **1 dia ou menos**, um lembrete abre uma vez por
+sessão ao entrar. Os dois levam ao mesmo Pix descrito abaixo.
+
+![Aviso de vencimento](screens/web/painel-12-aviso-vencimento.png)
+
 1. Escolha **1 mês** (preço mensal) ou um **pacote** com desconto.
 2. Clique em **Gerar Pix**: aparecem o QR Code e o código **copia e cola**, válidos por 30 minutos.
 3. Pague no app do seu banco. A confirmação chega sozinha (a tela atualiza) e o seu
