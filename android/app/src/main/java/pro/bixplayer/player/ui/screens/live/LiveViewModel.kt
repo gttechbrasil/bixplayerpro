@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import pro.bixplayer.player.util.DeviceClass
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -165,7 +166,16 @@ class LiveViewModel @Inject constructor(
     }.flatMapLatest { (id, s, q) ->
         if (id == null) return@flatMapLatest flowOf(PagingData.empty())
         val effective = if (q.isNotBlank()) ChannelScope.Search(q) else s
-        Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = PAGE_SIZE, enablePlaceholders = false)) {
+        Pager(
+            PagingConfig(
+                pageSize = DeviceClass.pageSize,
+                prefetchDistance = DeviceClass.pageSize,
+                // Pages far from the viewport are dropped: a 20k-title catalogue must never
+                // be held in memory on a 1 GB box (M5-018).
+                maxSize = DeviceClass.pagingMaxSize,
+                enablePlaceholders = false,
+            ),
+        ) {
             when (effective) {
                 ChannelScope.All -> channelDao.pagingByCategory(id, null)
                 ChannelScope.Favorites -> channelDao.pagingFavorites(id)
@@ -285,7 +295,6 @@ class LiveViewModel @Inject constructor(
     }
 
     companion object {
-        const val PAGE_SIZE = 60
         const val PREVIEW_DEBOUNCE_MS = 700L
         private const val KEY_SCOPE = "scope"
         private const val KEY_SCOPE_NAME = "scope_name"

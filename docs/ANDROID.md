@@ -404,14 +404,47 @@ com o build 1.1.0. Pendente de hardware real: TV box física (item 2 do bloco 0)
 libVLC em ARM, PiP em aparelhos que o restringem e o comportamento do recorte da câmera em
 celulares com notch.
 
-## 13. Hardware real (M5-016)
+## 13. Dispositivo de referência mínimo e hardware real (M5-016)
+
+**Referência mínima: MXQ Pro 4K 5G** (box do cliente). Android exibido "11.1" com patch de
+segurança de dezembro/2019 — quase certamente um `build.prop` falsificado sobre Android 7.1 ou
+9; 1 GB de RAM (2 GB no máximo nas variantes); SoC Allwinner H3 ou Rockchip RK3228A;
+decodificação por hardware limitada a H.264. Consequências no código:
+
+- **Nunca decidir por `Build.VERSION.RELEASE`**; só `SDK_INT`, memória e lista de codecs. O
+  diagnóstico grava `release_reported` apenas como informação.
+- **Memória** (`util/DeviceClass`, `lowRam` = RAM ≤ 1,5 GB ou `isLowRamDevice`): Coil com cache
+  de 5 % do heap, RGB_565 e 48 MB em disco; Paging com página 24 e `maxSize` 120; cache de
+  posters esvaziado ao abrir o player e em `onTrimMemory`; `largeHeap=false`.
+- **Vídeo**: sem decodificador HEVC de hardware o Media3 prefere H.264 nas playlists com
+  variantes; HEVC puro cai no VLC pelo fallback normal; em `lowRam` o vídeo é limitado a 1080p e
+  os buffers a 20 s / 12 MB.
+
+### AVD de baixo recurso (`bix_box_lowend`)
+
+```bash
+# imagem Android 9 x86 (o ';' precisa chegar inteiro ao sdkmanager — ver §2)
+cmd /c "echo y| sdkmanager.bat --install \"system-images;android-28;google_apis;x86\""
+avdmanager create avd -n bix_box_lowend -k "system-images;android-28;google_apis;x86" -d "tv_1080p" --force
+# config.ini: hw.ramSize=1024, hw.gpu.enabled=no (vídeo por software), hw.keyboard=yes, disk.dataPartition.size=4G
+emulator -avd bix_box_lowend -no-snapshot -gpu swiftshader_indirect -port 5558
+```
+
+Smoke test de reprodução nesse AVD: instalar o `app-universal-debug.apk` (a imagem é x86 32
+bits), ativar contra a API local, sincronizar a fixture de 20k filmes, abrir a grade de filmes,
+reproduzir um filme e um canal, e ler `adb shell dumpsys meminfo <pacote>` em cada etapa.
+
+### Resultados
 
 | Aparelho | Android | Chip / ABI | Release | Resultado |
 |---|---|---|---|---|
-| TV box do cliente (modelo a confirmar) | a confirmar (AOSP, sem leanback) | a confirmar | 1.2.0 | Abria a UI de celular (M5-017); D-pad só em modo mouse; fechamentos ao reproduzir filme (M5-013). Reteste com 1.2.1 pendente |
+| **MXQ Pro 4K 5G** (cliente) | exibido "11.1", patch 2019-12 (real: 7.1/9 provável) | Allwinner H3 / RK3228A, armeabi-v7a, 1 GB | 1.2.0 | Abria a UI de celular (M5-017); D-pad só em modo mouse; fechamentos ao reproduzir filme (M5-013 → hipótese OOM, M5-018). Reteste com 1.2.2 pendente |
+
+| Aparelho | Android | Chip / ABI | Release | Resultado |
+|---|---|---|---|---|
 | AVD `bix_tv_api36` | 16 (SDK 36) Android TV | x86_64 (+arm64 por tradução) | 1.2.1 | Entrada única abre a UI de TV; 1 OK toca filme e episódio; override Celular/Automático pelo controle; diagnóstico enviado e visível no admin |
 | AVD `Pixel_10_Pro_XL` | 16 (SDK 36) | x86_64 (+arm64) | 1.2.1 | Entrada única abre a UI de celular; D-pad navega a lista e toca canal com 1 OK; `hw.touchScreen=no` não remove o toque da imagem (ver M5-017) |
 
-Preencher com modelo, versão do Android, ABI (`Configurações → Enviar diagnóstico` inclui
-tudo isso no cabeçalho do pacote), tempo de sync da lista real, canais que caíram no VLC e
-o quadro de transição HLS→TS.
+Ao receber um diagnóstico da box (`Configurações → Enviar diagnóstico`), completar a linha com
+`sdk_int`, `hardware`, `video_decoders`, tempo de sync da lista real, canais que caíram no VLC e
+o pico de memória.

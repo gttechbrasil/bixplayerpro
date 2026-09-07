@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import pro.bixplayer.player.util.DeviceClass
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
@@ -135,7 +136,16 @@ class CatalogViewModel @Inject constructor(
         if (id == null) return@flatMapLatest flowOf(PagingData.empty())
         val category = key.removePrefix("cat:").takeIf { key.startsWith("cat:") }
         val favorites = if (key == CatalogUiState.KEY_FAVORITES) 1 else 0
-        Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = PAGE_SIZE, enablePlaceholders = false)) {
+        Pager(
+            PagingConfig(
+                pageSize = DeviceClass.pageSize,
+                prefetchDistance = DeviceClass.pageSize,
+                // Pages far from the viewport are dropped: a 20k-title catalogue must never
+                // be held in memory on a 1 GB box (M5-018).
+                maxSize = DeviceClass.pagingMaxSize,
+                enablePlaceholders = false,
+            ),
+        ) {
             if (kind == ContentKind.SERIES) seriesDao.paging(id, category, q, favorites, s.ordinal)
             else movieDao.paging(id, category, q, favorites, s.ordinal)
         }.flow.map { paging ->
@@ -192,7 +202,6 @@ class CatalogViewModel @Inject constructor(
 
     companion object {
         const val ARG_KIND = "kind"
-        const val PAGE_SIZE = 60
         private const val KEY_SELECTED = "selected"
         private const val KEY_QUERY = "query"
         private const val KEY_SORT = "sort"

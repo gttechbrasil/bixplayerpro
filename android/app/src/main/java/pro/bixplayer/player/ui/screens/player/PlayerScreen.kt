@@ -74,6 +74,8 @@ import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.util.TimeFormat
 import pro.bixplayer.player.ui.components.onSelect
 import android.content.pm.ActivityInfo
+import androidx.compose.ui.platform.LocalContext
+import coil3.SingletonImageLoader
 import android.os.Build
 import android.view.WindowManager
 import androidx.core.view.WindowCompat
@@ -107,8 +109,12 @@ fun PlayerScreen(
 
     // Phones watch in landscape, full screen (bars hidden, video under the camera cutout);
     // orientation, bars and cutout mode all go back to the system's when leaving.
+    // The catalogue's posters are worthless while a video plays; on a 1 GB box the decoder
+    // needs that memory more (M5-018).
+    val appContext = LocalContext.current.applicationContext
     DisposableEffect(isTv) {
         viewModel.session.inPlayerScreen = true
+        runCatching { SingletonImageLoader.get(appContext).memoryCache?.clear() }
         val window = activity?.window
         val controller = window?.let { WindowCompat.getInsetsController(it, it.decorView) }
         if (!isTv && activity != null && window != null && controller != null) {

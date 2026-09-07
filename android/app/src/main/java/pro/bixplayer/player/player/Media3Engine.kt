@@ -13,6 +13,9 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.common.MimeTypes
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import pro.bixplayer.player.util.DeviceClass
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.DefaultExtractorsFactory
@@ -90,18 +93,37 @@ class Media3Engine(
             .setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3)
             .setConstantBitrateSeekingEnabled(true)
 
+        val lowRam = DeviceClass.lowRam
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
                 MIN_BUFFER_MS,
-                MAX_BUFFER_MS,
+                if (lowRam) MAX_BUFFER_LOW_RAM_MS else MAX_BUFFER_MS,
                 BUFFER_FOR_PLAYBACK_MS,
                 BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
             )
+            // Bounded buffer in bytes as well: a 4K/HEVC variant must not eat the heap of a 1 GB box.
+            .setTargetBufferBytes(if (lowRam) TARGET_BUFFER_BYTES_LOW_RAM else C.LENGTH_UNSET)
             .build()
+
+        // Boxes such as the MXQ Pro 4K decode only H.264 in hardware: when the playlist offers
+        // several variants (HLS master), pick the H.264 one; HEVC-only streams then fail with a
+        // decoder error and PlayerSession falls back to VLC (M5-020). Low-RAM boxes are also
+        // capped at 1080p.
+        val hevcHardware = DeviceClass.hasHardwareDecoder(MimeTypes.VIDEO_H265)
+        val trackSelector = DefaultTrackSelector(context).apply {
+            parameters = buildUponParameters()
+                .apply {
+                    if (!hevcHardware) setPreferredVideoMimeTypes(MimeTypes.VIDEO_H264, MimeTypes.VIDEO_H265)
+                    if (lowRam) setMaxVideoSize(1920, 1080)
+                }
+                .build()
+        }
+        Timber.i("media3 engine: lowRam=%s hevcHw=%s", lowRam, hevcHardware)
 
         return ExoPlayer.Builder(context)
             .setMediaSourceFactory(DefaultMediaSourceFactory(dataSource, extractors))
             .setLoadControl(loadControl)
+            .setTrackSelector(trackSelector)
             .setHandleAudioBecomingNoisy(true)
             .build()
             .also {
@@ -262,6 +284,8 @@ class Media3Engine(
         private const val LIVE_TARGET_OFFSET_MS = 6_000L
         private const val MIN_BUFFER_MS = 15_000
         private const val MAX_BUFFER_MS = 50_000
+        private const val MAX_BUFFER_LOW_RAM_MS = 20_000
+        private const val TARGET_BUFFER_BYTES_LOW_RAM = 12 * 1024 * 1024
         private const val BUFFER_FOR_PLAYBACK_MS = 1_500
         private const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS = 3_000
     }
