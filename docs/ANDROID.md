@@ -409,6 +409,8 @@ celulares com notch.
 | Aparelho | Android | Chip / ABI | Release | Resultado |
 |---|---|---|---|---|
 | TV box do cliente (modelo a confirmar) | a confirmar (AOSP, sem leanback) | a confirmar | 1.2.0 | Abria a UI de celular (M5-017); D-pad só em modo mouse; fechamentos ao reproduzir filme (M5-013). Reteste com 1.2.1 pendente |
+| AVD `bix_tv_api36` | 16 (SDK 36) Android TV | x86_64 (+arm64 por tradução) | 1.2.1 | Entrada única abre a UI de TV; 1 OK toca filme e episódio; override Celular/Automático pelo controle; diagnóstico enviado e visível no admin |
+| AVD `Pixel_10_Pro_XL` | 16 (SDK 36) | x86_64 (+arm64) | 1.2.1 | Entrada única abre a UI de celular; D-pad navega a lista e toca canal com 1 OK; `hw.touchScreen=no` não remove o toque da imagem (ver M5-017) |
 
 Preencher com modelo, versão do Android, ABI (`Configurações → Enviar diagnóstico` inclui
 tudo isso no cabeçalho do pacote), tempo de sync da lista real, canais que caíram no VLC e
