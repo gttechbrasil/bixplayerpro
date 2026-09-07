@@ -1,4 +1,5 @@
 <script lang="ts">
+	import symbol from '$lib/assets/symbol.png';
 	import { goto } from '$app/navigation';
 	import { errorMessage, post } from '$lib/api';
 	import Button from '$lib/components/Button.svelte';
@@ -31,11 +32,7 @@
 	<div class="absolute top-4 right-4"><ThemeToggle /></div>
 	<form class="card w-full max-w-sm space-y-4 p-8" onsubmit={submit}>
 		<div class="text-center">
-			<div
-				class="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-brand-600 text-xl font-bold text-white"
-			>
-				R
-			</div>
+			<img src={symbol} alt="Bix Player Pro" class="mx-auto h-16 w-16" />
 			<h1 class="mt-4 text-xl font-semibold">Painel da revenda</h1>
 			<p class="mt-1 text-sm text-slate-500">Entre com seu usuário e senha.</p>
 		</div>

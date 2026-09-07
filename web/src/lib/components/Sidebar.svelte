@@ -11,6 +11,8 @@
 </script>
 
 <script lang="ts">
+	import logoLight from '$lib/assets/logo-light.png';
+	import logoDark from '$lib/assets/logo-dark.png';
 	import type { Snippet } from 'svelte';
 	import { page } from '$app/state';
 
@@ -31,10 +33,8 @@
 	class="flex h-full w-60 shrink-0 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
 >
 	<div class="flex h-16 items-center gap-2 border-b border-slate-200 px-5 dark:border-slate-800">
-		<span class="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 font-bold text-white">
-			{platformName.slice(0, 1).toUpperCase()}
-		</span>
-		<span class="truncate font-semibold">{platformName}</span>
+		<img src={logoLight} alt={platformName} class="h-8 w-auto dark:hidden" />
+		<img src={logoDark} alt={platformName} class="hidden h-8 w-auto dark:block" />
 	</div>
 	{#if top}
 		<div class="border-b border-slate-200 p-3 dark:border-slate-800">{@render top()}</div>

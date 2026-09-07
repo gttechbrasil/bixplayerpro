@@ -104,7 +104,7 @@
 		<td class="table-td font-mono text-xs">{entry.action}</td>
 		<td class="table-td font-mono text-xs">
 			{#if link}
-				<a class="text-brand-600 hover:underline dark:text-brand-300" href={link}>{entry.target}</a>
+				<a class="text-brand-700 hover:underline dark:text-brand-300" href={link}>{entry.target}</a>
 			{:else}
 				{entry.target ?? '—'}
 			{/if}

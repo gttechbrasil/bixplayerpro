@@ -124,7 +124,7 @@
 					<td class="table-td text-right whitespace-nowrap">
 						<button
 							type="button"
-							class="text-sm font-medium text-brand-600 hover:underline dark:text-brand-300"
+							class="text-sm font-medium text-brand-700 hover:underline dark:text-brand-300"
 							onclick={() => toggleActive(b)}
 						>
 							{b.is_active ? 'Desativar' : 'Ativar'}

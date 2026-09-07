@@ -109,7 +109,7 @@
 		{@const st = statusOf(r)}
 		<td class="table-td font-medium">
 			<a
-				class="text-brand-600 hover:underline dark:text-brand-300"
+				class="text-brand-700 hover:underline dark:text-brand-300"
 				href="/admin/revendedores/{r.id}"
 			>
 				{r.username}
@@ -124,7 +124,7 @@
 		<td class="table-td"><Badge tone={st.tone}>{st.label}</Badge></td>
 		<td class="table-td text-right">
 			<a
-				class="text-sm font-medium text-brand-600 hover:underline dark:text-brand-300"
+				class="text-sm font-medium text-brand-700 hover:underline dark:text-brand-300"
 				href="/admin/revendedores/{r.id}">Gerenciar</a
 			>
 		</td>

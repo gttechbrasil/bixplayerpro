@@ -82,7 +82,7 @@
 		<td class="table-td">
 			{#if p.reseller_id}
 				<a
-					class="text-brand-600 hover:underline dark:text-brand-300"
+					class="text-brand-700 hover:underline dark:text-brand-300"
 					href="/admin/revendedores/{p.reseller_id}"
 				>
 					{p.reseller_username ?? `#${p.reseller_id}`}

@@ -75,7 +75,7 @@
 		{/if}
 		<a
 			href="/painel/dispositivos/novo"
-			class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+			class="inline-flex items-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-slate-950 shadow-sm hover:bg-brand-400"
 			>+ Adicionar dispositivo</a
 		>
 	{/snippet}
@@ -109,7 +109,7 @@
 	{#snippet row(d)}
 		<td class="table-td">
 			<a
-				class="font-medium text-brand-600 hover:underline dark:text-brand-300"
+				class="font-medium text-brand-700 hover:underline dark:text-brand-300"
 				href="/painel/dispositivos/{d.id}"
 			>
 				{d.client_name || '(sem nome)'}
@@ -137,7 +137,7 @@
 		<td class="table-td text-xs text-slate-500">{formatDateTime(d.last_seen_at)}</td>
 		<td class="table-td text-right whitespace-nowrap">
 			<a
-				class="text-sm font-medium text-brand-600 hover:underline dark:text-brand-300"
+				class="text-sm font-medium text-brand-700 hover:underline dark:text-brand-300"
 				href="/painel/dispositivos/{d.id}">Editar</a
 			>
 			<button
