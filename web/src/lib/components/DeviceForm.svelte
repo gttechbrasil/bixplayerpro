@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Button from '$lib/components/Button.svelte';
 	import Input from '$lib/components/Input.svelte';
+	import { formatMac } from '$lib/mac';
 	import type { ResellerDevice } from '$lib/types';
 
 	export interface DeviceFormValues {
@@ -24,16 +25,23 @@
 	// Initial values only: the parent re-mounts the form with {#key} when the device changes.
 	// svelte-ignore state_referenced_locally
 	let values = $state<DeviceFormValues>({
-		mac_address: device?.mac_address ?? '',
+		mac_address: formatMac(device?.mac_address ?? ''),
 		client_name: device?.client_name ?? '',
 		playlist_name: device?.playlist_name ?? '',
 		playlist_url: device?.playlist_url ?? '',
 		license_expires_at: device?.license_expires_at ?? '2050-01-01'
 	});
 
+	// Mask: hex only, upper case, ":" after every pair, pasted values with or without separators.
+	function onMacInput(e: Event) {
+		const input = e.currentTarget as HTMLInputElement;
+		values.mac_address = formatMac(input.value);
+		input.value = values.mac_address;
+	}
+
 	function submit(e: SubmitEvent) {
 		e.preventDefault();
-		onsubmit(values);
+		onsubmit({ ...values, mac_address: formatMac(values.mac_address) });
 	}
 </script>
 
@@ -43,6 +51,11 @@
 		placeholder="00:11:22:33:44:55"
 		required
 		maxlength={17}
+		pattern="[0-9A-F]{2}(:[0-9A-F]{2}){5}"
+		title="12 dígitos hexadecimais, ex.: 02:50:50:AB:CD:EF"
+		autocapitalize="characters"
+		spellcheck={false}
+		oninput={onMacInput}
 		disabled={device !== null}
 		hint={device ? 'O MAC não pode ser alterado.' : 'Exibido na tela inicial do app.'}
 		bind:value={values.mac_address}

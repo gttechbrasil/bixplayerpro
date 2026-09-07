@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
-	import { del, errorMessage, patch, post } from '$lib/api';
+	import { del, errorMessage, get, patch, post } from '$lib/api';
 	import Badge from '$lib/components/Badge.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -12,7 +12,7 @@
 	import { expirationState, formatDate, formatDateTime, formatMoney } from '$lib/format';
 	import { updateQuery } from '$lib/query';
 	import { toast } from '$lib/stores/toast.svelte';
-	import type { Reseller } from '$lib/types';
+	import type { DeviceDiagnostic, Reseller, ResellerDevice } from '$lib/types';
 
 	let { data } = $props();
 	const r = $derived(data.reseller);
@@ -138,6 +138,59 @@
 	}
 
 	const ledgerPages = $derived(Math.max(1, Math.ceil(data.ledger.total / data.ledger.per_page)));
+	// Diagnostics bundles sent by the app (M5-013)
+	let diagDevice = $state<ResellerDevice | null>(null);
+	let diagList = $state<DeviceDiagnostic[]>([]);
+	let diagDetail = $state<DeviceDiagnostic | null>(null);
+	let diagLoading = $state(false);
+	let diagOpen = $state(false);
+
+	async function openDiagnostics(d: ResellerDevice) {
+		diagDevice = d;
+		diagOpen = true;
+		diagDetail = null;
+		diagList = [];
+		diagLoading = true;
+		try {
+			diagList = await get<DeviceDiagnostic[]>(
+				`admin/resellers/${data.reseller.id}/devices/${d.id}/diagnostics`
+			);
+		} catch (err) {
+			toast.error(errorMessage(err));
+		} finally {
+			diagLoading = false;
+		}
+	}
+
+	async function showDiagnostic(entry: DeviceDiagnostic) {
+		if (!diagDevice) return;
+		diagLoading = true;
+		try {
+			diagDetail = await get<DeviceDiagnostic>(
+				`admin/resellers/${data.reseller.id}/devices/${diagDevice.id}/diagnostics/${entry.id}`
+			);
+		} catch (err) {
+			toast.error(errorMessage(err));
+		} finally {
+			diagLoading = false;
+		}
+	}
+
+	async function copyDiagnostic() {
+		if (!diagDetail?.body) return;
+		try {
+			await navigator.clipboard.writeText(diagDetail.body);
+			toast.success('Diagnóstico copiado.');
+		} catch {
+			toast.warning('Não foi possível copiar. Selecione o texto manualmente.');
+		}
+	}
+
+	function closeDiagnostics() {
+		diagOpen = false;
+		diagDetail = null;
+	}
+
 	const devicePages = $derived(Math.max(1, Math.ceil(data.devices.total / data.devices.per_page)));
 	const paymentPages = $derived(
 		Math.max(1, Math.ceil(data.payments.total / data.payments.per_page))
@@ -325,12 +378,13 @@
 						<th class="table-th">Servidor</th>
 						<th class="table-th">Licença</th>
 						<th class="table-th">Último acesso</th>
+						<th class="table-th">Diagnóstico</th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-slate-100 dark:divide-slate-800/70">
 					{#if data.devices.items.length === 0}
 						<tr>
-							<td class="table-td py-8 text-center text-slate-500" colspan="5"
+							<td class="table-td py-8 text-center text-slate-500" colspan="6"
 								>Nenhum dispositivo.</td
 							>
 						</tr>
@@ -348,6 +402,19 @@
 								{/if}
 							</td>
 							<td class="table-td text-xs text-slate-500">{formatDateTime(d.last_seen_at)}</td>
+							<td class="table-td">
+								{#if d.diagnostics_count}
+									<button
+										type="button"
+										class="text-xs font-medium text-brand-700 hover:underline dark:text-brand-300"
+										onclick={() => openDiagnostics(d)}
+									>
+										{d.diagnostics_count} envio(s)
+									</button>
+								{:else}
+									<span class="text-xs text-slate-400">—</span>
+								{/if}
+							</td>
 						</tr>
 					{/each}
 				</tbody>
@@ -507,3 +574,53 @@
 	danger
 	onconfirm={remove}
 />
+
+<Modal
+	bind:open={diagOpen}
+	title="Diagnósticos · {diagDevice?.client_name || diagDevice?.mac_address}"
+	size="lg"
+>
+	{#if diagLoading}
+		<p class="text-sm text-slate-500">Carregando…</p>
+	{:else if diagDetail}
+		<div class="space-y-3">
+			<div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+				<Badge tone={diagDetail.kind === 'crash' ? 'red' : 'blue'}>{diagDetail.kind}</Badge>
+				<span>{formatDateTime(diagDetail.created_at)}</span>
+				<span>· app {diagDetail.app_version ?? '?'}</span>
+				<span>· {Math.round(diagDetail.size / 1024)} KB</span>
+				{#if diagDetail.device_info}
+					<span>· {diagDetail.device_info.model} · Android {diagDetail.device_info.android}</span>
+				{/if}
+			</div>
+			<pre
+				class="max-h-[60vh] overflow-auto rounded-lg bg-slate-950 p-3 font-mono text-[11px] leading-snug whitespace-pre-wrap text-slate-100">{diagDetail.body}</pre>
+			<div class="flex gap-2">
+				<Button size="sm" variant="secondary" onclick={() => (diagDetail = null)}>Voltar</Button>
+				<Button size="sm" onclick={copyDiagnostic}>Copiar</Button>
+			</div>
+		</div>
+	{:else if diagList.length === 0}
+		<p class="text-sm text-slate-500">Nenhum diagnóstico enviado por este dispositivo.</p>
+	{:else}
+		<ul class="divide-y divide-slate-200 dark:divide-slate-800">
+			{#each diagList as entry (entry.id)}
+				<li class="flex items-center justify-between gap-3 py-2 text-sm">
+					<div class="flex flex-wrap items-center gap-2">
+						<Badge tone={entry.kind === 'crash' ? 'red' : 'blue'}>{entry.kind}</Badge>
+						<span>{formatDateTime(entry.created_at)}</span>
+						<span class="text-xs text-slate-500"
+							>app {entry.app_version ?? '?'} · {Math.round(entry.size / 1024)} KB{entry.device_info
+								? ` · ${entry.device_info.model} · Android ${entry.device_info.android}`
+								: ''}</span
+						>
+					</div>
+					<Button size="sm" variant="secondary" onclick={() => showDiagnostic(entry)}>Abrir</Button>
+				</li>
+			{/each}
+		</ul>
+	{/if}
+	{#snippet footer()}
+		<Button variant="secondary" onclick={closeDiagnostics}>Fechar</Button>
+	{/snippet}
+</Modal>

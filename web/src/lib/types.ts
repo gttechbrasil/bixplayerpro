@@ -129,7 +129,19 @@ export interface ResellerDevice {
 	last_seen_at: string | null;
 	connected: boolean;
 	status: 'active' | 'expired';
+	diagnostics_count?: number;
 	created_at: string;
+}
+
+export interface DeviceDiagnostic {
+	id: number;
+	device_id: number;
+	kind: 'crash' | 'manual';
+	app_version: string | null;
+	device_info: Record<string, string> | null;
+	size: number;
+	created_at: string;
+	body?: string;
 }
 
 export interface DnsHost {
