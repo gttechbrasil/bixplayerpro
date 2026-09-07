@@ -434,11 +434,19 @@ Smoke test de reprodução nesse AVD: instalar o `app-universal-debug.apk` (a im
 bits), ativar contra a API local, sincronizar a fixture de 20k filmes, abrir a grade de filmes,
 reproduzir um filme e um canal, e ler `adb shell dumpsys meminfo <pacote>` em cada etapa.
 
+Esse AVD reproduz o ponto central da box do cliente: **não tem dispositivo de entrada de toque**
+(o perfil `tv_1080p` sobre uma imagem de celular), então `touchInput=false` e a entrada única
+abre a UI de TV sem leanback e sem `UiModeManager` de TV. Os números da tabela abaixo vieram
+dele (`dumpsys meminfo`, TOTAL PSS). A referência de conforto numa box de 1 GB é manter o app
+abaixo de ~150 MB de PSS com o player aberto; o LMK do Android 9 começa a matar apps de
+segundo plano bem antes disso, mas o app em primeiro plano só cai perto do esgotamento total.
+
 ### Resultados
 
 | Aparelho | Android | Chip / ABI | Release | Resultado |
 |---|---|---|---|---|
 | **MXQ Pro 4K 5G** (cliente) | exibido "11.1", patch 2019-12 (real: 7.1/9 provável) | Allwinner H3 / RK3228A, armeabi-v7a, 1 GB | 1.2.0 | Abria a UI de celular (M5-017); D-pad só em modo mouse; fechamentos ao reproduzir filme (M5-013 → hipótese OOM, M5-018). Reteste com 1.2.2 pendente |
+| **AVD `bix_box_lowend`** (referência) | 9 (SDK 28), imagem `google_apis` x86, perfil `tv_1080p` | x86, 1 GB (`hw.ramSize=1024`; o kernel reporta 1,46 GB), GPU por software | 1.2.2 (debug universal) | Sem dispositivo de toque → `UiModeDecider` escolhe **TV** mesmo sem leanback e com a feature de touchscreen declarada: é a simulação da box AOSP. Sync de 1.200 canais + 20.000 filmes + 500 séries em **15,4 s**. PSS: home 72–75 MB, grade de filmes após 20–40 linhas 87–106 MB, detalhe 86 MB, **filme tocando 93–97 MB**, lista de TV com prévia 100 MB, **canal HLS em tela cheia 111 MB**, canal TS 119 MB, fallback VLC 118 MB; memória livre do sistema nunca abaixo de 750 MB; nenhum `am_kill`/crash em ~20 min de uso |
 
 | Aparelho | Android | Chip / ABI | Release | Resultado |
 |---|---|---|---|---|

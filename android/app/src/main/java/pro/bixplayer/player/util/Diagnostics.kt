@@ -216,7 +216,9 @@ class Diagnostics @Inject constructor(
             BuildConfig.DEBUG || priority >= android.util.Log.INFO
 
         override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-            val line = "${stamp.format(Date())} ${priorityChar(priority)}/${tag ?: "app"}: $message" +
+            // One HTTP body log (debug builds) can be megabytes; the evidence must stay small.
+            val text = if (message.length > LINE_MAX_CHARS) message.take(LINE_MAX_CHARS) + "…[+${message.length - LINE_MAX_CHARS}]" else message
+            val line = "${stamp.format(Date())} ${priorityChar(priority)}/${tag ?: "app"}: $text" +
                 (t?.let { "\n" + StringWriter().also { w -> it.printStackTrace(PrintWriter(w)) } } ?: "")
             synchronized(ring) {
                 if (ring.size >= RING_LINES) ring.removeFirst()
@@ -246,6 +248,7 @@ class Diagnostics @Inject constructor(
         const val MAX_BODY = 512 * 1024
         private const val MB = 1024L * 1024L
         private const val RING_LINES = 300
+        private const val LINE_MAX_CHARS = 4_000
         private const val LOG_MAX_BYTES = 256 * 1024L
         private const val LOG_TAIL_BYTES = 96 * 1024
         private const val EVIDENCE_MAX_CHARS = 96 * 1024
