@@ -40,6 +40,7 @@ Legenda: **Auth** = dependência usada; **Escopo** = como o acesso é restrito a
 | `GET /device/config` | `device_with_rate_limit` | só o próprio registro; playlists e banners só quando `status=active`; devolve `pin` do próprio aparelho | — (atualiza `last_seen_at`) |
 | `POST /device/playlists` | `CurrentDevice` | exige `is_registered`; ≤ 20 playlists; URL http(s) validada; senha Xtream cifrada (Fernet) | sim |
 | `DELETE /device/playlists/{id}` | `CurrentDevice` | `WHERE device_id = device.id` | sim |
+| `POST /device/diagnostics` | `CurrentDevice` + limite 10 / 10 min por dispositivo | corpo ≤ 512 KB (`422` acima); guarda só os 10 mais recentes por dispositivo; o app redige credenciais de stream antes de enviar | — |
 
 ### Revenda (cookie `reseller_session` + CSRF)
 
@@ -61,6 +62,7 @@ Legenda: **Auth** = dependência usada; **Escopo** = como o acesso é restrito a
 | `GET/POST /admin/resellers`, `GET/PATCH/DELETE …/{id}` | usuário `^[a-zA-Z0-9_.-]+$` 3–64, senha ≥ 6; `username` único (409); tema enum; `logo_url`/`bg_url` http(s) (M5-003) | create/update/delete: sim |
 | `POST …/{id}/block`, `POST …/{id}/password`, `POST …/{id}/credits`, `PATCH …/{id}/expiration` | ajuste de crédito exige motivo (3–500) e créditos ativos; grava `credit_ledger` | sim |
 | `GET …/{id}/devices`, `GET …/{id}/credits`, `GET …/{id}/payments` | leitura; **URL da playlist omitida** para o admin | — |
+| `GET …/{id}/devices/{did}/diagnostics[/{diag}]` | leitura; 404 se o dispositivo não é da revenda | — |
 | `GET/PUT /admin/settings` | `min_app_version` `^\d+(\.\d+){0,3}$`; preços `Decimal(10,2) > 0`; pacotes 1–60 meses | sim |
 | `GET /admin/settings/gateway` | token mascarado, nunca completo | — |
 

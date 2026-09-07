@@ -352,6 +352,20 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
 
 ## 11. Decisões que valem lembrar
 
+- **Entrada única (M5-017)**: `LaunchActivity` recebe `LAUNCHER` e `LEANBACK_LAUNCHER` e escolhe
+  em runtime entre `TvActivity` e `MobileActivity` (`UiModeDecider`: `UiModeManager` = TV, feature
+  `leanback`/`television` ou ausência de touchscreen → TV). TV boxes AOSP não têm leanback e
+  disparam `LAUNCHER`; por isso a decisão não pode vir do manifesto. Override em Configurações →
+  *Modo de interface* (`ui_mode` no DataStore). A UI de celular continua navegável por D-pad:
+  `Modifier.onSelect` é um só para as duas famílias (OK/ENTER no KEY UP + toque no mesmo nó).
+- **Diagnóstico (M5-013)**: `util/Diagnostics` planta uma `Timber.Tree` com arquivo rotativo
+  (`files/diagnostics/app.log`), captura exceções não tratadas (`crash-*.txt`) e, no boot
+  seguinte, lê `ApplicationExitInfo` (Android 11+) para crashes nativos/OOM/ANR (`exit-*.txt`).
+  *Configurações → Enviar diagnóstico* e o envio automático após crash chamam
+  `POST /device/diagnostics`; o admin lê no detalhe do dispositivo.
+- **Foco inicial (M5-014)**: `FocusRequester.requestFocusWithRetry()` insiste até o foco ser
+  concedido; em boxes lentas a primeira tentativa acontece antes de a janela ter foco e a tela
+  ficava sem item focado (o primeiro OK só "acordava" o foco).
 - **BACK**: com `targetSdk 36` o sistema entrega o voltar por `OnBackInvokedCallback`; tratar
   `Key.Back` em `onKeyEvent` faz o NavHost e a tela "voltarem" duas vezes e esvazia o grafo. Use
   `BackHandler` (o `PlayerScreen` fecha painéis antes de sair).
@@ -389,3 +403,13 @@ busca, player em paisagem, PiP, retorno de background, rotação) e `50–59` pa
 com o build 1.1.0. Pendente de hardware real: TV box física (item 2 do bloco 0), decodificação
 libVLC em ARM, PiP em aparelhos que o restringem e o comportamento do recorte da câmera em
 celulares com notch.
+
+## 13. Hardware real (M5-016)
+
+| Aparelho | Android | Chip / ABI | Release | Resultado |
+|---|---|---|---|---|
+| TV box do cliente (modelo a confirmar) | a confirmar (AOSP, sem leanback) | a confirmar | 1.2.0 | Abria a UI de celular (M5-017); D-pad só em modo mouse; fechamentos ao reproduzir filme (M5-013). Reteste com 1.2.1 pendente |
+
+Preencher com modelo, versão do Android, ABI (`Configurações → Enviar diagnóstico` inclui
+tudo isso no cabeçalho do pacote), tempo de sync da lista real, canais que caíram no VLC e
+o quadro de transição HLS→TS.

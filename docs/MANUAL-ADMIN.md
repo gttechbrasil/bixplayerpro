@@ -32,7 +32,7 @@ Na ficha de cada revenda:
 | **Bloquear / Desbloquear** | Bloqueio é imediato: a revenda não entra e os apps dela mostram "Expirado". Use para inadimplência grave ou suspeita de conta comprometida |
 | **Redefinir senha** | Nova senha para a revenda (ela pode trocar depois em *Perfil*) |
 | **Créditos** | Ajuste manual (+/−) com motivo obrigatório. Cada linha vai para o histórico de créditos e para a auditoria. Só aparece com créditos ativos (§5) |
-| **Dispositivos** | Lista somente leitura dos aparelhos da revenda (a URL da playlist **não** é exibida ao admin) |
+| **Dispositivos** | Lista somente leitura dos aparelhos da revenda (a URL da playlist **não** é exibida ao admin). A coluna **Diagnóstico** abre os pacotes enviados pelo app daquele aparelho (crash automático ou *Enviar diagnóstico*): modelo, Android, versão do app, motivo da última falha, logs. Use **Copiar** para mandar ao suporte técnico |
 | **Pagamentos** | Histórico de Pix da revenda |
 | **Excluir** | Remove a revenda. Os dispositivos dela **ficam** no banco, desvinculados, e podem ser cadastrados de novo por outra revenda com o mesmo MAC. Pagamentos e auditoria são preservados |
 

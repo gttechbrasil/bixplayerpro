@@ -268,6 +268,33 @@ Adiciona playlist ao dispositivo (auto-cadastro pelo app)
 }
 ```
 
+#### `POST /api/v1/device/diagnostics`
+
+Envia um pacote de diagnóstico do app (M5-013). **Autenticação:** `Bearer <token>` do dispositivo.
+Limite: 10 envios por dispositivo a cada 10 minutos (`429 rate_limited`). O painel guarda os
+10 mais recentes de cada dispositivo.
+
+```json
+{
+  "kind": "crash",                       // "crash" (automático) | "manual" (botão em Configurações)
+  "app_version": "1.2.1",
+  "device_info": {"model": "X96 Mini", "android": "9 (SDK 28)", "abi": "armeabi-v7a,armeabi"},
+  "log": "=== Bix Player Pro diagnostics ...\n"   // texto, até 512 KB (524288 caracteres) → 422 acima disso
+}
+```
+
+`201` → `{"id": 12, "message": "Diagnóstico enviado. Obrigado!"}`
+
+#### `GET /api/v1/admin/resellers/{reseller_id}/devices/{device_id}/diagnostics`
+
+Lista (sem o corpo) os diagnósticos do dispositivo, mais recentes primeiro. **Admin.**
+`[{"id","device_id","kind","app_version","device_info","size","created_at"}]`. `404` se o
+dispositivo não pertence à revenda.
+
+#### `GET /api/v1/admin/resellers/{reseller_id}/devices/{device_id}/diagnostics/{diagnostic_id}`
+
+Mesmo objeto com `body` (o texto completo). **Admin.**
+
 #### `DELETE /api/v1/device/playlists/{playlist_id}`
 
 Remove playlist do dispositivo
