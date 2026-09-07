@@ -9,7 +9,7 @@ from app.core.deps import CurrentAdmin, DbSession, get_client_ip
 from app.core.exceptions import bad_request, conflict, not_found
 from app.core.pagination import paginate
 from app.core.security import hash_password
-from app.models import CreditLedger, Device, Payment, Reseller
+from app.models import CreditLedger, Device, DeviceDiagnostic, Payment, Reseller
 from app.schemas.admin import (
     BlockUpdate,
     CreditAdjust,
@@ -334,9 +334,21 @@ async def list_reseller_devices(
         term = f"%{params.search.strip()}%"
         stmt = stmt.where(or_(Device.mac_address.ilike(term), Device.client_name.ilike(term)))
 
+    counts = dict(
+        (
+            await db.execute(
+                select(DeviceDiagnostic.device_id, func.count(DeviceDiagnostic.id))
+                .join(Device, Device.id == DeviceDiagnostic.device_id)
+                .where(Device.reseller_id == reseller_id)
+                .group_by(DeviceDiagnostic.device_id)
+            )
+        ).all()
+    )
+
     def to_out(device: Device) -> ResellerDeviceOut:
         out = device_to_out(device)
         out.playlist_url = None  # credentials are never shown to the admin
+        out.diagnostics_count = counts.get(device.id, 0)
         return out
 
     return await paginate(db, stmt, params, to_out)

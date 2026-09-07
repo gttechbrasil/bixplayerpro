@@ -5,6 +5,7 @@ from app.models.admin import Admin
 from app.models.audit import AuditLog
 from app.models.banner import Banner
 from app.models.device import Device
+from app.models.diagnostic import DeviceDiagnostic
 from app.models.ledger import CreditLedger
 from app.models.payment import Payment
 from app.models.playlist import Playlist
@@ -18,6 +19,7 @@ __all__ = [
     "Base",
     "CreditLedger",
     "Device",
+    "DeviceDiagnostic",
     "Payment",
     "Playlist",
     "Reseller",

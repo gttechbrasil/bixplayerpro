@@ -49,6 +49,7 @@ class ResellerDeviceOut(ORMModel):
     last_seen_at: datetime | None
     connected: bool = False
     status: str = "active"
+    diagnostics_count: int = 0
     created_at: datetime
 
 
