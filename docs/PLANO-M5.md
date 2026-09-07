@@ -6,7 +6,7 @@ Blocos marcados **[Gustavo]** dependem de mim; os demais são seus. Nada de func
 - [ ] Apagar o device não vinculado de produção (`02:50:50:07:22:08`) e qualquer outro resíduo de teste no banco de produção; listar o que foi removido — **pendente de você**: levantamento feito (06/09/2026): 2 devices avulsos sem revenda e sem playlist (`02:50:50:2B:BC:8A` id 2, `02:50:50:07:22:08` id 3); resíduos de demonstração (`revenda01` "Revenda Demonstração", device 1 `AA:BB:CC:00:11:22` "Cliente Demo" com playlist `http://servidor.exemplo`, 2 Pix pendentes do sandbox de R$ 35,00) ficam para o bloco 3 junto com a revenda de teste. A sessão do Claude Code não tem permissão para escrever no banco de produção; rode no VPS:
   ```bash
   cd /home/deploy/app && docker compose -f deploy/docker-compose.yml --env-file deploy/.env exec -T db \
-    sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "delete from devices where id in (2,3) and reseller_id is null returning id, mac_address"'
+    sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "delete from devices where reseller_id is null and mac_address in ('02:50:50:2B:BC:8A','02:50:50:07:22:08','02:50:50:8C:A5:7B') returning id, mac_address"'
   ```
 - [x] Remover `AGENTS.md` da raiz (é cópia; o `CLAUDE.md` é a fonte). Registrar em `.gitignore` se algo o recriar — removido e adicionado ao `.gitignore`
 - [x] Revisar `.env.example` e `docs/DEPLOY.md`: toda variável documentada, nenhuma sobrando — conferido variável a variável contra `app/core/config.py`; acrescentadas as `DEVICE_*`
@@ -26,7 +26,7 @@ Blocos marcados **[Gustavo]** dependem de mim; os demais são seus. Nada de func
 
 ## 3. Produção de verdade **[Gustavo + Claude Code]**
 - [ ] Trocar o Mercado Pago para credenciais de produção: aplicação ativada, token `APP_USR` de produção, webhook recadastrado em modo produtivo, nova assinatura no `.env`, um Pix real de R$ 1 (preço temporário nas configurações) aprovado de ponta a ponta, preço restaurado
-- [ ] Domínio e marca definitivos do cliente: nome da plataforma, logo, cores, `applicationId` e nome do app via `gradle.properties`; novo release assinado com o **mesmo keystore**
+- [x] Domínio e marca definitivos do cliente: nome da plataforma, logo, cores, `applicationId` e nome do app via `gradle.properties`; novo release assinado com o **mesmo keystore** — feito em 07/09/2026: Bix Player Pro, `#1F1F13`/`#FF8A00`, `pro.bixplayer.app` 1.2.0 (mesma assinatura da 1.1.0, conferida com `apksigner`), publicado em `/downloads/app.apk`, `min_app_version=1.2.0`; domínio segue `bixplayer.pro`
 - [ ] Contas: admin do cliente criado, senha do admin de desenvolvimento trocada, revenda de teste removida
 - [ ] Deploy final no VPS definitivo (se diferente do atual): `deploy.sh` do zero, migrações, DNS, TLS, webhook, backup e monitoramento ativos
 
