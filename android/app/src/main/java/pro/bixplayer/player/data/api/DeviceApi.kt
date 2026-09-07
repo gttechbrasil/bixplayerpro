@@ -1,6 +1,8 @@
 package pro.bixplayer.player.data.api
 
 import pro.bixplayer.player.data.api.dto.DeviceConfigDto
+import pro.bixplayer.player.data.api.dto.DiagnosticRequest
+import pro.bixplayer.player.data.api.dto.DiagnosticResponse
 import pro.bixplayer.player.data.api.dto.MessageResponse
 import pro.bixplayer.player.data.api.dto.PlaylistCreateRequest
 import pro.bixplayer.player.data.api.dto.PlaylistDto
@@ -26,4 +28,7 @@ interface DeviceApi {
 
     @DELETE("api/v1/device/playlists/{id}")
     suspend fun deletePlaylist(@Path("id") id: Long): MessageResponse
+
+    @POST("api/v1/device/diagnostics")
+    suspend fun sendDiagnostics(@Body body: DiagnosticRequest): DiagnosticResponse
 }

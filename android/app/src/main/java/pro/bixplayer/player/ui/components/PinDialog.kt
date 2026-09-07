@@ -42,6 +42,7 @@ import pro.bixplayer.player.R
 import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.ui.components.onSelect
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * Four-digit PIN entry over a scrim. Digits come from the remote's number keys or from the
@@ -63,7 +64,7 @@ fun PinDialog(
     BackHandler { onCancel() }
     LaunchedEffect(Unit) {
         delay(60)
-        runCatching { firstKey.requestFocus() }
+        firstKey.requestFocusWithRetry()
     }
 
     fun push(digit: Char) {

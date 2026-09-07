@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import pro.bixplayer.player.ui.components.BrandLogo
 import pro.bixplayer.player.R
 import pro.bixplayer.player.ui.components.BixButton
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * First screen. Shows the reseller logo while the configuration is fetched, and turns into an
@@ -39,7 +40,7 @@ fun SplashScreen(
 ) {
     val focus = remember { FocusRequester() }
     LaunchedEffect(error) {
-        if (error != null) runCatching { focus.requestFocus() }
+        if (error != null) focus.requestFocusWithRetry()
     }
 
     Box(

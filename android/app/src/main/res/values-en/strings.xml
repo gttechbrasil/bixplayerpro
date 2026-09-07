@@ -69,6 +69,14 @@
     <string name="settings_language_en">English</string>
     <string name="settings_language_es">Español</string>
     <string name="settings_clear_cache">Clear cache</string>
+    <string name="settings_diagnostics">Send diagnostics</string>
+    <string name="settings_diagnostics_sending">Sending…</string>
+    <string name="settings_diagnostics_sent">Diagnostics sent (#%1$d). Give this number to support.</string>
+    <string name="settings_diagnostics_failed">Could not send the diagnostics. Check the connection and try again.</string>
+    <string name="settings_ui_mode">Interface mode</string>
+    <string name="settings_ui_mode_auto">Automatic</string>
+    <string name="settings_ui_mode_tv">TV</string>
+    <string name="settings_ui_mode_mobile">Phone</string>
     <string name="settings_cache_cleared">Cache cleared. The lists will be downloaded again.</string>
     <string name="settings_mac">MAC address</string>
     <string name="settings_version">Version</string>

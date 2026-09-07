@@ -20,6 +20,7 @@ import pro.bixplayer.player.BuildConfig
 import pro.bixplayer.player.R
 import pro.bixplayer.player.data.api.DeviceApi
 import pro.bixplayer.player.data.api.DeviceAuthInterceptor
+import pro.bixplayer.player.util.UiModeDecider
 import pro.bixplayer.player.data.api.DeviceRegistrar
 import pro.bixplayer.player.data.datastore.DevicePreferences
 import pro.bixplayer.player.data.datastore.DeviceStore
@@ -84,7 +85,7 @@ object AppModule {
         prefs = prefs,
         deviceIdProvider = { DeviceIdentity.deviceId(context) },
         // The TV build reports "tv"; the phone activity overrides it at runtime in the M4.
-        appType = if (context.resources.getBoolean(R.bool.is_tv_device)) "tv" else "mobile",
+        appType = if (UiModeDecider.isTvHardware(context)) "tv" else "mobile",
         appVersion = BuildConfig.VERSION_NAME,
     )
 

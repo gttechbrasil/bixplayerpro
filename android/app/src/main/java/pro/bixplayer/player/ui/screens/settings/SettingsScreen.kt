@@ -38,6 +38,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
+import android.content.Intent
+import androidx.activity.compose.LocalActivity
+import androidx.compose.ui.platform.LocalContext
+import pro.bixplayer.player.ui.LaunchActivity
+import pro.bixplayer.player.util.UiMode
 import pro.bixplayer.player.ui.theme.LocalIsTv
 import pro.bixplayer.player.ui.components.BixButton
 import pro.bixplayer.player.ui.components.PinGateDialog
@@ -46,6 +51,7 @@ import pro.bixplayer.player.ui.locale.AppLanguages
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.ui.components.onSelect
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /** Settings, M3 minimum. Every row is a focusable line: OK acts, the value shows on the right. */
 @Composable
@@ -60,6 +66,10 @@ fun SettingsScreen(
     val gate = rememberPinGate()
     val channelsUpdated = stringResource(R.string.playlist_channel_count)
     val cacheCleared = stringResource(R.string.settings_cache_cleared)
+    val diagnosticsSent = stringResource(R.string.settings_diagnostics_sent)
+    val diagnosticsFailed = stringResource(R.string.settings_diagnostics_failed)
+    val context = LocalContext.current
+    val activity = LocalActivity.current
 
     LaunchedEffect(state.loggedOut) {
         if (state.loggedOut) onLoggedOut()
@@ -68,7 +78,7 @@ fun SettingsScreen(
     val firstRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(60)
-        runCatching { firstRequester.requestFocus() }
+        firstRequester.requestFocusWithRetry()
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -151,6 +161,32 @@ fun SettingsScreen(
                 title = stringResource(R.string.settings_parental),
                 value = "🔒",
                 onClick = { gate.require(true, null, onParental) },
+            )
+            SettingRow(
+                title = stringResource(R.string.settings_ui_mode),
+                value = stringResource(
+                    when (state.uiMode) {
+                        UiMode.TV -> R.string.settings_ui_mode_tv
+                        UiMode.MOBILE -> R.string.settings_ui_mode_mobile
+                        else -> R.string.settings_ui_mode_auto
+                    },
+                ),
+                onClick = {
+                    // The choice takes effect on the next launch; relaunch through the entry
+                    // activity so the user sees the result right away.
+                    viewModel.cycleUiMode {
+                        val intent = Intent(context, LaunchActivity::class.java)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        context.startActivity(intent)
+                        activity?.finish()
+                    }
+                },
+            )
+            SettingRow(
+                title = stringResource(R.string.settings_diagnostics),
+                value = if (state.sendingDiagnostics) stringResource(R.string.settings_diagnostics_sending) else "↑",
+                enabled = !state.sendingDiagnostics,
+                onClick = { viewModel.sendDiagnostics(diagnosticsSent, diagnosticsFailed) },
             )
             SettingRow(
                 title = stringResource(R.string.settings_clear_cache),

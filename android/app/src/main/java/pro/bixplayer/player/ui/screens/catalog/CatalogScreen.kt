@@ -68,6 +68,8 @@ import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.ui.components.onSelect
 import pro.bixplayer.player.ui.components.tap
 import pro.bixplayer.player.ui.theme.LocalIsTv
+import pro.bixplayer.player.ui.components.requestFocusSafely
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * Movies / series catalogue: categories on the left, a paged 6-column grid of covers on the
@@ -91,11 +93,11 @@ fun CatalogScreen(
         if (focusedOnce) return@LaunchedEffect
         if (items.itemCount > 0) {
             delay(80)
-            runCatching { gridRequester.requestFocus() }
+            gridRequester.requestFocusWithRetry()
             focusedOnce = true
         } else if (state.categories.isNotEmpty()) {
             delay(80)
-            runCatching { categoryRequester.requestFocus() }
+            categoryRequester.requestFocusWithRetry()
             focusedOnce = true
         }
     }
@@ -131,7 +133,7 @@ fun CatalogScreen(
                         placeholder = stringResource(
                             if (state.kind == ContentKind.SERIES) R.string.catalog_search_series else R.string.catalog_search_movies,
                         ),
-                        onDone = { runCatching { gridRequester.requestFocus() } },
+                        onDone = { gridRequester.requestFocusSafely() },
                     )
                 }
                 SortChip(sort = state.sort, onClick = viewModel::cycleSort)
@@ -186,7 +188,7 @@ fun CatalogScreen(
                         .focusRequester(gridRequester)
                         .focusProperties {
                             onEnter = {
-                                cellRequesters[state.focusIndex]?.let { runCatching { it.requestFocus() } }
+                                cellRequesters[state.focusIndex]?.let { it.requestFocusSafely() }
                             }
                         },
                 ) {

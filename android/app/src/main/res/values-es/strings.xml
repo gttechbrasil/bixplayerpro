@@ -69,6 +69,14 @@
     <string name="settings_language_en">English</string>
     <string name="settings_language_es">Español</string>
     <string name="settings_clear_cache">Limpiar caché</string>
+    <string name="settings_diagnostics">Enviar diagnóstico</string>
+    <string name="settings_diagnostics_sending">Enviando…</string>
+    <string name="settings_diagnostics_sent">Diagnóstico enviado (n.º %1$d). Informe ese número al soporte.</string>
+    <string name="settings_diagnostics_failed">No se pudo enviar el diagnóstico. Revise la conexión e inténtelo de nuevo.</string>
+    <string name="settings_ui_mode">Modo de interfaz</string>
+    <string name="settings_ui_mode_auto">Automático</string>
+    <string name="settings_ui_mode_tv">TV</string>
+    <string name="settings_ui_mode_mobile">Teléfono</string>
     <string name="settings_cache_cleared">Caché limpiada. Las listas se descargarán de nuevo.</string>
     <string name="settings_mac">Dirección MAC</string>
     <string name="settings_version">Versión</string>

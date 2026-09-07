@@ -55,6 +55,7 @@ import pro.bixplayer.player.data.db.EpgProgramEntity
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.ui.components.onSelect
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * Programme guide: channels down the left, a 3-hour timeline across. Each programme is a
@@ -74,7 +75,7 @@ fun EpgGridScreen(
         if (!state.loading && state.rows.isNotEmpty()) {
             listState.scrollToItem(state.initialRow)
             delay(80)
-            runCatching { firstRequester.requestFocus() }
+            firstRequester.requestFocusWithRetry()
         }
     }
 

@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import pro.bixplayer.player.R
 import pro.bixplayer.player.ui.components.BixButton
 import pro.bixplayer.player.util.QrCode
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * Forced update. There is no in-app updater on Android TV outside the Play Store, so the screen
@@ -42,7 +43,7 @@ fun UpdateScreen(
     onCheck: () -> Unit,
 ) {
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+    LaunchedEffect(Unit) { focus.requestFocusWithRetry() }
     val qr = remember(apkUrl) { if (apkUrl.isNotBlank()) QrCode.encode(apkUrl, 420) else null }
 
     Box(

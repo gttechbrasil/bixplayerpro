@@ -8,6 +8,8 @@ import coil3.SingletonImageLoader
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import pro.bixplayer.player.util.UiMode
+import pro.bixplayer.player.util.Diagnostics
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,6 +48,8 @@ data class SettingsUiState(
     val confirmLogout: Boolean = false,
     /** Already translated; the screen picks the string and the VM only stores it. */
     val notice: String? = null,
+    val sendingDiagnostics: Boolean = false,
+    val uiMode: UiMode = UiMode.AUTO,
     /** Set once the local data is wiped; the screen navigates back to the boot flow. */
     val loggedOut: Boolean = false,
 )
@@ -59,12 +63,14 @@ class SettingsViewModel @Inject constructor(
     private val database: BixDatabase,
     private val session: PlayerSession,
     private val ioDispatcher: CoroutineDispatcher,
+    private val diagnostics: Diagnostics,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
+        store.uiMode.onEach { mode -> _uiState.value = _uiState.value.copy(uiMode = UiMode.parse(mode)) }.launchIn(viewModelScope)
         combine(store.refreshHours, store.language, store.macAddress, store.layoutOverride, repository.state) { values ->
             val override = values[3] as String?
             val panel = ((values[4] as? ConfigState.Ready)?.config?.layout ?: pro.bixplayer.player.domain.model.AppLayout.DEFAULT).name.lowercase()
@@ -145,6 +151,33 @@ class SettingsViewModel @Inject constructor(
                 loader.diskCache?.clear()
             }
             _uiState.value = _uiState.value.copy(busy = false, notice = doneMessage)
+        }
+    }
+
+    /** "Enviar diagnóstico" (M5-013): ships crash evidence, logs and device info to the panel. */
+    fun sendDiagnostics(sentMessage: String, failedMessage: String) {
+        if (_uiState.value.sendingDiagnostics) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(sendingDiagnostics = true, notice = null)
+            val result = diagnostics.send("manual")
+            _uiState.value = _uiState.value.copy(
+                sendingDiagnostics = false,
+                notice = result.getOrNull()?.let { String.format(sentMessage, it) } ?: failedMessage,
+            )
+        }
+    }
+
+    /** Automático → TV → Celular (M5-017). Persisted; [onSaved] relaunches the app. */
+    fun cycleUiMode(onSaved: () -> Unit) {
+        val next = when (_uiState.value.uiMode) {
+            UiMode.AUTO -> UiMode.TV
+            UiMode.TV -> UiMode.MOBILE
+            UiMode.MOBILE -> UiMode.AUTO
+        }
+        viewModelScope.launch {
+            store.setUiMode(next.name.lowercase())
+            _uiState.value = _uiState.value.copy(uiMode = next)
+            onSaved()
         }
     }
 

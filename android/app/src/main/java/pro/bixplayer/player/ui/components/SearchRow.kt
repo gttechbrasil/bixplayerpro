@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.ui.components.onSelect
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * Search in two states: a focusable row that only opens the text field (and therefore the
@@ -49,7 +50,7 @@ fun SearchRow(
     LaunchedEffect(editing) {
         if (editing) {
             delay(50)
-            runCatching { fieldRequester.requestFocus() }
+            fieldRequester.requestFocusWithRetry()
         }
     }
 

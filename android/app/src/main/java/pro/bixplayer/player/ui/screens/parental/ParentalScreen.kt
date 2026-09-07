@@ -48,6 +48,7 @@ import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.ui.components.onSelect
 import pro.bixplayer.player.ui.components.tap
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * Parental control: change the PIN and, per kind, hide categories (they vanish from lists,
@@ -64,7 +65,7 @@ fun ParentalScreen(
     val firstRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(80)
-        runCatching { firstRequester.requestFocus() }
+        firstRequester.requestFocusWithRetry()
     }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {

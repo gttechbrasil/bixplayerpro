@@ -84,6 +84,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import pro.bixplayer.player.ui.theme.LocalIsTv
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * Full-screen player, live and VOD. Live: OK toggles the info overlay, ↑/↓ zap inside the
@@ -176,7 +177,7 @@ fun PlayerScreen(
     LaunchedEffect(anyPanel) {
         if (!anyPanel) {
             delay(50)
-            runCatching { rootRequester.requestFocus() }
+            rootRequester.requestFocusWithRetry()
         }
     }
 
@@ -487,7 +488,7 @@ private fun NextEpisodePanel(
     val playRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(50)
-        runCatching { playRequester.requestFocus() }
+        playRequester.requestFocusWithRetry()
     }
     Column(
         modifier = modifier
@@ -526,7 +527,7 @@ private fun ErrorPanel(
     val retryRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(50)
-        runCatching { retryRequester.requestFocus() }
+        retryRequester.requestFocusWithRetry()
     }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -564,7 +565,7 @@ private fun QuickList(
     val currentRequester = remember { FocusRequester() }
     LaunchedEffect(channels) {
         delay(60)
-        runCatching { currentRequester.requestFocus() }
+        currentRequester.requestFocusWithRetry()
     }
 
     LazyColumn(
@@ -634,7 +635,7 @@ private fun TracksPanel(
     val firstRequester = remember { FocusRequester() }
     LaunchedEffect(audio, subtitles) {
         delay(60)
-        runCatching { firstRequester.requestFocus() }
+        firstRequester.requestFocusWithRetry()
     }
     Column(
         modifier = Modifier

@@ -39,6 +39,7 @@ import pro.bixplayer.player.R
 import pro.bixplayer.player.data.db.MovieEntity
 import pro.bixplayer.player.ui.components.BixButton
 import pro.bixplayer.player.util.TimeFormat
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * Movie detail: cover, metadata and synopsis when the provider has them, plus the actions.
@@ -55,7 +56,7 @@ fun MovieDetailScreen(
     val primaryRequester = remember { FocusRequester() }
     LaunchedEffect(movie.id) {
         delay(80)
-        runCatching { primaryRequester.requestFocus() }
+        primaryRequester.requestFocusWithRetry()
     }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {

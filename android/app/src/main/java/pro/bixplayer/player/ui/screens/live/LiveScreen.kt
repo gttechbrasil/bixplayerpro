@@ -74,6 +74,8 @@ import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.ui.components.onSelect
 import pro.bixplayer.player.ui.components.tap
 import pro.bixplayer.player.ui.theme.LocalIsTv
+import pro.bixplayer.player.ui.components.requestFocusSafely
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * Live TV, layout `default`: categories · channels · preview. The focused channel plays in the
@@ -107,11 +109,11 @@ fun LiveScreen(
         if (focusedOnce) return@LaunchedEffect
         if (channels.itemCount > 0) {
             delay(80)
-            runCatching { channelColumnRequester.requestFocus() }
+            channelColumnRequester.requestFocusWithRetry()
             focusedOnce = true
         } else if (state.categories.isNotEmpty()) {
             delay(80)
-            runCatching { categoryRequester.requestFocus() }
+            categoryRequester.requestFocusWithRetry()
             focusedOnce = true
         }
     }
@@ -163,7 +165,7 @@ fun LiveScreen(
                 query = state.query,
                 onQueryChange = viewModel::setQuery,
                 placeholder = stringResource(R.string.live_search),
-                onDone = { runCatching { channelColumnRequester.requestFocus() } },
+                onDone = { channelColumnRequester.requestFocusSafely() },
             )
             Spacer(Modifier.height(12.dp))
 
@@ -188,7 +190,7 @@ fun LiveScreen(
                     viewModel.focusRequests.collect { index ->
                         runCatching { listState.scrollToItem((index - 2).coerceAtLeast(0)) }
                         delay(120)
-                        rowRequesters[index]?.let { runCatching { it.requestFocus() } }
+                        rowRequesters[index]?.let { it.requestFocusWithRetry() }
                     }
                 }
                 LazyColumn(
@@ -200,7 +202,7 @@ fun LiveScreen(
                         .focusProperties {
                             onEnter = {
                                 rowRequesters[state.channelIndex]?.let { requester ->
-                                    runCatching { requester.requestFocus() }
+                                    requester.requestFocusSafely()
                                 }
                             }
                         },

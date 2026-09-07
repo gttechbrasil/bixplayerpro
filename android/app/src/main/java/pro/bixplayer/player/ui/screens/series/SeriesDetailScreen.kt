@@ -53,6 +53,7 @@ import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.util.TimeFormat
 import pro.bixplayer.player.ui.components.onSelect
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /** Series detail: cover and synopsis on the left, season chips and the episode list on the right. */
 @Composable
@@ -65,7 +66,7 @@ fun SeriesDetailScreen(
     val continueRequester = remember { FocusRequester() }
     LaunchedEffect(show.id, state.continueEpisode?.id) {
         delay(80)
-        runCatching { continueRequester.requestFocus() }
+        continueRequester.requestFocusWithRetry()
     }
 
     Row(

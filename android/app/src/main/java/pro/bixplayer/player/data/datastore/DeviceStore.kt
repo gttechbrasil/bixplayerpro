@@ -22,6 +22,9 @@ interface DeviceStore {
     /** Home layout chosen on the device (`default` | `grid`); null follows the panel. */
     val layoutOverride: Flow<String?>
 
+    /** Interface family override (`auto` | `tv` | `mobile`), see UiModeDecider (M5-017). */
+    val uiMode: Flow<String>
+
     suspend fun currentToken(): String?
     suspend fun currentMacAddress(): String?
     suspend fun currentConfigJson(): String?
@@ -29,6 +32,7 @@ interface DeviceStore {
     suspend fun currentRefreshHours(): Long
     suspend fun currentPin(): String?
     suspend fun currentLayoutOverride(): String?
+    suspend fun currentUiMode(): String
 
     /** Player engine preference per playlist: `auto` | `media3` | `vlc`. */
     fun playerEngine(playlistId: Long): Flow<String>
@@ -41,6 +45,7 @@ interface DeviceStore {
     suspend fun setLanguage(tag: String)
     suspend fun setPin(pin: String?)
     suspend fun setLayoutOverride(layout: String?)
+    suspend fun setUiMode(mode: String)
     suspend fun setPlayerEngine(playlistId: Long, engine: String)
     suspend fun clear()
 }

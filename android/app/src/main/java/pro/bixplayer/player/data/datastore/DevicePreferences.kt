@@ -40,6 +40,7 @@ class DevicePreferences @Inject constructor(
         val ONBOARDED = booleanPreferencesKey("onboarded")
         val PIN = stringPreferencesKey("parental_pin")
         val LAYOUT = stringPreferencesKey("layout_override")
+        val UI_MODE = stringPreferencesKey("ui_mode")
         fun engine(playlistId: Long) = stringPreferencesKey("engine_$playlistId")
     }
 
@@ -64,6 +65,7 @@ class DevicePreferences @Inject constructor(
     val onboarded: Flow<Boolean> = prefs.map { it[Keys.ONBOARDED] ?: false }
     override val pin: Flow<String?> = prefs.map { it[Keys.PIN] }
     override val layoutOverride: Flow<String?> = prefs.map { it[Keys.LAYOUT] }
+    override val uiMode: Flow<String> = prefs.map { it[Keys.UI_MODE] ?: "auto" }
 
     override suspend fun currentToken(): String? = token.first()
     override suspend fun currentMacAddress(): String? = macAddress.first()
@@ -72,6 +74,7 @@ class DevicePreferences @Inject constructor(
     override suspend fun currentRefreshHours(): Long = refreshHours.first()
     override suspend fun currentPin(): String? = pin.first()
     override suspend fun currentLayoutOverride(): String? = layoutOverride.first()
+    override suspend fun currentUiMode(): String = uiMode.first()
 
     override fun playerEngine(playlistId: Long): Flow<String> = prefs.map { it[Keys.engine(playlistId)] ?: ENGINE_AUTO }
     override suspend fun currentPlayerEngine(playlistId: Long): String = playerEngine(playlistId).first()
@@ -110,6 +113,10 @@ class DevicePreferences @Inject constructor(
 
     override suspend fun setLayoutOverride(layout: String?) {
         context.dataStore.edit { if (layout == null) it.remove(Keys.LAYOUT) else it[Keys.LAYOUT] = layout }
+    }
+
+    override suspend fun setUiMode(mode: String) {
+        context.dataStore.edit { it[Keys.UI_MODE] = mode }
     }
 
     override suspend fun setPlayerEngine(playlistId: Long, engine: String) {

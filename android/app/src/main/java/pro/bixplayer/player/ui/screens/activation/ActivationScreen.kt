@@ -52,6 +52,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import pro.bixplayer.player.ui.theme.LocalIsTv
+import pro.bixplayer.player.ui.components.requestFocusSafely
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * Shown when the device is not linked to a reseller yet, or is linked but has no playlist.
@@ -75,7 +77,7 @@ fun ActivationScreen(
         if (state.activated) onActivated()
     }
     LaunchedEffect(Unit) {
-        runCatching { checkFocus.requestFocus() }
+        checkFocus.requestFocusWithRetry()
     }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -311,7 +313,7 @@ private fun PlaylistForm(
             imeAction = ImeAction.Next,
             // "Next" on the virtual keyboard must land on the URL field: with the IME open the
             // D-pad moves the keyboard cursor, not the form focus.
-            onImeAction = { runCatching { urlFocus.requestFocus() } },
+            onImeAction = { urlFocus.requestFocusSafely() },
         )
         BixTextField(
             value = url,
@@ -321,7 +323,7 @@ private fun PlaylistForm(
             imeAction = ImeAction.Done,
             focusRequester = urlFocus,
             onImeAction = {
-                runCatching { submitFocus.requestFocus() }
+                submitFocus.requestFocusSafely()
                 if (!submitting) onSubmit(name, url)
             },
         )

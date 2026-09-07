@@ -47,6 +47,7 @@ import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.ui.components.onSelect
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /** One tile of the grid home. */
 data class GridTile(
@@ -73,7 +74,7 @@ fun GridHomeScreen(
     val firstRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(60)
-        runCatching { firstRequester.requestFocus() }
+        firstRequester.requestFocusWithRetry()
     }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {

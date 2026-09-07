@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pro.bixplayer.player.R
 import pro.bixplayer.player.ui.components.BixButton
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * The licence or the reseller expired. The user cannot fix this from inside the app, so the
@@ -38,7 +39,7 @@ fun ExpiredScreen(
     onCheck: () -> Unit,
 ) {
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+    LaunchedEffect(Unit) { focus.requestFocusWithRetry() }
 
     Box(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),

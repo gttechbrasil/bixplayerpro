@@ -69,6 +69,7 @@ import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.BixSuccess
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.ui.components.onSelect
+import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
  * Home, layout `default`: reseller branding on top (logo, status, clock), the four sections in
@@ -123,7 +124,7 @@ fun HomeScreen(
     val liveRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(60)
-        runCatching { liveRequester.requestFocus() }
+        liveRequester.requestFocusWithRetry()
     }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {

@@ -20,6 +20,7 @@ class FakeDeviceStore(
     private val _language = MutableStateFlow("pt-BR")
     private val _pin = MutableStateFlow<String?>(null)
     private val _layout = MutableStateFlow<String?>(null)
+    private val _uiMode = MutableStateFlow("auto")
     private val _engines = MutableStateFlow<Map<Long, String>>(emptyMap())
 
     var saveCredentialsCalls = 0
@@ -35,6 +36,7 @@ class FakeDeviceStore(
     override val language: Flow<String> = _language
     override val pin: Flow<String?> = _pin
     override val layoutOverride: Flow<String?> = _layout
+    override val uiMode: Flow<String> = _uiMode
 
     override suspend fun currentToken(): String? = _token.value
     override suspend fun currentMacAddress(): String? = _mac.value
@@ -43,6 +45,8 @@ class FakeDeviceStore(
     override suspend fun currentRefreshHours(): Long = _refreshHours.value
     override suspend fun currentPin(): String? = _pin.value
     override suspend fun currentLayoutOverride(): String? = _layout.value
+    override suspend fun currentUiMode(): String = _uiMode.value
+    override suspend fun setUiMode(mode: String) { _uiMode.value = mode }
     override fun playerEngine(playlistId: Long): Flow<String> = _engines.map { it[playlistId] ?: "auto" }
     override suspend fun currentPlayerEngine(playlistId: Long): String = _engines.value[playlistId] ?: "auto"
 
