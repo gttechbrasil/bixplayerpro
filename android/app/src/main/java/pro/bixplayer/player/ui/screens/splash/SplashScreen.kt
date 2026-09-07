@@ -22,7 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import pro.bixplayer.player.ui.components.BrandLogo
 import pro.bixplayer.player.R
 import pro.bixplayer.player.ui.components.BixButton
 
@@ -51,21 +51,12 @@ fun SplashScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(48.dp),
         ) {
-            if (!logoUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = logoUrl,
-                    contentDescription = platformName,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.heightIn(max = 160.dp),
-                )
-            } else {
-                Text(
-                    text = platformName?.takeIf { it.isNotBlank() }
-                        ?: stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-            }
+            BrandLogo(
+                url = logoUrl,
+                contentDescription = platformName?.takeIf { it.isNotBlank() }
+                    ?: stringResource(R.string.app_name),
+                modifier = Modifier.heightIn(max = 160.dp),
+            )
 
             Spacer(Modifier.height(32.dp))
 

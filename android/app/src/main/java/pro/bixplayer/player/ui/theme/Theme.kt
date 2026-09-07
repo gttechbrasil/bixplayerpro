@@ -5,7 +5,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.graphics.Color
 import androidx.tv.material3.darkColorScheme as tvDarkColorScheme
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
@@ -16,9 +15,9 @@ import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 val LocalIsTv = staticCompositionLocalOf { false }
 
 private val DarkColors = androidx.compose.material3.darkColorScheme(
-    primary = BixBlue,
-    onPrimary = Color.White,
-    secondary = BixBlueLight,
+    primary = BixAccent,
+    onPrimary = BixBackground,
+    secondary = BixAccentLight,
     background = BixBackground,
     onBackground = BixOnSurface,
     surface = BixSurface,
@@ -29,9 +28,9 @@ private val DarkColors = androidx.compose.material3.darkColorScheme(
 )
 
 private val TvColors = tvDarkColorScheme(
-    primary = BixBlue,
-    onPrimary = Color.White,
-    secondary = BixBlueLight,
+    primary = BixAccent,
+    onPrimary = BixBackground,
+    secondary = BixAccentLight,
     background = BixBackground,
     onBackground = BixOnSurface,
     surface = BixSurface,

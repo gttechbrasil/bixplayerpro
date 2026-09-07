@@ -263,17 +263,22 @@ Para criar um keystore novo (uma vez por marca):
 Tudo o que identifica a marca está em `android/gradle.properties`; o código não muda:
 
 ```properties
-bix.applicationId=pro.bixplayer.player   # pacote (um por marca; define a identidade do app na TV)
-bix.appName=Bix Player                   # nome mostrado no launcher
-bix.versionName=1.0.0
-bix.versionCode=1
+bix.applicationId=pro.bixplayer.app      # pacote (um por marca; define a identidade do app na TV)
+bix.appName=Bix Player Pro               # nome mostrado no launcher
+bix.versionName=1.2.0
+bix.versionCode=3
 bix.apiBaseUrl.release=https://bixplayer.pro/
 bix.apiBaseUrl.debug=http://10.0.2.2:8000/
 ```
 
-- **Ícone e banner**: substitua `app/src/main/res/mipmap-*/ic_launcher*.png` (launcher) e
-  `app/src/main/res/drawable/app_banner.png` (320×180, banner do launcher da TV).
-- **Cores**: `app/src/main/java/pro/bixplayer/player/ui/theme/Color.kt` (`BixBlue` é a cor de foco).
+- **Ícone, banner e logo padrão**: gerados a partir de `docs/brand/logo-original.png` pelo
+  roteiro do fechamento do M5 (Pillow): `mipmap-*/ic_launcher_foreground.png` (adaptive icon,
+  fundo `@color/ic_launcher_background` = `#1F1F13`), `mipmap-*/ic_launcher*.png` (API < 26),
+  `drawable-xhdpi/app_banner.png` (320×180 dp, launcher da TV) e `drawable-xhdpi/brand_logo.png`
+  (lock-up mostrado na splash e na home quando a revenda não enviou logo — `BrandLogo`).
+- **Cores**: `app/src/main/java/pro/bixplayer/player/ui/theme/Color.kt` (`BixAccent` `#FF8A00`
+  é a cor de foco e dos botões; fundo `#1F1F13`). Texto sobre o acento é escuro: branco sobre
+  `#FF8A00` fica em 2,4:1 e reprova no WCAG AA.
 - **Logo, fundo, banners e nome da plataforma** *não* são do build: vêm do painel, por revenda,
   em `GET /api/v1/device/config`, e mudam sem republicar o APK.
 - Cada marca deve ter o próprio keystore (seção 7) e o próprio `applicationId`; dois APKs com o

@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import pro.bixplayer.player.ui.components.BrandLogo
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -239,21 +240,12 @@ private fun TopBar(config: AppConfig?, syncing: Boolean, channelCount: Int) {
     }
 
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        val logoUrl = config?.logoUrl
-        if (!logoUrl.isNullOrBlank()) {
-            AsyncImage(
-                model = logoUrl,
-                contentDescription = config.platformName,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.heightIn(max = 56.dp).width(180.dp),
-            )
-        } else {
-            Text(
-                text = config?.platformName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.app_name),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-        }
+        BrandLogo(
+            url = config?.logoUrl,
+            contentDescription = config?.platformName?.takeIf { it.isNotBlank() }
+                ?: stringResource(R.string.app_name),
+            modifier = Modifier.heightIn(max = 56.dp).width(220.dp),
+        )
 
         Spacer(Modifier.weight(1f))
 

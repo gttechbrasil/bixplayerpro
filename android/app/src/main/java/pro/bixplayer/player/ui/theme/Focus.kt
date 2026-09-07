@@ -37,7 +37,7 @@ fun Modifier.bixFocusable(
     focused: Boolean,
     scale: Float = BixFocus.SCALE,
     shape: Shape = BixFocus.CARD_SHAPE,
-    borderColor: Color = BixBlue,
+    borderColor: Color = BixAccent,
 ): Modifier {
     val animatedScale by animateFloatAsState(
         targetValue = if (focused) scale else 1f,

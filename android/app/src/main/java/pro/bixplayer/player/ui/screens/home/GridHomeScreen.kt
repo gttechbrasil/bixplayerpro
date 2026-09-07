@@ -39,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import pro.bixplayer.player.ui.components.BrandLogo
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
 import pro.bixplayer.player.domain.model.AppConfig
@@ -84,16 +85,12 @@ fun GridHomeScreen(
 
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                val logoUrl = config?.logoUrl
-                if (!logoUrl.isNullOrBlank()) {
-                    AsyncImage(model = logoUrl, contentDescription = config.platformName, contentScale = ContentScale.Fit, modifier = Modifier.heightIn(max = 48.dp).width(160.dp))
-                } else {
-                    Text(
-                        text = config?.platformName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                }
+                BrandLogo(
+                    url = config?.logoUrl,
+                    contentDescription = config?.platformName?.takeIf { it.isNotBlank() }
+                        ?: stringResource(R.string.app_name),
+                    modifier = Modifier.heightIn(max = 48.dp).width(200.dp),
+                )
                 Spacer(Modifier.weight(1f))
                 config?.qrContent?.let {
                     Text(text = it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
