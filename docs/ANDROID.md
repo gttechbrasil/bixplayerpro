@@ -415,7 +415,7 @@ enviado pelo app em 08/09/2026 (a suposição anterior de H3/RK3228A e "só H.26
 | SoC / hardware | **Allwinner H616** (`hardware=sun50iw9p1`, `device=titan-p1/exdroid`), fabricante declarado "Google", modelo "TV BOX" |
 | ABI | `armeabi-v7a,armeabi` (userland 32 bits, mesmo o SoC sendo 64 bits) |
 | Decodificadores de vídeo | **HW**: `OMX.allwinner.video.decoder.avc`, `.hevc`, `.vp9`, `.mpeg2`; SW: `c2.android.*`/`OMX.google.*`; AV1: nenhum. O log mostra `setPortMode … DynamicANWBuffer failed -1010` no decodificador AVC (ruído do vendor; a reprodução seguiu) |
-| RAM | `ActivityManager.totalMem` devolve **16 MB** (bug do firmware, M5-021); `availMem` 202 MB no momento; heap do app 43/128 MB, `largeMemoryClass` 256 MB. O total real vem de `/proc/meminfo` a partir da 1.2.3 |
+| RAM | `ActivityManager.totalMem` devolve **16 MB** (bug do firmware, M5-021); `availMem` 202 MB no momento; heap do app 43/128 MB, `largeMemoryClass` 256 MB. Até a 1.2.2 o `lowRam` ficou `true` **por acidente** (16 MB ≤ 1,5 GB); a partir da 1.2.3 vale o `MemTotal` de `/proc/meminfo`. Se a box tiver os 1 GB anunciados (H616 com 1 GB é a configuração comum do MXQ Pro 4K 5G; `availMem` de 202 MB é coerente com isso), `lowRam` continua `true` pelo caminho correto; se o kernel reportar ≥ 1,5 GB, o app sai do modo econômico. **Confirmar com o primeiro diagnóstico da 1.2.3**: campo `meminfo_total_mb` e a linha `device class: ram=… (am=…, kernel=…) lowRam=…` |
 | Sinais de UI | `uiModeTv=true leanback=true tvFeature=true touchFeature=false touchInput=false` → **TV**. A box **tem** leanback; a 1.2.0 abria a UI de celular porque o launcher dela dispara `LAUNCHER`, não `LEANBACK_LAUNCHER` |
 
 Consequências no código:

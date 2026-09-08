@@ -43,12 +43,27 @@ async def register(body: DeviceRegisterRequest, db: DbSession) -> DeviceRegister
     summary="Configuração completa para o app (playlists, tema, status)",
     response_model=DeviceConfig,
 )
-async def config(db: DbSession, device: Device = Depends(device_with_rate_limit)) -> DeviceConfig:
+async def config(
+    request: Request, db: DbSession, device: Device = Depends(device_with_rate_limit)
+) -> DeviceConfig:
     device.last_seen_at = datetime.now(UTC)
+    _note_app_build(device, request)
     settings_values = await get_all_settings(db)
     result = await build_config(db, device, settings_values)
     await db.commit()
     return result
+
+
+def _note_app_build(device: Device, request: Request) -> None:
+    """Keeps app_version/app_type current from the headers the app sends on every call
+    (M5-022): before this they were only written on register, so the admin showed the
+    version the device had when it was first activated."""
+    version = (request.headers.get("x-app-version") or "").strip()[:32]
+    app_type = (request.headers.get("x-app-type") or "").strip().lower()
+    if version and version != device.app_version:
+        device.app_version = version
+    if app_type in ("tv", "mobile") and app_type != device.app_type:
+        device.app_type = app_type
 
 
 @router.post(

@@ -203,6 +203,10 @@ Configuração completa para o app (playlists, tema, status)
 Limite: `DEVICE_RATE_LIMIT` chamadas por dispositivo e `DEVICE_RATE_LIMIT_IP` por IP a cada
 `DEVICE_RATE_WINDOW` segundos (padrão 20 / 600 / 60) → `429 rate_limited` com `Retry-After`.
 
+Cabeçalhos opcionais `X-App-Version` (≤ 32) e `X-App-Type` (`tv` | `mobile`): quando presentes,
+atualizam `app_version`/`app_type` do dispositivo a cada chamada (o app 1.2.3+ envia em todas as
+requisições; antes só o `register` gravava a versão).
+
 **Response 200**
 
 ```json

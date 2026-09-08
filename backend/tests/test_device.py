@@ -137,3 +137,20 @@ async def test_blocked_or_expired_reseller_expires_device(
     reseller_user.expires_at = None
     await db.flush()
     assert (await client.get(CONFIG, headers=h)).json()["status"] == "active"
+
+
+async def test_config_updates_app_version_from_headers(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    data = await register(client, "versioned-device")
+    headers = {**bearer(data["token"]), "X-App-Version": "1.2.3", "X-App-Type": "mobile"}
+    assert (await client.get(CONFIG, headers=headers)).status_code == 200
+    device = await db.scalar(select(Device).where(Device.mac_address == data["mac_address"]))
+    assert device is not None
+    assert device.app_version == "1.2.3"
+    assert device.app_type == "mobile"
+    # a bogus type is ignored, a missing header leaves the value alone
+    bad = {**bearer(data["token"]), "X-App-Type": "fridge"}
+    assert (await client.get(CONFIG, headers=bad)).status_code == 200
+    await db.refresh(device)
+    assert device.app_version == "1.2.3" and device.app_type == "mobile"
