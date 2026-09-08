@@ -18,7 +18,7 @@ RES = ROOT / "android" / "app" / "src" / "main" / "res"
 WEB_ASSETS = ROOT / "web" / "src" / "lib" / "assets"
 WEB_STATIC = ROOT / "web" / "static"
 
-BG = (0x1F, 0x1F, 0x13)
+BG = (0x05, 0x04, 0x04)
 ACCENT = (0xFF, 0x8A, 0x00)
 FONT_BOLD = r"C:\Windows\Fonts\segoeuib.ttf"  # Segoe UI Bold; on Linux/macOS point to any bold TTF
 FONT_SEMI = r"C:\Windows\Fonts\seguisb.ttf"

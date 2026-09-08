@@ -3,10 +3,10 @@
 | Item | Valor |
 |---|---|
 | Nome (plataforma e app) | Bix Player Pro |
-| Cor principal (fundo) | `#1F1F13` |
+| Cor principal (fundo) | `#050404` |
 | Cor de destaque | `#FF8A00` |
-| Texto sobre o destaque | `#1F1F13` (branco sobre `#FF8A00` reprova no WCAG AA: 2,4:1) |
-| Texto sobre o fundo | `#F5F3EA` (16:1) e `#C9C6B5` (9,8:1) |
+| Texto sobre o destaque | `#050404` (branco sobre `#FF8A00` reprova no WCAG AA: 2,4:1) |
+| Texto sobre o fundo | `#F5F3EA` (19:1) e `#C9C6B5` (12:1) |
 
 ## Arquivos
 

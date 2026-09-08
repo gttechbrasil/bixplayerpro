@@ -273,11 +273,11 @@ bix.apiBaseUrl.debug=http://10.0.2.2:8000/
 
 - **Ícone, banner e logo padrão**: gerados a partir de `docs/brand/logo-original.png` pelo
   roteiro do fechamento do M5 (Pillow): `mipmap-*/ic_launcher_foreground.png` (adaptive icon,
-  fundo `@color/ic_launcher_background` = `#1F1F13`), `mipmap-*/ic_launcher*.png` (API < 26),
+  fundo `@color/ic_launcher_background` = `#050404`), `mipmap-*/ic_launcher*.png` (API < 26),
   `drawable-xhdpi/app_banner.png` (320×180 dp, launcher da TV) e `drawable-xhdpi/brand_logo.png`
   (lock-up mostrado na splash e na home quando a revenda não enviou logo — `BrandLogo`).
 - **Cores**: `app/src/main/java/pro/bixplayer/player/ui/theme/Color.kt` (`BixAccent` `#FF8A00`
-  é a cor de foco e dos botões; fundo `#1F1F13`). Texto sobre o acento é escuro: branco sobre
+  é a cor de foco e dos botões; fundo `#050404`). Texto sobre o acento é escuro: branco sobre
   `#FF8A00` fica em 2,4:1 e reprova no WCAG AA.
 - **Logo, fundo, banners e nome da plataforma** *não* são do build: vêm do painel, por revenda,
   em `GET /api/v1/device/config`, e mudam sem republicar o APK.

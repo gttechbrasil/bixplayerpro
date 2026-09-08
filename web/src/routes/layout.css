@@ -4,10 +4,10 @@
 /* Dark mode is driven by data-theme on <html> (see app.html + $lib/theme.svelte.ts) */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
-/* Bix Player Pro: orange accent (#FF8A00) on warm near-black (#1F1F13).
+/* Bix Player Pro: orange accent (#FF8A00) on near-black (#050404).
    brand-500 is the accent itself; text on it must be dark (white fails WCAG AA at 2.4:1).
    brand-700 is the darkest orange that keeps AA for normal text on white (4.8:1).
-   The slate scale is re-tuned to the same warm hue so light and dark surfaces match the brand. */
+   The light slate steps keep a warm hue; the dark steps (800-950) follow the near-black base. */
 @theme {
 	--color-brand-50: #fff5e8;
 	--color-brand-100: #ffe6c7;
@@ -28,9 +28,9 @@
 	--color-slate-500: #75725f;
 	--color-slate-600: #5a5847;
 	--color-slate-700: #43422f;
-	--color-slate-800: #333325;
-	--color-slate-900: #262619;
-	--color-slate-950: #1f1f13;
+	--color-slate-800: #262222;
+	--color-slate-900: #141212;
+	--color-slate-950: #050404;
 }
 
 html {
