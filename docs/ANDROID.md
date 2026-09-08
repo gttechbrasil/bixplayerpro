@@ -345,6 +345,12 @@ cd android && ./gradlew :app:assembleRelease && cd ..
 Publicado no fechamento do M4: `1.1.0` (versionCode 2), universal ARM de 50 MB, com
 `min_app_version=1.1.0` no admin — instalações 1.0.0 recebem a tela de atualização no boot.
 
+Histórico do M5: `1.2.0` (3, marca), `1.2.1` (4, entrada única + diagnóstico; `min_app_version`
+forçada para 1.2.1), `1.2.2` (5, medidas de memória/HEVC), `1.2.3` (6, RAM via `/proc/meminfo` e
+`X-App-Version` em toda chamada). A 1.2.2 e a 1.2.3 foram publicadas **sem** mexer em
+`min_app_version` (segue 1.2.1): o cliente atualiza quando quiser, e o admin passa a mostrar a
+versão real do device na primeira chamada de `config` feita pela 1.2.3 (M5-022).
+
 O `deploy.sh` copia o arquivo para `deploy/downloads/app.apk` no servidor (bind mount lido pelo
 Caddy) e ele fica em `https://bixplayer.pro/downloads/app.apk`. Depois, em **Admin →
 Configurações**, aponte `apk_url` para essa URL e ajuste `min_app_version` quando quiser forçar a
