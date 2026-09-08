@@ -28,7 +28,7 @@ class DeviceAuthInterceptor(
         val original = chain.request()
         // The register call is the one request that must not carry a token.
         if (original.url.encodedPath.endsWith("/device/register")) {
-            return chain.proceed(original)
+            return chain.proceed(original.withToken(null))
         }
 
         val token = runBlocking { prefs.currentToken() }
@@ -51,9 +51,20 @@ class DeviceAuthInterceptor(
         return chain.proceed(original.withToken(fresh))
     }
 
-    private fun Request.withToken(token: String?): Request =
-        if (token.isNullOrBlank()) this
-        else newBuilder().header("Authorization", "Bearer $token").build()
+    private fun Request.withToken(token: String?): Request {
+        val builder = newBuilder()
+            // Every call reports the running build (M5-022): the panel updates the device's
+            // app_version on each config fetch instead of only on register.
+            .header(HEADER_APP_VERSION, registrar.appVersion)
+            .header(HEADER_APP_TYPE, registrar.appType)
+        if (!token.isNullOrBlank()) builder.header("Authorization", "Bearer $token")
+        return builder.build()
+    }
+
+    companion object {
+        const val HEADER_APP_VERSION = "X-App-Version"
+        const val HEADER_APP_TYPE = "X-App-Type"
+    }
 }
 
 /**
@@ -64,8 +75,8 @@ class DeviceRegistrar(
     private val apiProvider: () -> DeviceApi,
     private val prefs: DeviceStore,
     private val deviceIdProvider: () -> String,
-    private val appType: String,
-    private val appVersion: String,
+    val appType: String,
+    val appVersion: String,
 ) {
     suspend fun register(): RegistrationResult {
         val response = apiProvider().register(
