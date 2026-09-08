@@ -406,13 +406,24 @@ celulares com notch.
 
 ## 13. Dispositivo de referência mínimo e hardware real (M5-016)
 
-**Referência mínima: MXQ Pro 4K 5G** (box do cliente). Android exibido "11.1" com patch de
-segurança de dezembro/2019 — quase certamente um `build.prop` falsificado sobre Android 7.1 ou
-9; 1 GB de RAM (2 GB no máximo nas variantes); SoC Allwinner H3 ou Rockchip RK3228A;
-decodificação por hardware limitada a H.264. Consequências no código:
+**Referência mínima: MXQ Pro 4K 5G** (box do cliente). Dados **reais**, lidos do diagnóstico
+enviado pelo app em 08/09/2026 (a suposição anterior de H3/RK3228A e "só H.264" estava errada):
+
+| Item | Valor real |
+|---|---|
+| `Build.VERSION.SDK_INT` | **29 (Android 10)** — `release_reported` diz "11.1", patch 2019-12-05: o `build.prop` mente na string, não na API |
+| SoC / hardware | **Allwinner H616** (`hardware=sun50iw9p1`, `device=titan-p1/exdroid`), fabricante declarado "Google", modelo "TV BOX" |
+| ABI | `armeabi-v7a,armeabi` (userland 32 bits, mesmo o SoC sendo 64 bits) |
+| Decodificadores de vídeo | **HW**: `OMX.allwinner.video.decoder.avc`, `.hevc`, `.vp9`, `.mpeg2`; SW: `c2.android.*`/`OMX.google.*`; AV1: nenhum. O log mostra `setPortMode … DynamicANWBuffer failed -1010` no decodificador AVC (ruído do vendor; a reprodução seguiu) |
+| RAM | `ActivityManager.totalMem` devolve **16 MB** (bug do firmware, M5-021); `availMem` 202 MB no momento; heap do app 43/128 MB, `largeMemoryClass` 256 MB. O total real vem de `/proc/meminfo` a partir da 1.2.3 |
+| Sinais de UI | `uiModeTv=true leanback=true tvFeature=true touchFeature=false touchInput=false` → **TV**. A box **tem** leanback; a 1.2.0 abria a UI de celular porque o launcher dela dispara `LAUNCHER`, não `LEANBACK_LAUNCHER` |
+
+Consequências no código:
 
 - **Nunca decidir por `Build.VERSION.RELEASE`**; só `SDK_INT`, memória e lista de codecs. O
-  diagnóstico grava `release_reported` apenas como informação.
+  diagnóstico grava `release_reported` apenas como informação. Também não confiar em
+  `ActivityManager.MemoryInfo.totalMem` sozinho: `DeviceClass` usa `/proc/meminfo` quando o
+  valor é implausível (M5-021).
 - **Memória** (`util/DeviceClass`, `lowRam` = RAM ≤ 1,5 GB ou `isLowRamDevice`): Coil com cache
   de 5 % do heap, RGB_565 e 48 MB em disco; Paging com página 24 e `maxSize` 120; cache de
   posters esvaziado ao abrir o player e em `onTrimMemory`; `largeHeap=false`.
@@ -445,7 +456,8 @@ segundo plano bem antes disso, mas o app em primeiro plano só cai perto do esgo
 
 | Aparelho | Android | Chip / ABI | Release | Resultado |
 |---|---|---|---|---|
-| **MXQ Pro 4K 5G** (cliente) | exibido "11.1", patch 2019-12 (real: 7.1/9 provável) | Allwinner H3 / RK3228A, armeabi-v7a, 1 GB | 1.2.0 | Abria a UI de celular (M5-017); D-pad só em modo mouse; fechamentos ao reproduzir filme (M5-013 → hipótese OOM, M5-018). Reteste com 1.2.2 pendente |
+| **MXQ Pro 4K 5G** (cliente) | SDK 29 (Android 10; string "11.1" falsa) | Allwinner H616 `sun50iw9p1`, armeabi-v7a, RAM total mal reportada (16 MB) | 1.2.0 | Abria a UI de celular (M5-017: launcher dispara `LAUNCHER`); D-pad só em modo mouse; fechamentos ao reproduzir filme (M5-013) |
+| **MXQ Pro 4K 5G** (cliente) | idem | idem | **1.2.2** | Cliente relata funcionamento normal. Diagnóstico manual de 08/09/2026: entrada única abriu a UI de TV pelo automático; 3 reproduções com o decodificador AVC de hardware; sem crash Java, sem evidência de morte do processo (o `ApplicationExitInfo` não existe no SDK 29, então uma morte por memória só apareceria como ausência de crash file); memória do app 43 MB de heap. M5-013 fica em observação |
 | **AVD `bix_box_lowend`** (referência) | 9 (SDK 28), imagem `google_apis` x86, perfil `tv_1080p` | x86, 1 GB (`hw.ramSize=1024`; o kernel reporta 1,46 GB), GPU por software | 1.2.2 (debug universal) | Sem dispositivo de toque → `UiModeDecider` escolhe **TV** mesmo sem leanback e com a feature de touchscreen declarada: é a simulação da box AOSP. Sync de 1.200 canais + 20.000 filmes + 500 séries em **15,4 s**. PSS: home 72–75 MB, grade de filmes após 20–40 linhas 87–106 MB, detalhe 86 MB, **filme tocando 93–97 MB**, lista de TV com prévia 100 MB, **canal HLS em tela cheia 111 MB**, canal TS 119 MB, fallback VLC 118 MB; memória livre do sistema nunca abaixo de 750 MB; nenhum `am_kill`/crash em ~20 min de uso |
 
 | Aparelho | Android | Chip / ABI | Release | Resultado |

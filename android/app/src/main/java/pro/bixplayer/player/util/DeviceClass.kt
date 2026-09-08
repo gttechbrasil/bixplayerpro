@@ -28,10 +28,25 @@ object DeviceClass {
     fun init(context: Context) {
         val am = context.getSystemService<ActivityManager>()
         val mem = ActivityManager.MemoryInfo().also { am?.getMemoryInfo(it) }
-        totalRamMb = mem.totalMem / (1024 * 1024)
-        lowRam = (am?.isLowRamDevice == true) || mem.totalMem in 1..LOW_RAM_BYTES
-        Timber.i("device class: ram=%d MB lowRam=%s sdk=%d hw=%s", totalRamMb, lowRam, Build.VERSION.SDK_INT, Build.HARDWARE)
+        // The client's Allwinner H616 box reports totalMem = 16 MB through ActivityManager
+        // (M5-021); /proc/meminfo is the value the kernel actually uses.
+        val kernelTotal = procMemTotalBytes()
+        val total = if (mem.totalMem < MIN_PLAUSIBLE_TOTAL && kernelTotal > 0) kernelTotal else mem.totalMem
+        totalRamMb = total / (1024 * 1024)
+        lowRam = (am?.isLowRamDevice == true) || total in 1..LOW_RAM_BYTES
+        Timber.i(
+            "device class: ram=%d MB (am=%d MB, kernel=%d MB) lowRam=%s sdk=%d hw=%s",
+            totalRamMb, mem.totalMem / (1024 * 1024), kernelTotal / (1024 * 1024), lowRam, Build.VERSION.SDK_INT, Build.HARDWARE,
+        )
     }
+
+    /** `MemTotal` from /proc/meminfo in bytes, or 0 when unreadable. */
+    fun procMemTotalBytes(): Long = runCatching {
+        java.io.File("/proc/meminfo").useLines { lines ->
+            lines.firstOrNull { it.startsWith("MemTotal:") }
+                ?.filter { it.isDigit() }?.toLongOrNull()?.times(1024) ?: 0L
+        }
+    }.getOrDefault(0L)
 
     /** Paging: fewer, smaller pages on a 1 GB box so a 20k-title catalogue never sits in RAM. */
     val pageSize: Int get() = if (lowRam) 24 else 60
@@ -66,5 +81,6 @@ object DeviceClass {
     }
 
     private const val LOW_RAM_BYTES = 1536L * 1024 * 1024
+    private const val MIN_PLAUSIBLE_TOTAL = 256L * 1024 * 1024
     private val VIDEO_MIMES = listOf("video/avc", "video/hevc", "video/x-vnd.on2.vp9", "video/av01", "video/mpeg2")
 }

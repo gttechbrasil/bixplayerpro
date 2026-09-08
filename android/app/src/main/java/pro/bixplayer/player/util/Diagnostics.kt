@@ -123,6 +123,7 @@ class Diagnostics @Inject constructor(
             "abi" to Build.SUPPORTED_ABIS.joinToString(","),
             "ui_signals" to UiModeDecider.signals(context).toString(),
             "mem_total_mb" to (mem.totalMem / MB).toString(),
+            "meminfo_total_mb" to (DeviceClass.procMemTotalBytes() / MB).toString(),
             "mem_avail_mb" to (mem.availMem / MB).toString(),
             "low_memory" to mem.lowMemory.toString(),
             "heap_mb" to "${(rt.totalMemory() - rt.freeMemory()) / MB}/${rt.maxMemory() / MB}",
