@@ -6,7 +6,7 @@ import type { Platform, ResellerUser } from '$lib/types';
 const EXPIRED_ALLOWED = ['/painel/renovar', '/painel/perfil'];
 
 export const load: LayoutServerLoad = async ({ fetch, url }) => {
-	const res = await fetch('/api/v1/auth/me');
+	const res = await fetch('/api/v1/auth/me?as=reseller');
 	if (res.status === 401 || res.status === 403) {
 		redirect(303, `/painel/login?next=${encodeURIComponent(url.pathname)}`);
 	}

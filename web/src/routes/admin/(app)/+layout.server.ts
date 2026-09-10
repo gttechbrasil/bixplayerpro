@@ -3,7 +3,7 @@ import type { LayoutServerLoad } from './$types';
 import type { AdminUser, Settings } from '$lib/types';
 
 export const load: LayoutServerLoad = async ({ fetch, url }) => {
-	const res = await fetch('/api/v1/auth/me');
+	const res = await fetch('/api/v1/auth/me?as=admin');
 	if (res.status === 401 || res.status === 403) {
 		redirect(303, `/admin/login?next=${encodeURIComponent(url.pathname)}`);
 	}

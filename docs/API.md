@@ -144,9 +144,13 @@ Encerra a sessão
 
 Ator autenticado na sessão atual
 
-Returns the logged-in actor. Checks the admin cookie first, then the reseller one.
+Returns the logged-in actor. Admin and reseller sessions live in different cookies and may
+coexist in one browser; `?as=admin|reseller` says which one the caller wants (the panels always
+send it). Without it the admin session wins.
 
 **Autenticação:** Sem autenticação.
+
+**Query:** `as` — `admin` ou `reseller` (opcional).
 
 **Response 200**
 

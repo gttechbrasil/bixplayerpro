@@ -75,6 +75,21 @@ async def test_reseller_login_ok(client: AsyncClient, reseller_user: Reseller) -
     assert me.json()["role"] == "reseller"
 
 
+async def test_me_prefers_the_role_each_panel_asks_for(
+    admin_client: AsyncClient, reseller_user: Reseller
+) -> None:
+    """Admin and reseller sessions in the same browser (M5-024): the reseller panel must not
+    be bounced to its login because the admin cookie wins by default."""
+    resp = await admin_client.post(
+        LOGIN_RESELLER, json={"username": "revenda", "password": RESELLER_PASSWORD}
+    )
+    assert resp.status_code == 200
+    assert (await admin_client.get("/api/v1/auth/me")).json()["role"] == "admin"
+    assert (await admin_client.get("/api/v1/auth/me?as=admin")).json()["role"] == "admin"
+    assert (await admin_client.get("/api/v1/auth/me?as=reseller")).json()["role"] == "reseller"
+    assert (await admin_client.get("/api/v1/auth/me?as=device")).status_code == 422
+
+
 async def test_reseller_login_blocked(
     client: AsyncClient, reseller_user: Reseller, db: AsyncSession
 ) -> None:

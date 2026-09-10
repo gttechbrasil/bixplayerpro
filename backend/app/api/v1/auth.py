@@ -1,6 +1,7 @@
 from datetime import date
+from typing import Literal
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
@@ -113,28 +114,43 @@ async def logout(response: Response, settings: Settings = Depends(get_settings))
 
 
 @router.get("/me", summary="Ator autenticado na sessão atual", response_model=MeResponse)
-async def me(request: Request, db: AsyncSession = Depends(get_db)) -> MeResponse:
-    """Returns the logged-in actor. Checks the admin cookie first, then the reseller one."""
-    admin_token = request.cookies.get(ADMIN_COOKIE)
-    payload = decode_access_token(admin_token) if admin_token else None
-    if payload and payload.get("role") == "admin":
-        admin = await db.get(Admin, int(payload["sub"]))
-        if admin is not None:
-            return MeResponse(
-                role="admin", user=AdminOut.model_validate(admin), platform=await _platform(db)
-            )
-
-    reseller_token = request.cookies.get(RESELLER_COOKIE)
-    payload = decode_access_token(reseller_token) if reseller_token else None
-    if payload and payload.get("role") == "reseller":
-        reseller = await db.get(Reseller, int(payload["sub"]))
-        if reseller is not None:
-            if reseller.is_blocked:
-                raise forbidden(MSG_RESELLER_BLOCKED, "reseller_blocked")
-            return MeResponse(
-                role="reseller",
-                user=_reseller_me(reseller),
-                platform=await _platform(db),
-            )
-
+async def me(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    prefer: Literal["admin", "reseller"] | None = Query(
+        None,
+        alias="as",
+        description="Sessão a preferir quando o navegador tem as duas (admin e revenda).",
+    ),
+) -> MeResponse:
+    """Returns the logged-in actor. Admin and reseller sessions live in different cookies and
+    may coexist in one browser (the platform owner opening a reseller panel, or a reseller
+    who was handed the admin login). Each panel asks for its own role with `?as=`; without
+    it the admin session wins, as before (M5-024)."""
+    order = ("reseller", "admin") if prefer == "reseller" else ("admin", "reseller")
+    for role in order:
+        found = await _session_actor(request, db, role)
+        if found is not None:
+            return found
     raise unauthorized()
+
+
+async def _session_actor(request: Request, db: AsyncSession, role: str) -> MeResponse | None:
+    cookie = ADMIN_COOKIE if role == "admin" else RESELLER_COOKIE
+    token = request.cookies.get(cookie)
+    payload = decode_access_token(token) if token else None
+    if not payload or payload.get("role") != role:
+        return None
+    if role == "admin":
+        admin = await db.get(Admin, int(payload["sub"]))
+        if admin is None:
+            return None
+        return MeResponse(
+            role="admin", user=AdminOut.model_validate(admin), platform=await _platform(db)
+        )
+    reseller = await db.get(Reseller, int(payload["sub"]))
+    if reseller is None:
+        return None
+    if reseller.is_blocked:
+        raise forbidden(MSG_RESELLER_BLOCKED, "reseller_blocked")
+    return MeResponse(role="reseller", user=_reseller_me(reseller), platform=await _platform(db))
