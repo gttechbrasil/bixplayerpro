@@ -51,7 +51,7 @@
 		placeholder="00:11:22:33:44:55"
 		required
 		maxlength={17}
-		pattern="[0-9A-F]{2}(:[0-9A-F]{2}){5}"
+		pattern={"[0-9A-F]{2}(:[0-9A-F]{2}){5}"}
 		title="12 dígitos hexadecimais, ex.: 02:50:50:AB:CD:EF"
 		autocapitalize="characters"
 		spellcheck={false}
