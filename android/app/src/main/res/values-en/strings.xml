@@ -60,7 +60,7 @@
 
     <string name="settings_hint">OK changes the option</string>
     <string name="settings_hint_touch">Tap to change the option</string>
-    <string name="settings_playlist">Change playlist</string>
+    <string name="settings_playlist">Playlist</string>
     <string name="settings_refresh">Refresh lists</string>
     <string name="settings_refresh_period">Refresh period</string>
     <string name="settings_refresh_hours">Every %1$d h</string>
@@ -162,6 +162,15 @@
     <string name="settings_engine_media3">Media3</string>
     <string name="settings_engine_vlc">VLC</string>
     <string name="mobile_more">More</string>
+    <string name="back">Back</string>
+    <string name="home_playlist">Playlist</string>
+    <string name="home_settings_short">Settings</string>
+    <string name="home_demo_subtitle">Demo</string>
+    <string name="home_awaiting_activation">Waiting for activation</string>
+    <string name="demo_notice">Demo mode. Give the MAC below to your reseller to load your list; the app switches over by itself once it is registered.</string>
+    <string name="demo_open_playlist">Open Playlist</string>
+    <string name="demo_card">Sample</string>
+    <string name="mobile_demo_strip">No active list. Tap here to see the MAC and activate.</string>
     <string name="activation_copy_mac">Copy MAC</string>
     <string name="activation_share">Share</string>
     <string name="activation_copied">MAC copied.</string>

@@ -61,6 +61,9 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
+import pro.bixplayer.player.ui.demo.DemoKind
+import pro.bixplayer.player.ui.demo.DemoShowcase
+import pro.bixplayer.player.ui.demo.LocalDemoState
 import pro.bixplayer.player.data.db.ChannelEntity
 import pro.bixplayer.player.data.db.EpgProgramEntity
 import pro.bixplayer.player.player.SessionState
@@ -89,6 +92,11 @@ fun LiveScreen(
     onBack: () -> Unit,
     viewModel: LiveViewModel = hiltViewModel(),
 ) {
+    // No playlist yet (F2-001): placeholder catalogue that leads to the Playlist screen.
+    if (LocalDemoState.current.active) {
+        DemoShowcase(DemoKind.LIVE)
+        return
+    }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val channels = viewModel.channels.collectAsLazyPagingItems()
     val gate = rememberPinGate()

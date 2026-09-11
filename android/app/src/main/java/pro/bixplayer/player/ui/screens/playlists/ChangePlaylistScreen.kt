@@ -46,6 +46,7 @@ import pro.bixplayer.player.ui.theme.bixFocusable
  */
 @Composable
 fun ChangePlaylistScreen(
+    macAddress: String,
     onBack: () -> Unit,
     viewModel: PlaylistViewModel = hiltViewModel(),
 ) {
@@ -73,6 +74,15 @@ fun ChangePlaylistScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 6.dp),
         )
+        if (macAddress.isNotBlank()) {
+            // The reseller may ask for the MAC again (new list, migration): keep it one screen away.
+            Text(
+                text = stringResource(R.string.settings_mac) + ": " + macAddress,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
 
         state.notice?.let { notice ->
             Spacer(Modifier.height(16.dp))

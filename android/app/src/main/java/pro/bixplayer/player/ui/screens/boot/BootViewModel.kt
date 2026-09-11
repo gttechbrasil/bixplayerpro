@@ -9,6 +9,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import pro.bixplayer.player.BuildConfig
 import pro.bixplayer.player.data.datastore.DevicePreferences
@@ -16,6 +20,7 @@ import pro.bixplayer.player.data.datastore.DeviceStore
 import pro.bixplayer.player.data.repository.ConfigRepository
 import pro.bixplayer.player.domain.model.AppConfig
 import pro.bixplayer.player.domain.model.ConfigState
+import pro.bixplayer.player.ui.Routes
 import timber.log.Timber
 
 /** Where the splash screen should send the user once the configuration is known. */
@@ -45,6 +50,34 @@ class BootViewModel @Inject constructor(
 
     init {
         boot()
+        pollUntilWatchable()
+    }
+
+    /**
+     * Demo mode (F2-001) has no "verify" wall any more, so the app itself asks the platform
+     * every [ACTIVATION_POLL_MS] whether the reseller has registered the MAC. Stops as soon
+     * as the device can watch and restarts if that changes again (logout, playlist removed).
+     * 3 calls/min against a budget of 20 per device.
+     */
+    private fun pollUntilWatchable() {
+        viewModelScope.launch {
+            configState
+                .map { (it as? ConfigState.Ready)?.config?.canWatch == true }
+                .distinctUntilChanged()
+                .collectLatest { watchable ->
+                    if (watchable) return@collectLatest
+                    while (true) {
+                        delay(ACTIVATION_POLL_MS)
+                        if (_destination.value !is BootDestination.Go) continue
+                        val state = repository.refresh()
+                        val config = (state as? ConfigState.Ready)?.config ?: continue
+                        // Expiry or a forced update discovered while idling must still win;
+                        // HOME stays as it is so the user's screen is not reset under them.
+                        val route = routeFor(config)
+                        if (route != Routes.HOME) _destination.value = BootDestination.Go(route)
+                    }
+                }
+        }
     }
 
     fun boot() {
@@ -65,4 +98,8 @@ class BootViewModel @Inject constructor(
         BootRouting.routeFor(config, BuildConfig.VERSION_NAME).also {
             Timber.d("boot route: %s (status=%s, playlists=%d)", it, config.status, config.playlists.size)
         }
+
+    private companion object {
+        const val ACTIVATION_POLL_MS = 20_000L
+    }
 }

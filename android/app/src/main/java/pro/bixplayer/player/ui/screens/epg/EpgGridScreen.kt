@@ -50,6 +50,9 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
+import pro.bixplayer.player.ui.demo.DemoKind
+import pro.bixplayer.player.ui.demo.DemoShowcase
+import pro.bixplayer.player.ui.demo.LocalDemoState
 import pro.bixplayer.player.data.db.ChannelEntity
 import pro.bixplayer.player.data.db.EpgProgramEntity
 import pro.bixplayer.player.ui.theme.BixFocus
@@ -67,6 +70,11 @@ fun EpgGridScreen(
     onPlayChannel: (ChannelEntity) -> Unit,
     viewModel: EpgGridViewModel = hiltViewModel(),
 ) {
+    // No playlist yet (F2-001): placeholder catalogue that leads to the Playlist screen.
+    if (LocalDemoState.current.active) {
+        DemoShowcase(DemoKind.GUIDE)
+        return
+    }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val firstRequester = remember { FocusRequester() }
     val listState = rememberLazyListState()

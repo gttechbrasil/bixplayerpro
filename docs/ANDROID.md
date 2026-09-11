@@ -320,7 +320,8 @@ canais + 20.000 filmes + 500 séries (12.000 episódios) em **4,2 s**, EPG de 10
 > `/painel` (Hosts/DNS) e compilar o debug com `-Pbix.apiBaseUrl.debug=http://10.0.2.2:8001/`.
 
 Cadastre a playlist no `/painel` (URL `http://10.0.2.2:8000/uploads/fixture.m3u`, tipo M3U) para
-o dispositivo do emulador, ou adicione pelo próprio app na tela de ativação. Roteiro validado no
+o dispositivo do emulador, ou adicione pelo próprio app na tela Playlist (o MAC está lá desde a
+1.3.0; antes era a tela de ativação). Roteiro validado no
 M3 (capturas em `docs/screens/android/m3/`): ativação → cadastro → sync (1200 canais) → TV ao vivo
 → prévia → tocar canal 1 (HLS) → zapping até o 4 (TS) → digitar 7 (erro/retry) → MENU (faixas) →
 ←/→ (lista rápida) → favoritar → busca → trocar playlist → idioma → sair.
@@ -347,9 +348,10 @@ Publicado no fechamento do M4: `1.1.0` (versionCode 2), universal ARM de 50 MB, 
 
 Histórico do M5: `1.2.0` (3, marca), `1.2.1` (4, entrada única + diagnóstico; `min_app_version`
 forçada para 1.2.1), `1.2.2` (5, medidas de memória/HEVC), `1.2.3` (6, RAM via `/proc/meminfo` e
-`X-App-Version` em toda chamada). A 1.2.2 e a 1.2.3 foram publicadas **sem** mexer em
-`min_app_version` (segue 1.2.1): o cliente atualiza quando quiser, e o admin passa a mostrar a
-versão real do device na primeira chamada de `config` feita pela 1.2.3 (M5-022).
+`X-App-Version` em toda chamada), `1.2.4` (7, cor base `#050404`), `1.3.0` (8, home antes da
+ativação — F2-001). A partir da 1.2.2 as publicações **não** mexem em `min_app_version` (segue
+1.2.1): o cliente atualiza quando quiser, e o admin passa a mostrar a versão real do device na
+primeira chamada de `config` feita pela 1.2.3 (M5-022).
 
 O `deploy.sh` copia o arquivo para `deploy/downloads/app.apk` no servidor (bind mount lido pelo
 Caddy) e ele fica em `https://bixplayer.pro/downloads/app.apk`. Depois, em **Admin →
@@ -358,6 +360,20 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
 
 ## 11. Decisões que valem lembrar
 
+- **Home antes da ativação (F2-001, 1.3.0)**: não existe mais a "parede" do MAC. Sem lista
+  utilizável (`AppConfig.canWatch == false`, regra em `ui/demo/DemoMode`) o `BootRouting` manda
+  para `HOME` mesmo assim e `LocalDemoState` liga o **modo demonstração**: os cartões da home
+  abrem e TV ao vivo / Filmes / Séries / Guia mostram a `DemoShowcase` (cartazes de paisagem
+  desenhados em Canvas, sem bitmaps) com o MAC e um botão para a tela **Playlist**. A tela
+  Playlist (`Routes.PLAYLIST`, `PlaylistScreen`) é a antiga tela de ativação (MAC, QR, "já
+  cadastrei", playlist manual, agora com "Voltar") enquanto não dá para assistir, e o gerenciador
+  de playlists depois. Na TV o cartão Playlist recebe o primeiro foco e carrega o MAC; no celular
+  uma faixa laranja acima da barra ("Sem lista ativa…") abre a mesma tela. O `BootViewModel`
+  consulta `GET /device/config` a cada 20 s enquanto o device não pode assistir (3/min contra
+  um orçamento de 20/min por device): quando a revenda cadastra o MAC a home vira a real sozinha
+  e o sync começa. `EXPIRED` e atualização obrigatória continuam sendo paredes. Validado nos três
+  AVDs (capturas em `docs/screens/android/f2/`): ativação automática em 13 s (TV), 8 s (celular)
+  e 16 s (box 1 GB, 116 MB de PSS após o sync).
 - **Entrada única (M5-017)**: `LaunchActivity` recebe `LAUNCHER` e `LEANBACK_LAUNCHER` e escolhe
   em runtime entre `TvActivity` e `MobileActivity` (`UiModeDecider`: `UiModeManager` = TV, feature
   `leanback`/`television` ou ausência de touchscreen → TV). TV boxes AOSP não têm leanback e

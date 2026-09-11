@@ -70,6 +70,8 @@ fun GridHomeScreen(
     tiles: List<GridTile>,
     banners: List<Pair<String, String>>,
     notice: String?,
+    /** Index of the tile that takes the first focus (the Playlist tile in demo mode). */
+    firstFocus: Int = 0,
 ) {
     val firstRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
@@ -107,12 +109,12 @@ fun GridHomeScreen(
                     row.forEachIndexed { colIndex, tile ->
                         GridTileCard(
                             tile = tile,
-                            focusRequester = if (rowIndex == 0 && colIndex == 0) firstRequester else null,
+                            focusRequester = if (rowIndex * 3 + colIndex == firstFocus) firstRequester else null,
                             modifier = Modifier.weight(1f).fillMaxSize(),
                         )
                     }
                 }
-                if (rowIndex == 0) Spacer(Modifier.height(16.dp))
+                if (rowIndex < (tiles.size - 1) / 3) Spacer(Modifier.height(16.dp))
             }
 
             if (banners.isNotEmpty()) {

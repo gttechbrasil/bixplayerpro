@@ -19,10 +19,8 @@ object BootRouting {
 
         return when {
             config.status == DeviceStatus.EXPIRED -> Routes.EXPIRED
-            !config.registered -> Routes.ACTIVATION
-            // Registered but with nothing to play: the reseller still has to add a playlist,
-            // or the user can add one from the activation screen.
-            !config.hasPlaylists -> Routes.ACTIVATION
+            // Not linked, or linked without a playlist: the home opens anyway in demo mode
+            // (F2-001) and the MAC waits in the Playlist screen; see ui/demo/DemoMode.
             else -> Routes.HOME
         }
     }

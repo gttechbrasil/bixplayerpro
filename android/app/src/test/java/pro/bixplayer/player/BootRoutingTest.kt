@@ -10,6 +10,7 @@ import pro.bixplayer.player.domain.model.PlaylistType
 import pro.bixplayer.player.ui.Routes
 import pro.bixplayer.player.ui.screens.activation.ActivationViewModel
 import pro.bixplayer.player.ui.screens.boot.BootRouting
+import pro.bixplayer.player.ui.demo.DemoMode
 
 /** The rule that decides whether a paying customer sees channels or a wall. */
 class BootRoutingTest {
@@ -46,18 +47,25 @@ class BootRoutingTest {
     }
 
     @Test
-    fun `an unregistered device goes to activation`() {
-        val route = BootRouting.routeFor(
-            config(registered = false, status = DeviceStatus.UNREGISTERED, playlists = emptyList()),
-            "1.0.0",
-        )
-        assertThat(route).isEqualTo(Routes.ACTIVATION)
+    fun `an unregistered device goes home in demo mode`() {
+        // F2-001: no activation wall; the home opens and the MAC waits in the Playlist screen.
+        val unregistered = config(registered = false, status = DeviceStatus.UNREGISTERED, playlists = emptyList())
+        assertThat(BootRouting.routeFor(unregistered, "1.0.0")).isEqualTo(Routes.HOME)
+        assertThat(DemoMode.isDemo(unregistered)).isTrue()
     }
 
     @Test
-    fun `registered but without playlists still goes to activation`() {
-        val route = BootRouting.routeFor(config(playlists = emptyList()), "1.0.0")
-        assertThat(route).isEqualTo(Routes.ACTIVATION)
+    fun `registered but without playlists goes home in demo mode`() {
+        val noLists = config(playlists = emptyList())
+        assertThat(BootRouting.routeFor(noLists, "1.0.0")).isEqualTo(Routes.HOME)
+        assertThat(DemoMode.isDemo(noLists)).isTrue()
+    }
+
+    @Test
+    fun `demo mode ends only when the device can watch`() {
+        assertThat(DemoMode.isDemo(null)).isTrue()
+        assertThat(DemoMode.isDemo(config())).isFalse()
+        assertThat(DemoMode.isDemo(config(status = DeviceStatus.EXPIRED))).isTrue()
     }
 
     @Test

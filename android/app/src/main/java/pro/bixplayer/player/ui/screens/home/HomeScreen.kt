@@ -45,6 +45,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.os.ConfigurationCompat
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -67,6 +68,8 @@ import pro.bixplayer.player.ui.components.rememberPinGate
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.BixSuccess
+import pro.bixplayer.player.ui.theme.BixWarning
+import pro.bixplayer.player.ui.demo.LocalDemoState
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.ui.components.onSelect
 import pro.bixplayer.player.ui.components.requestFocusWithRetry
@@ -85,12 +88,18 @@ fun HomeScreen(
     onSeries: () -> Unit,
     onGuide: () -> Unit,
     onSettings: () -> Unit,
+    onPlaylist: () -> Unit,
     onResume: (kind: String, id: Long) -> Unit,
     viewModel: PlaylistViewModel = hiltViewModel(),
     homeViewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val home by homeViewModel.uiState.collectAsStateWithLifecycle()
+    // Demo mode (F2-001): every section opens on placeholder content and the Playlist card,
+    // which carries the MAC, takes the first focus.
+    val demo = LocalDemoState.current.active
+    val demoSubtitle = stringResource(R.string.home_demo_subtitle)
+    val activeName = state.playlists.firstOrNull { it.id == state.activeId }?.name.orEmpty()
     val gate = rememberPinGate()
     val protected = gate.playlistProtected(home.playlistId)
     fun guarded(action: () -> Unit) = gate.require(protected, R.string.pin_protected_playlist, action)
@@ -106,13 +115,15 @@ fun HomeScreen(
             GridHomeScreen(
                 config = config,
                 tiles = listOf(
-                    GridTile(stringResource(R.string.home_live), stringResource(R.string.live_channels_count, home.channelCount), "▶", null, true) { guarded(onLive) },
-                    GridTile(stringResource(R.string.home_movies), stringResource(R.string.home_movies_count, home.movieCount), "🎬", home.movieCover, home.movieCount > 0) { guarded(onMovies) },
-                    GridTile(stringResource(R.string.home_series), stringResource(R.string.home_series_count, home.seriesCount), "📺", home.seriesCover, home.seriesCount > 0) { guarded(onSeries) },
+                    GridTile(stringResource(R.string.home_live), if (demo) demoSubtitle else stringResource(R.string.live_channels_count, home.channelCount), "▶", null, true) { guarded(onLive) },
+                    GridTile(stringResource(R.string.home_movies), if (demo) demoSubtitle else stringResource(R.string.home_movies_count, home.movieCount), "🎬", home.movieCover, demo || home.movieCount > 0) { guarded(onMovies) },
+                    GridTile(stringResource(R.string.home_series), if (demo) demoSubtitle else stringResource(R.string.home_series_count, home.seriesCount), "📺", home.seriesCover, demo || home.seriesCount > 0) { guarded(onSeries) },
+                    GridTile(stringResource(R.string.home_playlist), if (demo) config?.macAddress.orEmpty() else activeName, "≡", null, true, onPlaylist),
                     GridTile(stringResource(R.string.live_favorites), stringResource(R.string.home_favorites_count, home.favoriteCount), "★", null, true) { guarded(onFavorites) },
                     GridTile(stringResource(R.string.epg_title), stringResource(R.string.home_guide_hint), "▦", null, true) { guarded(onGuide) },
                     GridTile(stringResource(R.string.home_settings), config?.macAddress.orEmpty(), "⚙", null, true, onSettings),
                 ),
+                firstFocus = if (demo) 3 else 0,
                 banners = config?.banners.orEmpty().map { it.url to it.title },
                 notice = state.notice,
             )
@@ -149,47 +160,61 @@ fun HomeScreen(
         )
 
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 56.dp, vertical = 32.dp)) {
-            TopBar(config = config, syncing = state.syncing, channelCount = state.channelCount)
+            TopBar(config = config, syncing = state.syncing, channelCount = state.channelCount, demo = demo)
 
             Spacer(Modifier.weight(1f))
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                // Five cards since F2-001 (Playlist): tighter gaps so the titles still fit at 1080p.
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 MenuCard(
                     title = stringResource(R.string.home_live),
                     icon = "▶",
                     subtitle = when {
+                        demo -> demoSubtitle
                         state.syncing -> stringResource(R.string.playlist_syncing)
                         state.channelCount > 0 -> stringResource(R.string.live_channels_count, state.channelCount)
                         else -> stringResource(R.string.playlist_not_synced)
                     },
                     enabled = true,
-                    focusRequester = liveRequester,
+                    focusRequester = if (demo) null else liveRequester,
                     onClick = { guarded(onLive) },
                     modifier = Modifier.weight(1f),
                 )
                 MenuCard(
                     title = stringResource(R.string.home_movies),
                     icon = "🎬",
-                    subtitle = stringResource(R.string.home_movies_count, home.movieCount),
-                    enabled = home.movieCount > 0,
+                    subtitle = if (demo) demoSubtitle else stringResource(R.string.home_movies_count, home.movieCount),
+                    enabled = demo || home.movieCount > 0,
                     onClick = { guarded(onMovies) },
                     modifier = Modifier.weight(1f),
                 )
                 MenuCard(
                     title = stringResource(R.string.home_series),
                     icon = "📺",
-                    subtitle = stringResource(R.string.home_series_count, home.seriesCount),
-                    enabled = home.seriesCount > 0,
+                    subtitle = if (demo) demoSubtitle else stringResource(R.string.home_series_count, home.seriesCount),
+                    enabled = demo || home.seriesCount > 0,
                     onClick = { guarded(onSeries) },
                     modifier = Modifier.weight(1f),
                 )
                 MenuCard(
-                    title = stringResource(R.string.home_settings),
+                    title = stringResource(R.string.home_playlist),
+                    icon = "≡",
+                    subtitle = if (demo) config?.macAddress.orEmpty() else activeName,
+                    subtitleMono = demo,
+                    enabled = true,
+                    focusRequester = if (demo) liveRequester else null,
+                    onClick = onPlaylist,
+                    modifier = Modifier.weight(1f),
+                )
+                MenuCard(
+                    // Short title: five cards share the row since F2-001.
+                    title = stringResource(R.string.home_settings_short),
                     icon = "⚙",
-                    subtitle = config?.macAddress.orEmpty(),
+                    // The MAC already sits on the Playlist card while waiting for activation.
+                    subtitle = if (demo) "" else config?.macAddress.orEmpty(),
                     enabled = true,
                     onClick = onSettings,
                     modifier = Modifier.weight(1f),
@@ -225,7 +250,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun TopBar(config: AppConfig?, syncing: Boolean, channelCount: Int) {
+private fun TopBar(config: AppConfig?, syncing: Boolean, channelCount: Int, demo: Boolean) {
     var now by remember { mutableStateOf(LocalTime.now()) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -252,10 +277,10 @@ private fun TopBar(config: AppConfig?, syncing: Boolean, channelCount: Int) {
 
         Column(horizontalAlignment = Alignment.End) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(10.dp).clip(RoundedCornerShape(5.dp)).background(BixSuccess))
+                Box(modifier = Modifier.size(10.dp).clip(RoundedCornerShape(5.dp)).background(if (demo) BixWarning else BixSuccess))
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.status_active),
+                    text = stringResource(if (demo) R.string.home_awaiting_activation else R.string.status_active),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
@@ -293,6 +318,8 @@ private fun MenuCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester? = null,
+    /** Monospace, slightly smaller: a MAC address must never be cut short. */
+    subtitleMono: Boolean = false,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
@@ -311,7 +338,7 @@ private fun MenuCard(
             .alpha(if (enabled) 1f else 0.55f)
             .focusable(interactionSource = interaction)
             .onSelect { if (enabled) onClick() }
-            .padding(horizontal = 20.dp, vertical = 24.dp),
+            .padding(horizontal = 16.dp, vertical = 24.dp),
     ) {
         Text(text = icon, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(12.dp))
@@ -324,8 +351,9 @@ private fun MenuCard(
         )
         Text(
             text = subtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = if (subtitleMono) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
+            fontFamily = if (subtitleMono) FontFamily.Monospace else null,
+            color = if (subtitleMono) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )

@@ -15,7 +15,6 @@ import pro.bixplayer.player.BuildConfig
 import pro.bixplayer.player.data.db.ContentKind
 import pro.bixplayer.player.domain.model.ConfigState
 import pro.bixplayer.player.ui.locale.BixLocale
-import pro.bixplayer.player.ui.screens.activation.ActivationScreen
 import pro.bixplayer.player.ui.screens.boot.BootDestination
 import pro.bixplayer.player.ui.screens.boot.BootViewModel
 import pro.bixplayer.player.ui.screens.catalog.CatalogScreen
@@ -31,7 +30,12 @@ import pro.bixplayer.player.ui.screens.player.PlayerScreen
 import pro.bixplayer.player.ui.screens.parental.ParentalScreen
 import pro.bixplayer.player.ui.screens.player.PlayerViewModel
 import pro.bixplayer.player.ui.screens.player.ZapScope
-import pro.bixplayer.player.ui.screens.playlists.ChangePlaylistScreen
+import pro.bixplayer.player.ui.screens.playlists.PlaylistScreen
+import pro.bixplayer.player.ui.demo.DemoMode
+import pro.bixplayer.player.ui.demo.DemoState
+import pro.bixplayer.player.ui.demo.LocalDemoState
+import androidx.compose.runtime.CompositionLocalProvider
+import pro.bixplayer.player.ui.components.onSelect
 import pro.bixplayer.player.ui.screens.series.SeriesDetailScreen
 import pro.bixplayer.player.ui.screens.series.SeriesDetailViewModel
 import pro.bixplayer.player.ui.screens.settings.SettingsScreen
@@ -69,7 +73,7 @@ import pro.bixplayer.player.ui.theme.LocalIsTv
 /** Routes of the app. Constants so the graph and the tests agree on the strings. */
 object Routes {
     const val SPLASH = "splash"
-    const val ACTIVATION = "activation"
+    const val PLAYLIST = "playlist"
     const val EXPIRED = "expired"
     const val UPDATE = "update"
     const val HOME = "home"
@@ -79,7 +83,6 @@ object Routes {
     fun live(scope: String? = null): String = if (scope == null) LIVE else "$LIVE?scope=$scope"
     const val PLAYER = "player"
     const val SETTINGS = "settings"
-    const val CHANGE_PLAYLIST = "change_playlist"
     const val CATALOG = "catalog"
     const val MOVIE = "movie"
     const val SERIES = "series"
@@ -119,6 +122,11 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
     val configState by bootViewModel.configState.collectAsStateWithLifecycle()
     val language by bootViewModel.language.collectAsStateWithLifecycle()
     val config = (configState as? ConfigState.Ready)?.config
+    // Demo mode (F2-001): no playlist yet → home and catalogues show placeholders, and every
+    // one of them can jump to the Playlist screen where the MAC lives.
+    val demo = DemoMode.isDemo(config)
+    val openPlaylist: () -> Unit = { navController.navigate(Routes.PLAYLIST) { launchSingleTop = true } }
+    val demoState = DemoState(active = demo, macAddress = config?.macAddress.orEmpty(), openPlaylist = openPlaylist)
 
     LaunchedEffect(destination) {
         val target = (destination as? BootDestination.Go)?.route ?: return@LaunchedEffect
@@ -132,6 +140,7 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
 
     val isTv = LocalIsTv.current
     BixLocale(languageTag = language) {
+    CompositionLocalProvider(LocalDemoState provides demoState) {
         val backStack by navController.currentBackStackEntryAsState()
         val currentRoute = backStack?.destination?.route
         val tabRoutes = listOf(Routes.LIVE_PATTERN, Routes.CATALOG_PATTERN, Routes.EPG_PATTERN, Routes.SETTINGS)
@@ -181,6 +190,19 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
                                     .background(MaterialTheme.colorScheme.primary)
                                     .padding(vertical = 6.dp, horizontal = 16.dp),
                             )
+                        } else if (demo) {
+                            // Phone demo mode: a tappable strip is the shortcut to the MAC.
+                            Text(
+                                text = stringResource(R.string.mobile_demo_strip),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .onSelect { openPlaylist() }
+                                    .padding(vertical = 8.dp, horizontal = 16.dp),
+                            )
                         }
                     MobileBottomBar(
                         focusRequester = barRequester,
@@ -209,14 +231,18 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
                 )
             }
 
-            composable(Routes.ACTIVATION) {
-                ActivationScreen(
+            composable(Routes.PLAYLIST) {
+                PlaylistScreen(
+                    config = config,
                     onActivated = {
+                        // Fresh home: the playlist sync starts from HomeScreen (TV) or the
+                        // activity-scoped PlaylistViewModel (phone) as on any first boot.
                         navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.ACTIVATION) { inclusive = true }
+                            popUpTo(0) { inclusive = true }
                             launchSingleTop = true
                         }
                     },
+                    onBack = { navController.popBackStack() },
                 )
             }
 
@@ -258,6 +284,7 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
                     onSeries = { navController.navigate(Routes.catalog(ContentKind.SERIES)) { launchSingleTop = true } },
                     onGuide = { navController.navigate(Routes.epg(null)) { launchSingleTop = true } },
                     onSettings = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } },
+                    onPlaylist = openPlaylist,
                     onResume = { kind, id -> navController.navigate(Routes.playerVod(kind, id, resume = true)) },
                 )
             }
@@ -342,7 +369,7 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
 
             composable(Routes.SETTINGS) {
                 SettingsScreen(
-                    onChangePlaylist = { navController.navigate(Routes.CHANGE_PLAYLIST) },
+                    onChangePlaylist = openPlaylist,
                     onParental = { navController.navigate(Routes.PARENTAL) },
                     onLoggedOut = {
                         // Everything local is gone: boot again, which re-registers the device and
@@ -357,15 +384,12 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
                 )
             }
 
-            composable(Routes.CHANGE_PLAYLIST) {
-                ChangePlaylistScreen(onBack = { navController.popBackStack() })
-            }
-
             composable(Routes.PARENTAL) {
                 ParentalScreen(onBack = { navController.popBackStack() })
             }
         }
         }
+    }
     }
 }
 

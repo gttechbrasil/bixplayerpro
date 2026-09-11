@@ -56,12 +56,15 @@ import pro.bixplayer.player.ui.components.requestFocusSafely
 import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
- * Shown when the device is not linked to a reseller yet, or is linked but has no playlist.
- * The MAC is the only thing the user needs to read out loud, so it dominates the screen.
+ * The *Playlist* screen before activation: the device is not linked to a reseller yet, or is
+ * linked but has no playlist. The MAC is the only thing the user needs to read out loud, so
+ * it dominates the screen. Since F2-001 it is no longer a wall — the home opens in demo mode
+ * and this screen is reached from it — hence [onBack].
  */
 @Composable
 fun ActivationScreen(
     onActivated: () -> Unit,
+    onBack: () -> Unit,
     viewModel: ActivationViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -155,6 +158,12 @@ fun ActivationScreen(
                     text = stringResource(R.string.activation_add_playlist),
                     primary = false,
                     onClick = { viewModel.togglePlaylistForm() },
+                    modifier = if (compact) Modifier.fillMaxWidth() else Modifier,
+                )
+                BixButton(
+                    text = stringResource(R.string.back),
+                    primary = false,
+                    onClick = onBack,
                     modifier = if (compact) Modifier.fillMaxWidth() else Modifier,
                 )
             }

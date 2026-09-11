@@ -56,7 +56,7 @@ Acesse `https://<dominio>/painel` com a revenda criada em A4.
 | B5 | Cadastrar o mesmo MAC de novo | Recusado ("já está cadastrado na sua conta") | | |
 | B6 | Buscar por MAC e por nome; paginar | Busca e paginação funcionam | | |
 | B7 | Editar o dispositivo (nome do cliente, playlist, vencimento) | Alterações salvas; app recebe a nova playlist ao atualizar | | |
-| B8 | Selecionar 2+ dispositivos e **excluir em lote**; excluir 1 individualmente | Excluídos; somem da lista e o app volta para a tela de ativação | | |
+| B8 | Selecionar 2+ dispositivos e **excluir em lote**; excluir 1 individualmente | Excluídos; somem da lista e o app volta ao modo demonstração (home com "Aguardando ativação") na próxima consulta | | |
 | B9 | **Migrador de DNS**: listar hosts em uso; migrar `http://servidor-antigo` → `http://servidor-novo` | Contagem de playlists afetadas correta; URLs atualizadas; registro na auditoria | | |
 | B10 | Migrar informando origem = destino | Recusado com mensagem clara | | |
 | B11 | **Personalização → Logomarca**: enviar PNG/JPG (até 2 MB) | Logo salva e exibida no painel | | |
@@ -79,9 +79,9 @@ celular. Repita C1–C4 e C6–C9 nos dois; o restante pode ser feito só na TV,
 
 | # | Passo | Resultado esperado | Resultado | Observação |
 |---|---|---|---|---|
-| C1 | Abrir o app pela primeira vez | Tela de ativação com **MAC** grande e QR Code | | |
+| C1 | Abrir o app pela primeira vez | (1.3.0+) Home em **modo demonstração**: "Aguardando ativação", cartão **Playlist** em foco com o MAC; TV ao vivo/Filmes/Séries mostram cartazes de exemplo. OK no cartão Playlist (TV) ou toque na faixa laranja (celular) abre a tela com **MAC** grande e QR Code | | |
 | C2 | (Celular) **Copiar MAC** e **Compartilhar** | MAC vai para a área de transferência / WhatsApp | | |
-| C3 | Cadastrar o MAC no painel (B3) e tocar em **"Já cadastrei — verificar"** | App carrega a playlist automaticamente e vai para a tela inicial (TV) ou TV ao vivo (celular). Anotar o **tempo do sync** da lista real: ____ s | | |
+| C3 | Cadastrar o MAC no painel (B3) e **esperar** (até 20 s) ou tocar em **"Já cadastrei — verificar"** | App sai do modo demonstração sozinho, carrega a playlist e mostra a tela inicial (TV) ou TV ao vivo (celular). Anotar o **tempo do sync** da lista real: ____ s | | |
 | C4 | Tela inicial: **status** (Ativo) e **data de vencimento** | Exibidos; com a revenda vencida (B21) aparece "Expirado" e a reprodução é bloqueada | | |
 | C5 | **Logo, fundo, banners e QR Code** do revendedor (B11–B15) | Todos exibidos conforme configurado | | |
 | C6 | **TV ao vivo**: categorias, lista, prévia, reprodução em tela cheia (OK) | Reproduz; zapping com ↑/↓; dígitos sintonizam pelo número | | |

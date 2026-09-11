@@ -41,6 +41,17 @@ class ActivationViewModel @Inject constructor(
             val config = repository.cached()
             if (config != null) _uiState.value = _uiState.value.copy(macAddress = config.macAddress)
         }
+        // The boot ViewModel polls the platform while the device is not usable (F2-001); when
+        // the reseller registers the MAC the config flips and this screen leaves on its own.
+        viewModelScope.launch {
+            repository.state.collect { state ->
+                val config = (state as? ConfigState.Ready)?.config ?: return@collect
+                _uiState.value = _uiState.value.copy(
+                    macAddress = config.macAddress,
+                    activated = _uiState.value.activated || config.canWatch,
+                )
+            }
+        }
     }
 
     fun setMacFrom(config: AppConfig) {

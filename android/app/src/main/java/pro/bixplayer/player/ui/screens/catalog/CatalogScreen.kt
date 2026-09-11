@@ -59,6 +59,9 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
+import pro.bixplayer.player.ui.demo.DemoKind
+import pro.bixplayer.player.ui.demo.DemoShowcase
+import pro.bixplayer.player.ui.demo.LocalDemoState
 import pro.bixplayer.player.data.db.ContentKind
 import pro.bixplayer.player.ui.components.SearchRow
 import pro.bixplayer.player.ui.components.PinGateDialog
@@ -80,6 +83,11 @@ fun CatalogScreen(
     onOpen: (CatalogItem) -> Unit,
     viewModel: CatalogViewModel = hiltViewModel(),
 ) {
+    // No playlist yet (F2-001): placeholder catalogue that leads to the Playlist screen.
+    if (LocalDemoState.current.active) {
+        DemoShowcase(if (viewModel.kind == ContentKind.SERIES) DemoKind.SERIES else DemoKind.MOVIES)
+        return
+    }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val items = viewModel.items.collectAsLazyPagingItems()
     val gate = rememberPinGate()
