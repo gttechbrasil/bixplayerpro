@@ -19,7 +19,15 @@ class UiModeDecisionTest {
         touchFeature: Boolean = true,
         touchInputDevice: Boolean = true,
         characteristics: String = "default",
-    ) = UiModeDecider.Signals(uiModeTv, leanback, tvFeature, touchFeature, touchInputDevice, characteristics)
+        fireTv: Boolean = false,
+    ) = UiModeDecider.Signals(uiModeTv, leanback, tvFeature, touchFeature, touchInputDevice, characteristics, fireTv)
+
+    @Test
+    fun `fire tv stick is tv even if every other signal looked like a phone`() {
+        // Fire OS declares leanback and the TV ui mode, but the Amazon flag alone must be enough (M5-025).
+        assertTrue(signals(fireTv = true, touchFeature = true, touchInputDevice = true, characteristics = "default").isTv)
+        assertTrue(signals(uiModeTv = true, leanback = true, touchFeature = false, touchInputDevice = false, fireTv = true).isTv)
+    }
 
     @Test
     fun `android tv with leanback is tv`() {

@@ -426,6 +426,88 @@ com o build 1.1.0. Pendente de hardware real: TV box física (item 2 do bloco 0)
 libVLC em ARM, PiP em aparelhos que o restringem e o comportamento do recorte da câmera em
 celulares com notch.
 
+## 14. Amazon Fire TV / Fire TV Stick (M5-025)
+
+Fire OS é Android (Fire OS 6 = 7.1, Fire OS 7 = 9, Fire OS 8 = 11) **sem Google Play
+Services**. O app já nasce compatível; esta seção registra a auditoria e o que foi ajustado.
+
+**Dependências.** Nenhum artefato do GMS, Firebase ou Play Core no `build.gradle.kts` nem na
+árvore transitiva de `releaseRuntimeClasspath` (`./gradlew :app:dependencies`, 0 ocorrências de
+`gms`/`play-services`/`firebase`). Coil resolve imagens com OkHttp; Media3 entra sem a extensão
+Cast; WorkManager agenda pelo `JobScheduler`; QR pelo ZXing puro; nenhuma chamada a
+`GoogleApiAvailability`/`ProviderInstaller`. TLS: `minSdk 23` e Fire OS ≥ 6 (7.1.1) trazem a raiz
+ISRG X1 do Let's Encrypt; a política de rede libera HTTP apenas para servidores de lista e exige
+TLS para `bixplayer.pro`.
+
+**Detecção de TV.** Fire OS declara `android.software.leanback` e `UI_MODE_TYPE_TELEVISION`,
+o que já bastava; `amazon.hardware.fire_tv` entrou no `UiModeDecider.Signals` como sinal
+adicional (e aparece em `ui_signals` no diagnóstico). O manifesto não exige touchscreen nem
+leanback e a entrada tem `LAUNCHER` + `LEANBACK_LAUNCHER`, como a Amazon pede.
+
+**Controle remoto Fire TV** (Select, D-pad, Back, Home, Menu, Rewind, Play/Pause, Fast
+forward — sem dígitos, GUIDE, INFO, CH+/− ou teclas coloridas):
+
+| Tecla | Onde | Efeito |
+|---|---|---|
+| Select/OK, D-pad | todas | foco e ação (`Modifier.onSelect`, OK no KEY UP) |
+| BACK | todas | `BackHandler` em cada tela; no player sai para a lista |
+| MENU | player | faixas de áudio/legenda (também `Captions`); listas: remover playlist; celular: foca a barra |
+| Play/Pause | player | VOD pausa/retoma; ao vivo mostra o overlay (canal ao vivo não pausa) |
+| REW / FF | player VOD | seek −/+ (segurar ◀/▶ também) |
+| HOME | sistema | app vai para segundo plano; ao voltar, `LaunchActivity` reabre onde estava |
+
+Funções que em outros controles têm tecla própria continuam alcançáveis: zapping por ▲/▼ e pela
+lista rápida (◀/▶), guia pelo cartão da home e pelo botão na lista de canais, número do canal
+só por D-pad (a digitação direta exige teclado numérico, que o Fire remote não tem).
+
+**Instalação (sideload) na Fire TV.**
+
+1. Configurações → Minha Fire TV → Opções do desenvolvedor → **Apps de fontes desconhecidas**
+   (Fire OS 7+: habilitar por app, para o Downloader) e, se for usar `adb`, **Depuração ADB**.
+2. Instalar o **Downloader** (AFTVnews) pela Appstore da Amazon, abrir e digitar a URL
+   `https://bixplayer.pro/downloads/app.apk` (ou o código curto do Downloader, se a revenda
+   criar um em aftv.news). O Downloader baixa e chama o instalador do sistema.
+3. Ou por rede: `adb connect <ip-da-fire-tv>:5555 && adb install -r app-universal-release.apk`.
+4. O ícone aparece em *Seus apps e canais*; a primeira abertura cai na home em modo demonstração
+   com o MAC no cartão Playlist (F2-001). Atualizações: repetir o passo 2 — a assinatura é a
+   mesma, o app atualiza por cima sem perder dados.
+
+**Limitações conhecidas.**
+
+- Não há Play Protect nem Play Store; a atualização obrigatória continua funcionando pela URL do
+  APK no `min_app_version`. O app não está na Appstore da Amazon (não solicitado).
+- Fire TV Stick Lite/2ª geração: 1 GB de RAM e decodificação HEVC limitada — vale o mesmo
+  regime da MXQ (§13: `lowRam`, preferência por H.264). Fire TV Stick 4K/4K Max: HEVC em hardware.
+- Fire OS 5 (Android 5.1, Sticks de 2016) fica fora: `minSdk 23`.
+- Sem Google Cast e sem Assistente; nenhum recurso do app depende deles.
+- Fire OS pode fechar apps em segundo plano agressivamente; ao voltar pelo HOME o app reabre
+  pela `LaunchActivity` e retoma a última tela.
+
+**Validação.** Não existe imagem oficial do Fire OS para o emulador; o substituto é um AVD
+**Android 9 x86 AOSP sem Google APIs** (`system-images;android-28;default;x86`, perfil
+`tv_1080p`, 1 GB, GPU por software), criado como `bix_firetv_aosp` na porta 5560:
+
+```bash
+cmd /c "echo y| sdkmanager.bat --install \"system-images;android-28;default;x86\""
+avdmanager create avd -n bix_firetv_aosp -k "system-images;android-28;default;x86" -d "tv_1080p" --force
+# config.ini: hw.ramSize=1024, hw.gpu.enabled=no, hw.keyboard=yes
+emulator -avd bix_firetv_aosp -no-snapshot -gpu swiftshader_indirect -port 5560
+```
+
+Resultados (14/09/2026, build 1.3.0 debug, capturas `docs/screens/android/m5/14–16-firetv-aosp-*.png`):
+
+| Verificação | Resultado |
+|---|---|
+| Imagem | Android 9 / SDK 28, `pm list packages` sem `com.google.android.gms` nem `com.android.vending`; sem leanback, sem `type.television`, `touchscreen=true` |
+| UI escolhida | `TvActivity` (sinais: `touchInput=false` → TV); `fireTv=false` aqui porque o AVD não declara a feature — na Fire TV real ele é `true` |
+| Boot | home em modo demonstração em 5 s, 59 MB de PSS; MAC cadastrado pela API → ativou sozinho em 14 s e sincronizou 1200 canais em 17 s |
+| WorkManager | `SystemJobService` registrado no `JobScheduler` (7 jobs), sem GMS |
+| Coil | logo do canal carregado na prévia (OkHttp), 0 erros no logcat |
+| Controle | Play/Pause ao vivo → overlay; MENU → "Áudio e legendas"; ▼ → `tune 2`; REW/FF sem efeito ao vivo (esperado); BACK → lista → home; HOME → segundo plano e relançamento na home |
+| Estabilidade | sem `FATAL EXCEPTION` nem `am_kill`; 89–92 MB de PSS após o player |
+
+Pendente: teste num Fire TV Stick real (cliente), em especial HEVC no Stick Lite e o comportamento do launcher da Amazon com o ícone/banner.
+
 ## 13. Dispositivo de referência mínimo e hardware real (M5-016)
 
 **Referência mínima: MXQ Pro 4K 5G** (box do cliente). Dados **reais**, lidos do diagnóstico

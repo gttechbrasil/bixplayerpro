@@ -40,15 +40,17 @@ object UiModeDecider {
         val touchFeature: Boolean,
         val touchInputDevice: Boolean,
         val characteristics: String,
+        /** Amazon Fire TV / Fire TV Stick declare `amazon.hardware.fire_tv` (M5-025). */
+        val fireTv: Boolean = false,
     ) {
         /** AOSP boxes often *declare* the touchscreen feature; what they never have is a real
          *  touch input device. `ro.build.characteristics` says "tv" on most of them too. */
         val isTv: Boolean
-            get() = uiModeTv || leanback || tvFeature || !touchFeature || !touchInputDevice ||
+            get() = uiModeTv || leanback || tvFeature || fireTv || !touchFeature || !touchInputDevice ||
                 characteristics.split(',').any { it.trim() == "tv" }
 
         override fun toString(): String =
-            "uiModeTv=$uiModeTv leanback=$leanback tvFeature=$tvFeature touchFeature=$touchFeature " +
+            "uiModeTv=$uiModeTv leanback=$leanback tvFeature=$tvFeature fireTv=$fireTv touchFeature=$touchFeature " +
                 "touchInput=$touchInputDevice characteristics=$characteristics -> ${if (isTv) "TV" else "MOBILE"}"
     }
 
@@ -62,6 +64,7 @@ object UiModeDecider {
             touchFeature = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN),
             touchInputDevice = hasTouchInputDevice(),
             characteristics = buildCharacteristics(),
+            fireTv = pm.hasSystemFeature(FEATURE_FIRE_TV),
         )
         Timber.i("ui mode: %s", signals)
         return signals
@@ -80,6 +83,9 @@ object UiModeDecider {
         clazz.getMethod("get", String::class.java, String::class.java)
             .invoke(null, "ro.build.characteristics", "") as String
     }.getOrDefault("")
+
+    /** Fire OS feature flag; Fire TV also reports leanback and UI_MODE_TYPE_TELEVISION, this is belt and braces. */
+    const val FEATURE_FIRE_TV = "amazon.hardware.fire_tv"
 
     fun useTvUi(context: Context, override: UiMode): Boolean = when (override) {
         UiMode.TV -> true
