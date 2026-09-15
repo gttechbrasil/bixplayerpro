@@ -65,9 +65,11 @@ def main() -> None:
         img = Image.new("RGB", (400, 600))
         d = ImageDraw.Draw(img)
         landscape(d, 400, 600, mood, 0.25 + (i % 4) * 0.18)
-        d.rectangle([0, 470, 400, 600], fill=(0, 0, 0))
-        d.text((24, 500), f"Amostra {i}", font=font(40), fill=(255, 255, 255))
-        d.text((24, 552), "fixture", font=font(24), fill=(200, 200, 200))
+        # The label sits at the top: the app draws the real title over the bottom of the poster,
+        # and two texts in the same place made every screenshot unreadable.
+        d.rectangle([0, 0, 400, 96], fill=(0, 0, 0))
+        d.text((20, 16), f"Amostra {i}", font=font(38), fill=(255, 255, 255))
+        d.text((20, 62), "fixture", font=font(22), fill=(190, 190, 190))
         img.save(OUT / f"p{i}.png")
 
     wide = Image.new("RGB", (1280, 720))

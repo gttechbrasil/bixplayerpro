@@ -154,7 +154,10 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
         val backStack by navController.currentBackStackEntryAsState()
         val currentRoute = backStack?.destination?.route
         val tabRoutes = listOf(Routes.HOME, Routes.LIVE_PATTERN, Routes.CATALOG_PATTERN, Routes.EPG_PATTERN, Routes.SETTINGS)
-        val showBar = !isTv && currentRoute in tabRoutes
+        // The home already lists TV ao vivo, Filmes and Séries as part of the chosen layout, so
+        // showing the tab bar there repeated the same three entries on one screen (M5-030). The
+        // bar belongs to the sections; the home is the menu, and "Início" brings it back.
+        val showBar = !isTv && currentRoute in tabRoutes && currentRoute != Routes.HOME
         // D-pad safety net for the phone UI on a box (M5-017): MENU moves the focus to the
         // bottom bar, which a long list would otherwise never let the D-pad reach.
         val barRequester = remember { FocusRequester() }

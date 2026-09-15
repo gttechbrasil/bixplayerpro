@@ -338,7 +338,7 @@ private fun CompactTileGrid(tiles: List<GridTile>) {
 private fun CompactTile(tile: GridTile, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .height(118.dp)
+            .height(132.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.surface)
             .focusable()
@@ -380,7 +380,7 @@ private fun CompactPosterRow(posters: List<HomePoster>) {
                     .focusable()
                     .onSelect { poster.onClick() },
             ) {
-                Box(modifier = Modifier.fillMaxWidth().height(148.dp).background(MaterialTheme.colorScheme.background)) {
+                Box(modifier = Modifier.fillMaxWidth().height(156.dp).background(MaterialTheme.colorScheme.background)) {
                     if (!poster.imageUrl.isNullOrBlank()) {
                         AsyncImage(model = poster.imageUrl, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                     } else {

@@ -360,6 +360,9 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
 
 ## 11. Decisões que valem lembrar
 
+- **Barra inferior fora da tela inicial (M5-030, 1.5.1)**: com a tela inicial no telefone, TV ao
+  vivo/Filmes/Séries apareciam duas vezes na mesma tela — no layout e na barra. A barra passou a
+  valer só para as seções (`showBar` exclui `Routes.HOME`); a volta é pela aba **Início**.
 - **Tela inicial no celular (M5-029, 1.5.0)**: o telefone abria direto em TV ao vivo e ignorava
   o layout da revenda. Agora as duas famílias abrem a mesma `HomeScreen`; abaixo de `isTv` ela
   delega para `CompactHomeScreen` (`ui/screens/home/HomeLayoutsCompact.kt`), que mantém o
