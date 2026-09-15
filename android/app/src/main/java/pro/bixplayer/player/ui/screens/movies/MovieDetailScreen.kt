@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.ColumnScope
+import pro.bixplayer.player.ui.theme.LocalIsTv
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -76,15 +78,16 @@ fun MovieDetailScreen(
                 .background(Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.background, Color.Transparent))),
         )
 
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 56.dp, vertical = 40.dp),
-            horizontalArrangement = Arrangement.spacedBy(40.dp),
-        ) {
+        // A phone cannot afford the TV's side-by-side layout: 56 dp of padding plus a 260 dp
+        // poster left nothing for the text, so the title showed as "Fil" and the synopsis broke
+        // one letter per line (M5-031). In portrait everything stacks and scrolls instead.
+        val compact = !LocalIsTv.current
+        DetailFrame(
+            compact = compact,
+            poster = {
             Box(
                 modifier = Modifier
-                    .width(260.dp)
+                    .then(if (compact) Modifier.fillMaxWidth(0.45f) else Modifier.width(260.dp))
                     .aspectRatio(2f / 3f)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surface),
@@ -97,10 +100,11 @@ fun MovieDetailScreen(
                 }
             }
 
-            Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            },
+        ) {
                 Text(
                     text = movie.name,
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -124,7 +128,7 @@ fun MovieDetailScreen(
 
                 val progress = state.progress
                 val resumable = progress?.resumable == true
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                DetailActions(compact) {
                     BixButton(
                         text = if (resumable) {
                             stringResource(R.string.movie_continue, TimeFormat.clock(progress!!.positionMs))
@@ -133,6 +137,7 @@ fun MovieDetailScreen(
                         },
                         onClick = { onPlay(movie, resumable) },
                         focusRequester = primaryRequester,
+                        modifier = if (compact) Modifier.fillMaxWidth() else Modifier,
                     )
                     if (resumable) {
                         BixButton(
@@ -142,12 +147,14 @@ fun MovieDetailScreen(
                                 viewModel.restart()
                                 onPlay(movie, false)
                             },
+                            modifier = if (compact) Modifier.fillMaxWidth() else Modifier,
                         )
                     }
                     BixButton(
                         text = stringResource(if (state.favorite) R.string.detail_favorite_remove else R.string.detail_favorite_add),
                         primary = false,
                         onClick = viewModel::toggleFavorite,
+                        modifier = if (compact) Modifier.fillMaxWidth() else Modifier,
                     )
                 }
 
@@ -181,8 +188,52 @@ fun MovieDetailScreen(
                     Spacer(Modifier.height(8.dp))
                     MetaLine(label = stringResource(R.string.movie_cast), value = it)
                 }
-            }
         }
+    }
+}
+
+/**
+ * Poster and text side by side on a TV, stacked and scrollable on a phone (M5-031).
+ */
+@Composable
+internal fun DetailFrame(
+    compact: Boolean,
+    poster: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    if (compact) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            poster()
+            Spacer(Modifier.height(20.dp))
+            Column(modifier = Modifier.fillMaxWidth(), content = content)
+        }
+    } else {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 56.dp, vertical = 40.dp),
+            horizontalArrangement = Arrangement.spacedBy(40.dp),
+        ) {
+            poster()
+            Column(
+                modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                content = content,
+            )
+        }
+    }
+}
+
+/** Buttons in a row on a TV, stacked full width on a phone, where thumbs need the space. */
+@Composable
+internal fun DetailActions(compact: Boolean, content: @Composable () -> Unit) {
+    if (compact) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) { content() }
+    } else {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) { content() }
     }
 }
 

@@ -102,8 +102,8 @@ data class PlayerUiState(
     val finished: Boolean = false,
     /** Playing on libVLC after Media3 gave up on the stream. */
     val compatibilityMode: Boolean = false,
-    /** Video cropped to the screen (true) or shown whole (false) — the user's choice (F2-005). */
-    val videoFill: Boolean = false,
+    /** Cropped (true), whole (false) or never chosen (null, the screen decides) — F2-005. */
+    val videoFill: Boolean? = null,
 ) {
     val isLive: Boolean get() = item?.isLive != false
     val channel: ChannelEntity? get() = (item as? PlaybackItem.Live)?.channel
@@ -455,9 +455,12 @@ class PlayerViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(overlayVisible = false)
     }
 
-    /** Switches between the original proportions and filling the screen (F2-005). */
-    fun toggleVideoFill() {
-        val next = !_uiState.value.videoFill
+    /**
+     * Switches between the original proportions and filling the screen (F2-005). [current] is
+     * what the viewer sees now, which on the first use is the default for that screen shape.
+     */
+    fun toggleVideoFill(current: Boolean) {
+        val next = !current
         _uiState.value = _uiState.value.copy(videoFill = next)
         viewModelScope.launch { store.setVideoFill(next) }
     }

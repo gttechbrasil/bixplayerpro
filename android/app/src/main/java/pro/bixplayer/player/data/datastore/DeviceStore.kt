@@ -22,8 +22,11 @@ interface DeviceStore {
     /** Home layout chosen on the device (`default` | `grid`); null follows the panel. */
     val layoutOverride: Flow<String?>
 
-    /** True to crop the video to the screen; false keeps the original proportions (F2-005). */
-    val videoFill: Flow<Boolean>
+    /**
+     * True crops the video to the screen, false keeps the original proportions, null means the
+     * user never chose and the player decides by screen shape (F2-005, M5-032).
+     */
+    val videoFill: Flow<Boolean?>
 
     /** Interface family override (`auto` | `tv` | `mobile`), see UiModeDecider (M5-017). */
     val uiMode: Flow<String>

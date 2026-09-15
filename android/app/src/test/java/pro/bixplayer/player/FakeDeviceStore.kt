@@ -36,8 +36,8 @@ class FakeDeviceStore(
     override val language: Flow<String> = _language
     override val pin: Flow<String?> = _pin
     override val layoutOverride: Flow<String?> = _layout
-    private val _videoFill = MutableStateFlow(false)
-    override val videoFill: Flow<Boolean> = _videoFill
+    private val _videoFill = MutableStateFlow<Boolean?>(null)
+    override val videoFill: Flow<Boolean?> = _videoFill
     override val uiMode: Flow<String> = _uiMode
 
     override suspend fun currentToken(): String? = _token.value

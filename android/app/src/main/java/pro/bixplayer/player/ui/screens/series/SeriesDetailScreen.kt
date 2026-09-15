@@ -20,6 +20,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.ColumnScope
+import pro.bixplayer.player.ui.theme.LocalIsTv
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -69,17 +71,13 @@ fun SeriesDetailScreen(
         continueRequester.requestFocusWithRetry()
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 48.dp, vertical = 32.dp),
-        horizontalArrangement = Arrangement.spacedBy(32.dp),
-    ) {
-        Column(modifier = Modifier.width(360.dp).fillMaxHeight()) {
+    val compact = !LocalIsTv.current
+    SeriesFrame(
+        compact = compact,
+        sheet = {
             Box(
                 modifier = Modifier
-                    .width(200.dp)
+                    .then(if (compact) Modifier.width(120.dp) else Modifier.width(200.dp))
                     .aspectRatio(2f / 3f)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surface),
@@ -94,7 +92,7 @@ fun SeriesDetailScreen(
             Spacer(Modifier.height(16.dp))
             Text(
                 text = show.name,
-                style = MaterialTheme.typography.headlineMedium,
+                style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -115,6 +113,7 @@ fun SeriesDetailScreen(
                     },
                     onClick = { onPlayEpisode(continueEp) },
                     focusRequester = continueRequester,
+                    modifier = if (compact) Modifier.fillMaxWidth() else Modifier,
                 )
                 Spacer(Modifier.height(10.dp))
             }
@@ -122,6 +121,7 @@ fun SeriesDetailScreen(
                 text = stringResource(if (state.favorite) R.string.detail_favorite_remove else R.string.detail_favorite_add),
                 primary = false,
                 onClick = viewModel::toggleFavorite,
+                modifier = if (compact) Modifier.fillMaxWidth() else Modifier,
             )
             Spacer(Modifier.height(16.dp))
             if (!show.plot.isNullOrBlank()) {
@@ -129,13 +129,12 @@ fun SeriesDetailScreen(
                     text = show.plot,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 6,
+                    maxLines = if (compact) 3 else 6,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-        }
-
-        Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+        },
+    ) {
             if (state.seasons.isNotEmpty()) {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(state.seasons, key = { it }) { season ->
@@ -169,6 +168,37 @@ fun SeriesDetailScreen(
                     }
                 }
             }
+    }
+}
+
+/** Sheet beside the episodes on a TV, above them on a phone (M5-031). */
+@Composable
+private fun SeriesFrame(
+    compact: Boolean,
+    sheet: @Composable ColumnScope.() -> Unit,
+    episodes: @Composable ColumnScope.() -> Unit,
+) {
+    if (compact) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 16.dp, vertical = 20.dp),
+        ) {
+            Column(modifier = Modifier.fillMaxWidth(), content = sheet)
+            Spacer(Modifier.height(16.dp))
+            Column(modifier = Modifier.weight(1f).fillMaxWidth(), content = episodes)
+        }
+    } else {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 48.dp, vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+        ) {
+            Column(modifier = Modifier.width(360.dp).fillMaxHeight(), content = sheet)
+            Column(modifier = Modifier.weight(1f).fillMaxHeight(), content = episodes)
         }
     }
 }

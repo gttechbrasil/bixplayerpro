@@ -360,6 +360,13 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
 
 ## 11. Decisões que valem lembrar
 
+- **Detalhe em retrato (M5-031, 1.5.2)**: `MovieDetailScreen` e `SeriesDetailScreen` eram
+  `Row` de TV. Agora `DetailFrame`/`SeriesFrame` escolhem entre lado a lado (TV) e empilhado
+  (celular); os botões viram largura total no telefone.
+- **Preenchimento do vídeo por formato de tela (M5-032, 1.5.2)**: `PlayerUiState.videoFill` é
+  `Boolean?`. Nulo significa "o usuário não escolheu" e o player decide: `!isTv`, ou seja,
+  celular preenche (`RESIZE_MODE_ZOOM`) e TV mantém a proporção (`RESIZE_MODE_FIT`). Uma TV é
+  16:9 como o conteúdo; um celular de 20:9 deixaria tarjas largas nas laterais.
 - **Barra inferior fora da tela inicial (M5-030, 1.5.1)**: com a tela inicial no telefone, TV ao
   vivo/Filmes/Séries apareciam duas vezes na mesma tela — no layout e na barra. A barra passou a
   valer só para as seções (`showBar` exclui `Routes.HOME`); a volta é pela aba **Início**.

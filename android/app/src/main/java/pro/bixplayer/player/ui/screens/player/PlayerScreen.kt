@@ -109,6 +109,9 @@ fun PlayerScreen(
     val rootRequester = remember { FocusRequester() }
     val isTv = LocalIsTv.current
     val activity = LocalActivity.current
+    // Phones fill the screen by default: their 20:9 panels leave thick side bars on 16:9 video,
+    // which is what "deita mas não preenche" meant (M5-032). TVs match the content already.
+    val videoFill = state.videoFill ?: !isTv
 
     // Phones watch in landscape, full screen (bars hidden, video under the camera cutout);
     // orientation, bars and cutout mode all go back to the system's when leaving.
@@ -266,7 +269,7 @@ fun PlayerScreen(
             player = viewModel.session.player,
             vlcPlayer = viewModel.session.vlcPlayer,
             modifier = Modifier.fillMaxSize(),
-            resizeMode = if (state.videoFill) {
+            resizeMode = if (videoFill) {
                 AspectRatioFrameLayout.RESIZE_MODE_ZOOM
             } else {
                 AspectRatioFrameLayout.RESIZE_MODE_FIT
@@ -353,7 +356,8 @@ fun PlayerScreen(
                 touch = !isTv,
                 onTogglePause = viewModel::togglePause,
                 onTracks = viewModel::openTracks,
-                onToggleFill = viewModel::toggleVideoFill,
+                videoFill = videoFill,
+                onToggleFill = { viewModel.toggleVideoFill(videoFill) },
             )
         }
 
@@ -379,10 +383,10 @@ fun PlayerScreen(
             TracksPanel(
                 audio = state.audioTracks,
                 subtitles = state.subtitleTracks,
-                videoFill = state.videoFill,
+                videoFill = videoFill,
                 onSelect = viewModel::selectTrack,
                 onSubtitlesOff = viewModel::disableSubtitles,
-                onToggleFill = viewModel::toggleVideoFill,
+                onToggleFill = { viewModel.toggleVideoFill(videoFill) },
             )
         }
 
@@ -406,6 +410,7 @@ private fun InfoOverlay(
     touch: Boolean = false,
     onTogglePause: () -> Unit = {},
     onTracks: () -> Unit = {},
+    videoFill: Boolean = false,
     onToggleFill: () -> Unit = {},
 ) {
     var now by remember { mutableStateOf(LocalTime.now()) }
@@ -504,7 +509,7 @@ private fun InfoOverlay(
                     )
                 }
             }
-            FitButton(fill = state.videoFill, onClick = onToggleFill)
+            FitButton(fill = videoFill, onClick = onToggleFill)
         }
     }
 

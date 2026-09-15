@@ -67,7 +67,7 @@ class DevicePreferences @Inject constructor(
     override val pin: Flow<String?> = prefs.map { it[Keys.PIN] }
     override val layoutOverride: Flow<String?> = prefs.map { it[Keys.LAYOUT] }
 
-    override val videoFill: Flow<Boolean> = prefs.map { it[Keys.VIDEO_FILL] ?: false }
+    override val videoFill: Flow<Boolean?> = prefs.map { it[Keys.VIDEO_FILL] }
     override val uiMode: Flow<String> = prefs.map { it[Keys.UI_MODE] ?: "auto" }
 
     override suspend fun currentToken(): String? = token.first()
