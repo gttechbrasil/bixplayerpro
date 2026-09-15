@@ -63,7 +63,11 @@ class PlaylistViewModel @Inject constructor(
      * Syncs the active playlist when it has never been synced, or when [force] is set
      * ("Atualizar listas" in the settings screen).
      */
-    fun syncActive(force: Boolean = false) {
+    /**
+     * [doneMessage] is shown on the home when the user asks for a refresh from the tile (F2-004);
+     * background syncs pass null and stay silent.
+     */
+    fun syncActive(force: Boolean = false, doneMessage: String? = null) {
         val state = _uiState.value
         val playlist = state.playlists.firstOrNull { it.id == state.activeId } ?: return
         if (state.syncing) return
@@ -82,7 +86,7 @@ class PlaylistViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         syncing = false,
                         channelCount = result.channels,
-                        notice = null,
+                        notice = doneMessage?.format(result.channels),
                     )
                 }
 

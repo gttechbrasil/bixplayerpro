@@ -26,6 +26,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -263,7 +266,11 @@ fun PlayerScreen(
             player = viewModel.session.player,
             vlcPlayer = viewModel.session.vlcPlayer,
             modifier = Modifier.fillMaxSize(),
-            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT,
+            resizeMode = if (state.videoFill) {
+                AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            } else {
+                AspectRatioFrameLayout.RESIZE_MODE_FIT
+            },
         )
 
         if (state.compatibilityMode) {
@@ -341,7 +348,13 @@ fun PlayerScreen(
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
-            InfoOverlay(state = state, touch = !isTv, onTogglePause = viewModel::togglePause, onTracks = viewModel::openTracks)
+            InfoOverlay(
+                state = state,
+                touch = !isTv,
+                onTogglePause = viewModel::togglePause,
+                onTracks = viewModel::openTracks,
+                onToggleFill = viewModel::toggleVideoFill,
+            )
         }
 
         AnimatedVisibility(
@@ -366,8 +379,10 @@ fun PlayerScreen(
             TracksPanel(
                 audio = state.audioTracks,
                 subtitles = state.subtitleTracks,
+                videoFill = state.videoFill,
                 onSelect = viewModel::selectTrack,
                 onSubtitlesOff = viewModel::disableSubtitles,
+                onToggleFill = viewModel::toggleVideoFill,
             )
         }
 
@@ -391,6 +406,7 @@ private fun InfoOverlay(
     touch: Boolean = false,
     onTogglePause: () -> Unit = {},
     onTracks: () -> Unit = {},
+    onToggleFill: () -> Unit = {},
 ) {
     var now by remember { mutableStateOf(LocalTime.now()) }
     LaunchedEffect(state.overlayVisible) {
@@ -466,20 +482,62 @@ private fun InfoOverlay(
         }
 
         Spacer(Modifier.height(8.dp))
-        if (touch) {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                if (!state.isLive) {
-                    BixButton(text = if (state.playback is SessionState.Paused) "▶" else "❚❚", onClick = onTogglePause)
+        // Screen fit sits in the bottom corner of the overlay (F2-005): the viewer chooses
+        // between the whole picture and filling the screen, and the choice sticks.
+        Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.weight(1f)) {
+                if (touch) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        if (!state.isLive) {
+                            BixButton(
+                                text = if (state.playback is SessionState.Paused) "▶" else "❚❚",
+                                onClick = onTogglePause,
+                            )
+                        }
+                        BixButton(text = stringResource(R.string.player_tracks), primary = false, onClick = onTracks)
+                    }
+                } else {
+                    Text(
+                        text = stringResource(if (state.isLive) R.string.player_hints else R.string.player_pause_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
-                BixButton(text = stringResource(R.string.player_tracks), primary = false, onClick = onTracks)
             }
-        } else {
-            Text(
-                text = stringResource(if (state.isLive) R.string.player_hints else R.string.player_pause_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            FitButton(fill = state.videoFill, onClick = onToggleFill)
         }
+    }
+
+}
+
+/** Toggles between the original proportions and a screen-filling crop (F2-005). */
+@Composable
+private fun FitButton(fill: Boolean, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val focused by interaction.collectIsFocusedAsState()
+    val shape = RoundedCornerShape(10.dp)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .bixFocusable(focused, scale = BixFocus.SCALE_SMALL, shape = shape)
+            .clip(shape)
+            .background(if (focused) MaterialTheme.colorScheme.primary else Color(0x99161616))
+            .focusable(interactionSource = interaction)
+            .onSelect(onClick)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+    ) {
+        Icon(
+            painter = painterResource(if (fill) R.drawable.ic_player_fit else R.drawable.ic_player_fill),
+            contentDescription = null,
+            tint = if (focused) MaterialTheme.colorScheme.onPrimary else Color.White,
+            modifier = Modifier.size(20.dp),
+        )
+        Text(
+            text = stringResource(if (fill) R.string.player_fit_original else R.string.player_fit_fill),
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (focused) MaterialTheme.colorScheme.onPrimary else Color.White,
+        )
     }
 }
 
@@ -635,8 +693,10 @@ private fun QuickRow(
 private fun TracksPanel(
     audio: List<TrackOption>,
     subtitles: List<TrackOption>,
+    videoFill: Boolean,
     onSelect: (TrackOption) -> Unit,
     onSubtitlesOff: () -> Unit,
+    onToggleFill: () -> Unit,
 ) {
     val firstRequester = remember { FocusRequester() }
     LaunchedEffect(audio, subtitles) {
@@ -655,6 +715,20 @@ private fun TracksPanel(
             color = Color.White,
         )
         Spacer(Modifier.height(16.dp))
+        SectionLabel(stringResource(R.string.player_fit_label))
+        TrackRow(
+            label = stringResource(R.string.player_fit_original),
+            selected = !videoFill,
+            focusRequester = firstRequester,
+            onSelect = { if (videoFill) onToggleFill() },
+        )
+        TrackRow(
+            label = stringResource(R.string.player_fit_fill),
+            selected = videoFill,
+            focusRequester = null,
+            onSelect = { if (!videoFill) onToggleFill() },
+        )
+        Spacer(Modifier.height(12.dp))
         if (audio.isEmpty() && subtitles.isEmpty()) {
             Text(
                 text = stringResource(R.string.player_no_tracks),
@@ -668,7 +742,7 @@ private fun TracksPanel(
                 TrackRow(
                     label = option.label,
                     selected = option.selected,
-                    focusRequester = if (index == 0) firstRequester else null,
+                    focusRequester = null,
                     onSelect = { onSelect(option) },
                 )
             }
@@ -679,7 +753,7 @@ private fun TracksPanel(
             TrackRow(
                 label = stringResource(R.string.player_subtitle_off),
                 selected = subtitles.none { it.selected },
-                focusRequester = if (audio.isEmpty()) firstRequester else null,
+                focusRequester = null,
                 onSelect = onSubtitlesOff,
             )
             subtitles.forEach { option ->

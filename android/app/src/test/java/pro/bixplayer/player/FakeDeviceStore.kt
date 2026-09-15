@@ -36,6 +36,8 @@ class FakeDeviceStore(
     override val language: Flow<String> = _language
     override val pin: Flow<String?> = _pin
     override val layoutOverride: Flow<String?> = _layout
+    private val _videoFill = MutableStateFlow(false)
+    override val videoFill: Flow<Boolean> = _videoFill
     override val uiMode: Flow<String> = _uiMode
 
     override suspend fun currentToken(): String? = _token.value
@@ -79,6 +81,10 @@ class FakeDeviceStore(
 
     override suspend fun setLayoutOverride(layout: String?) {
         _layout.value = layout
+    }
+
+    override suspend fun setVideoFill(fill: Boolean) {
+        _videoFill.value = fill
     }
 
     override suspend fun setPlayerEngine(playlistId: Long, engine: String) {

@@ -360,6 +360,21 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
 
 ## 11. Decisões que valem lembrar
 
+- **Tela inicial no celular (M5-029, 1.5.0)**: o telefone abria direto em TV ao vivo e ignorava
+  o layout da revenda. Agora as duas famílias abrem a mesma `HomeScreen`; abaixo de `isTv` ela
+  delega para `CompactHomeScreen` (`ui/screens/home/HomeLayoutsCompact.kt`), que mantém o
+  caráter de cada layout em retrato, e a barra inferior ganhou a aba **Início**.
+- **Ícones do menu (F2-003, 1.5.0)**: `GridTile.icon` é `@DrawableRes`; os vetores estão em
+  `res/drawable/ic_tile_*.xml`. Os emoji anteriores mudavam de desenho conforme a fonte da box
+  e não aceitavam tintura.
+- **Cartão Atualizar (F2-004, 1.5.0)**: com o aparelho ativo o quarto cartão da tela inicial
+  dispara `PlaylistViewModel.syncActive(force = true)` e avisa quantos canais entraram. Em modo
+  demonstração ele continua sendo *Playlist*, que é o caminho do MAC (F2-001).
+- **Ajuste de tela (F2-005, 1.5.0)**: `PlayerUiState.videoFill` escolhe entre
+  `RESIZE_MODE_FIT` e `RESIZE_MODE_ZOOM`, fica salvo no DataStore e aparece em dois lugares —
+  o canto inferior direito do overlay (toque) e o painel do **MENU** (controle remoto). O canto
+  sozinho não bastava: o `onPreviewKeyEvent` da raiz consome as setas para zapear e o botão
+  nunca receberia foco numa TV.
 - **Cinco layouts de tela inicial (F2-002, 1.4.0)**: `AppLayout` agora tem `DEFAULT`, `GRID`,
   `CINEMA`, `RAIL` e `MOSAIC`; o valor vem do `theme` da revenda e o dispositivo pode
   sobrepor em *Configurações → Layout da tela inicial* (o `SettingsViewModel` cicla pelos cinco).

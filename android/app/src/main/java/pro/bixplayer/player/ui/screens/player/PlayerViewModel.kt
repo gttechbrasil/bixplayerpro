@@ -102,6 +102,8 @@ data class PlayerUiState(
     val finished: Boolean = false,
     /** Playing on libVLC after Media3 gave up on the stream. */
     val compatibilityMode: Boolean = false,
+    /** Video cropped to the screen (true) or shown whole (false) — the user's choice (F2-005). */
+    val videoFill: Boolean = false,
 ) {
     val isLive: Boolean get() = item?.isLive != false
     val channel: ChannelEntity? get() = (item as? PlaybackItem.Live)?.channel
@@ -139,6 +141,11 @@ class PlayerViewModel @Inject constructor(
     private var endedHandled = false
 
     init {
+        // The screen-fit choice is the user's and sticks between sessions (F2-005).
+        store.videoFill
+            .onEach { fill -> _uiState.value = _uiState.value.copy(videoFill = fill) }
+            .launchIn(viewModelScope)
+
         combine(session.state, session.tracks, session.progress, session.compatibilityMode) { playback, tracks, progress, compat ->
             Quad(playback, tracks, progress, compat)
         }.onEach { (playback, tracks, progress, compat) ->
@@ -446,6 +453,13 @@ class PlayerViewModel @Inject constructor(
     fun hideOverlay() {
         overlayJob?.cancel()
         _uiState.value = _uiState.value.copy(overlayVisible = false)
+    }
+
+    /** Switches between the original proportions and filling the screen (F2-005). */
+    fun toggleVideoFill() {
+        val next = !_uiState.value.videoFill
+        _uiState.value = _uiState.value.copy(videoFill = next)
+        viewModelScope.launch { store.setVideoFill(next) }
     }
 
     fun openTracks() {

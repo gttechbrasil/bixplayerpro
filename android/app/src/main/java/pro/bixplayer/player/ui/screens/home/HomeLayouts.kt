@@ -22,6 +22,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +38,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -369,10 +372,11 @@ private fun ActionChip(tile: GridTile, focusRequester: FocusRequester?) {
             .onSelect { if (tile.enabled) tile.onClick() }
             .padding(horizontal = 20.dp, vertical = 14.dp),
     ) {
-        Text(
-            text = tile.icon,
-            style = MaterialTheme.typography.titleMedium,
-            color = if (focused) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+        Icon(
+            painter = painterResource(tile.icon),
+            contentDescription = null,
+            tint = if (focused) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(24.dp),
         )
         Column {
             Text(
@@ -413,10 +417,11 @@ private fun RailItem(tile: GridTile, focusRequester: FocusRequester?) {
             .onSelect { if (tile.enabled) tile.onClick() }
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        Text(
-            text = tile.icon,
-            style = MaterialTheme.typography.titleLarge,
-            color = if (focused) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+        Icon(
+            painter = painterResource(tile.icon),
+            contentDescription = null,
+            tint = if (focused) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(26.dp),
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -471,10 +476,11 @@ private fun MosaicPanel(
         }
         Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC000000)))))
         Column(modifier = Modifier.align(Alignment.BottomStart).padding(if (tall) 26.dp else 18.dp)) {
-            Text(
-                text = tile.icon,
-                style = if (tall) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary,
+            Icon(
+                painter = painterResource(tile.icon),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(if (tall) 44.dp else 30.dp),
             )
             Spacer(Modifier.height(6.dp))
             Text(

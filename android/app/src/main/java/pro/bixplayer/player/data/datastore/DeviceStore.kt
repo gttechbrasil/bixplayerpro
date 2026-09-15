@@ -22,6 +22,9 @@ interface DeviceStore {
     /** Home layout chosen on the device (`default` | `grid`); null follows the panel. */
     val layoutOverride: Flow<String?>
 
+    /** True to crop the video to the screen; false keeps the original proportions (F2-005). */
+    val videoFill: Flow<Boolean>
+
     /** Interface family override (`auto` | `tv` | `mobile`), see UiModeDecider (M5-017). */
     val uiMode: Flow<String>
 
@@ -45,6 +48,8 @@ interface DeviceStore {
     suspend fun setLanguage(tag: String)
     suspend fun setPin(pin: String?)
     suspend fun setLayoutOverride(layout: String?)
+
+    suspend fun setVideoFill(fill: Boolean)
     suspend fun setUiMode(mode: String)
     suspend fun setPlayerEngine(playlistId: Long, engine: String)
     suspend fun clear()

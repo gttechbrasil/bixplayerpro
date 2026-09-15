@@ -103,6 +103,9 @@
     <string name="player_audio_track">Áudio</string>
     <string name="player_subtitle_track">Legenda</string>
     <string name="player_subtitle_off">Desativada</string>
+    <string name="player_fit_label">Ajuste de tela</string>
+    <string name="player_fit_original">Tamanho original</string>
+    <string name="player_fit_fill">Tela cheia</string>
     <string name="player_tracks">Áudio e legendas</string>
     <string name="player_no_tracks">Este canal não tem faixas alternativas.</string>
     <string name="player_hints">OK info · ↑↓ canal · ←→ lista · MENU faixas</string>
@@ -128,6 +131,7 @@
     <string name="movie_no_details">O provedor não enviou sinopse para este título.</string>
     <string name="movie_director">Direção</string>
     <string name="movie_cast">Elenco</string>
+    <string name="home_banners">Banners</string>
     <string name="home_continue_watching">Continuar assistindo</string>
     <string name="home_movies_count">%1$d filmes</string>
     <string name="home_series_count">%1$d séries</string>
@@ -181,6 +185,8 @@
     <string name="settings_engine_vlc">VLC</string>
     <string name="mobile_more">Mais</string>
     <string name="back">Voltar</string>
+    <string name="home_refresh">Atualizar</string>
+    <string name="home_tab">Início</string>
     <string name="home_playlist">Playlist</string>
     <string name="home_settings_short">Ajustes</string>
     <string name="home_demo_subtitle">Demonstração</string>

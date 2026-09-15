@@ -104,7 +104,7 @@ abertura.
 | **Padrão** | Cartões de menu sobre o seu fundo, com "continuar assistindo" e banners | Quem quer o fundo personalizado em evidência |
 | **Grade** | Seis blocos grandes | Controle remoto simples, TVs pequenas |
 | **Cinema** | Capa do filme mais recente ocupando a tela, menu em botões e fileira de lançamentos | Listas com capas boas (Xtream) |
-| **Menu lateral** | Menu vertical à esquerda, capas de filmes e séries à direita | Quem vem de outros apps de IPTV |
+| **Menu lateral** (padrão) | Menu vertical à esquerda, capas de filmes e séries à direita | Quem vem de outros apps de IPTV |
 | **Mosaico** | Um painel grande de TV ao vivo e blocos de Filmes e Séries com capas | Uso misto de canais e catálogo |
 
 Cinema, Menu lateral e Mosaico usam as **capas da lista do cliente**. Se o servidor não enviar
@@ -112,7 +112,10 @@ capas, eles continuam funcionando, só ficam sem as imagens. O cliente também p
 layout no próprio aparelho em *Configurações → Layout da tela inicial*; essa escolha vale só
 para aquele aparelho.
 
-![Cinema](screens/android/layouts/cinema.png)
+Na tela **Layout** do painel cada opção mostra uma **captura real do app**; clique na imagem
+para ampliar. O padrão de fábrica é o **Menu lateral**.
+
+![Menu lateral](screens/android/layouts/rail.png)
 
 ## 6. Renovar (Pix)
 

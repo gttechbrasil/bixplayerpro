@@ -25,7 +25,7 @@ async def test_branding_get_and_update(
         "logo_url": None,
         "bg_url": None,
         "qr_content": None,
-        "theme": "default",
+        "theme": "rail",
         "auto_ads": False,
     }
     resp = await reseller_client.put(

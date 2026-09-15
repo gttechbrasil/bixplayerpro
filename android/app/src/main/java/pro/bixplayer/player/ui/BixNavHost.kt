@@ -43,6 +43,8 @@ import pro.bixplayer.player.ui.screens.splash.SplashScreen
 import pro.bixplayer.player.ui.screens.update.UpdateScreen
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.annotation.DrawableRes
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -65,6 +67,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import pro.bixplayer.player.ui.screens.playlists.PlaylistViewModel
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.currentBackStackEntryAsState
 import pro.bixplayer.player.R
@@ -139,11 +142,18 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
     }
 
     val isTv = LocalIsTv.current
+    // Tabs and home entries replace the destination instead of reusing it: `launchSingleTop`
+    // alone keeps the old NavBackStackEntry, and with it the old arguments, which is how
+    // Favourites ended up showing every channel (M5-028).
+    val openTab: androidx.navigation.NavOptionsBuilder.() -> Unit = {
+        popUpTo(Routes.LIVE_PATTERN) { inclusive = true }
+        launchSingleTop = true
+    }
     BixLocale(languageTag = language) {
     CompositionLocalProvider(LocalDemoState provides demoState) {
         val backStack by navController.currentBackStackEntryAsState()
         val currentRoute = backStack?.destination?.route
-        val tabRoutes = listOf(Routes.LIVE_PATTERN, Routes.CATALOG_PATTERN, Routes.EPG_PATTERN, Routes.SETTINGS)
+        val tabRoutes = listOf(Routes.HOME, Routes.LIVE_PATTERN, Routes.CATALOG_PATTERN, Routes.EPG_PATTERN, Routes.SETTINGS)
         val showBar = !isTv && currentRoute in tabRoutes
         // D-pad safety net for the phone UI on a box (M5-017): MENU moves the focus to the
         // bottom bar, which a long list would otherwise never let the D-pad reach.
@@ -265,21 +275,13 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
                 )
             }
 
+            // The phone used to skip this screen and land on live TV, so the reseller's layout
+            // never showed up there (M5-029). Now both families open the same home.
             composable(Routes.HOME) {
-                if (!isTv) {
-                    // Phones land on live TV with the bottom bar; the TV home is a menu.
-                    LaunchedEffect(Unit) {
-                        navController.navigate(Routes.LIVE) {
-                            popUpTo(Routes.HOME) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    }
-                    return@composable
-                }
                 HomeScreen(
                     config = config,
-                    onLive = { navController.navigate(Routes.LIVE) { launchSingleTop = true } },
-                    onFavorites = { navController.navigate(Routes.live(ZapScope.FAVORITES)) { launchSingleTop = true } },
+                    onLive = { navController.navigate(Routes.live(ZapScope.ALL)) { openTab() } },
+                    onFavorites = { navController.navigate(Routes.live(ZapScope.FAVORITES)) { openTab() } },
                     onMovies = { navController.navigate(Routes.catalog(ContentKind.MOVIE)) { launchSingleTop = true } },
                     onSeries = { navController.navigate(Routes.catalog(ContentKind.SERIES)) { launchSingleTop = true } },
                     onGuide = { navController.navigate(Routes.epg(null)) { launchSingleTop = true } },
@@ -292,8 +294,9 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
             composable(
                 route = Routes.LIVE_PATTERN,
                 arguments = listOf(navArgument("scope") { type = NavType.StringType; nullable = true; defaultValue = null }),
-            ) {
+            ) { entry ->
                 LiveScreen(
+                    scopeArg = entry.arguments?.getString("scope"),
                     onOpenChannel = { channel, scopeKey ->
                         navController.navigate(Routes.player(channel.id, scopeKey)) { launchSingleTop = true }
                     },
@@ -401,13 +404,13 @@ private fun MobileBottomBar(
     currentKind: String?,
     onNavigate: (String) -> Unit,
 ) {
-    data class Tab(val label: String, val icon: String, val route: String, val selected: Boolean)
+    data class Tab(val label: String, @DrawableRes val icon: Int, val route: String, val selected: Boolean)
     val tabs = listOf(
-        Tab(stringResource(R.string.home_live), "▶", Routes.LIVE, current == Routes.LIVE_PATTERN),
-        Tab(stringResource(R.string.home_movies), "🎬", Routes.catalog(ContentKind.MOVIE), current == Routes.CATALOG_PATTERN && currentKind == ContentKind.MOVIE),
-        Tab(stringResource(R.string.home_series), "📺", Routes.catalog(ContentKind.SERIES), current == Routes.CATALOG_PATTERN && currentKind == ContentKind.SERIES),
-        Tab(stringResource(R.string.live_guide), "▦", Routes.epg(null), current == Routes.EPG_PATTERN),
-        Tab(stringResource(R.string.mobile_more), "⋯", Routes.SETTINGS, current == Routes.SETTINGS),
+        Tab(stringResource(R.string.home_tab), R.drawable.ic_tile_home, Routes.HOME, current == Routes.HOME),
+        Tab(stringResource(R.string.home_live), R.drawable.ic_tile_live, Routes.live(ZapScope.ALL), current == Routes.LIVE_PATTERN),
+        Tab(stringResource(R.string.home_movies), R.drawable.ic_tile_movies, Routes.catalog(ContentKind.MOVIE), current == Routes.CATALOG_PATTERN && currentKind == ContentKind.MOVIE),
+        Tab(stringResource(R.string.home_series), R.drawable.ic_tile_series, Routes.catalog(ContentKind.SERIES), current == Routes.CATALOG_PATTERN && currentKind == ContentKind.SERIES),
+        Tab(stringResource(R.string.mobile_more), R.drawable.ic_tile_more, Routes.SETTINGS, current == Routes.SETTINGS),
     )
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         tabs.forEach { tab ->
@@ -415,7 +418,7 @@ private fun MobileBottomBar(
                 selected = tab.selected,
                 modifier = if (tab.selected) Modifier.focusRequester(focusRequester) else Modifier,
                 onClick = { if (!tab.selected) onNavigate(tab.route) },
-                icon = { Text(tab.icon) },
+                icon = { Icon(painter = painterResource(tab.icon), contentDescription = null) },
                 label = { Text(tab.label, maxLines = 1) },
             )
         }

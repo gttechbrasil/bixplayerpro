@@ -90,8 +90,11 @@ fun LiveScreen(
     onOpenChannel: (channel: ChannelEntity, scopeArg: String) -> Unit,
     onOpenGuide: (channel: ChannelEntity?) -> Unit,
     onBack: () -> Unit,
+    /** `fav` when the home asked for the favourites list, null to keep the last category. */
+    scopeArg: String? = null,
     viewModel: LiveViewModel = hiltViewModel(),
 ) {
+    LaunchedEffect(scopeArg) { viewModel.applyScopeKey(scopeArg) }
     // No playlist yet (F2-001): placeholder catalogue that leads to the Playlist screen.
     if (LocalDemoState.current.active) {
         DemoShowcase(DemoKind.LIVE)

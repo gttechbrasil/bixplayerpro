@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,9 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.annotation.DrawableRes
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,7 +57,8 @@ import pro.bixplayer.player.ui.components.requestFocusWithRetry
 data class GridTile(
     val title: String,
     val subtitle: String,
-    val icon: String,
+    /** Vector icon (F2-003): emoji rendered differently on every box and looked amateur. */
+    @DrawableRes val icon: Int,
     val coverUrl: String?,
     val enabled: Boolean,
     val onClick: () -> Unit,
@@ -149,7 +154,12 @@ private fun GridTileCard(tile: GridTile, focusRequester: FocusRequester?, modifi
             )
         }
         Column(modifier = Modifier.align(Alignment.BottomStart).padding(20.dp)) {
-            Text(text = tile.icon, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+            Icon(
+                painter = painterResource(tile.icon),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(34.dp),
+            )
             Spacer(Modifier.height(6.dp))
             Text(
                 text = tile.title,

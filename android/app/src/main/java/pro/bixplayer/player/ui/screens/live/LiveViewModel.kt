@@ -110,6 +110,25 @@ class LiveViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val scope = MutableStateFlow<ChannelScope>(restoreScope())
+
+    /**
+     * Applies the scope the caller asked for in the route (`live?scope=fav`). The home's
+     * Favourites entry used to land on every channel because the destination is reused and the
+     * ViewModel had already read its saved scope (M5-028).
+     */
+    fun applyScopeKey(key: String?) {
+        val wanted = when {
+            key.isNullOrBlank() -> return
+            key == ChannelScope.KEY_FAVORITES -> ChannelScope.Favorites
+            key == ChannelScope.KEY_ALL -> ChannelScope.All
+            else -> return
+        }
+        if (wanted.key == scope.value.key) return
+        scope.value = wanted
+        savedState[KEY_SCOPE] = wanted.key
+        savedState[KEY_SCOPE_NAME] = null
+        setChannelIndex(0)
+    }
     private val query = MutableStateFlow(savedState.get<String>(KEY_QUERY).orEmpty())
     private val focusedChannel = MutableStateFlow<ChannelEntity?>(null)
     private val channelIndex = MutableStateFlow(savedState.get<Int>(KEY_INDEX) ?: 0)

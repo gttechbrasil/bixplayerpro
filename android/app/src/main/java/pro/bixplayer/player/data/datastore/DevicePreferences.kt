@@ -40,6 +40,7 @@ class DevicePreferences @Inject constructor(
         val ONBOARDED = booleanPreferencesKey("onboarded")
         val PIN = stringPreferencesKey("parental_pin")
         val LAYOUT = stringPreferencesKey("layout_override")
+        val VIDEO_FILL = booleanPreferencesKey("video_fill")
         val UI_MODE = stringPreferencesKey("ui_mode")
         fun engine(playlistId: Long) = stringPreferencesKey("engine_$playlistId")
     }
@@ -65,6 +66,8 @@ class DevicePreferences @Inject constructor(
     val onboarded: Flow<Boolean> = prefs.map { it[Keys.ONBOARDED] ?: false }
     override val pin: Flow<String?> = prefs.map { it[Keys.PIN] }
     override val layoutOverride: Flow<String?> = prefs.map { it[Keys.LAYOUT] }
+
+    override val videoFill: Flow<Boolean> = prefs.map { it[Keys.VIDEO_FILL] ?: false }
     override val uiMode: Flow<String> = prefs.map { it[Keys.UI_MODE] ?: "auto" }
 
     override suspend fun currentToken(): String? = token.first()
@@ -109,6 +112,10 @@ class DevicePreferences @Inject constructor(
 
     override suspend fun setPin(pin: String?) {
         context.dataStore.edit { if (pin == null) it.remove(Keys.PIN) else it[Keys.PIN] = pin }
+    }
+
+    override suspend fun setVideoFill(fill: Boolean) {
+        context.dataStore.edit { it[Keys.VIDEO_FILL] = fill }
     }
 
     override suspend fun setLayoutOverride(layout: String?) {

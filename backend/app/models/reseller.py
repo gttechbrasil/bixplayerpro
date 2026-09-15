@@ -30,8 +30,9 @@ class Reseller(TimestampMixin, Base):
     logo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     bg_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     qr_content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Menu lateral out of the box (F2-006): the client asked for it as the standard look.
     theme: Mapped[str] = mapped_column(
-        String(16), nullable=False, default="default", server_default="default"
+        String(16), nullable=False, default="rail", server_default="rail"
     )
     auto_ads: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"

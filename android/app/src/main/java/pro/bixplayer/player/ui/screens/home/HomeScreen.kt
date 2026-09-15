@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.annotation.DrawableRes
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,6 +46,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.os.ConfigurationCompat
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
@@ -70,6 +73,7 @@ import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.BixSuccess
 import pro.bixplayer.player.ui.theme.BixWarning
 import pro.bixplayer.player.ui.demo.LocalDemoState
+import pro.bixplayer.player.ui.theme.LocalIsTv
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.ui.components.onSelect
 import pro.bixplayer.player.ui.components.requestFocusWithRetry
@@ -109,17 +113,32 @@ fun HomeScreen(
         if (state.activeId != null) viewModel.syncActive()
     }
 
-    val layout = home.layoutOverride?.let { AppLayout.from(it) } ?: config?.layout ?: AppLayout.DEFAULT
+    // No config yet (first boot, offline): the side menu is the out-of-the-box look (F2-006).
+    val layout = home.layoutOverride?.let { AppLayout.from(it) } ?: config?.layout ?: AppLayout.RAIL
 
     // Every layout is fed the same menu, so a reseller switching layouts never loses an entry.
+    // While the device cannot watch, the fourth tile is the way to the MAC (F2-001). Once it is
+    // active the reseller asked for a Refresh button there instead: the MAC and the playlist
+    // manager stay one step away in Configurações → Playlist (F2-004).
+    val refreshed = stringResource(R.string.playlist_channel_count)
     val tiles = listOf(
-        GridTile(stringResource(R.string.home_live), if (demo) demoSubtitle else stringResource(R.string.live_channels_count, home.channelCount), "▶", null, true) { guarded(onLive) },
-        GridTile(stringResource(R.string.home_movies), if (demo) demoSubtitle else stringResource(R.string.home_movies_count, home.movieCount), "🎬", home.movieCover, demo || home.movieCount > 0) { guarded(onMovies) },
-        GridTile(stringResource(R.string.home_series), if (demo) demoSubtitle else stringResource(R.string.home_series_count, home.seriesCount), "📺", home.seriesCover, demo || home.seriesCount > 0) { guarded(onSeries) },
-        GridTile(stringResource(R.string.home_playlist), if (demo) config?.macAddress.orEmpty() else activeName, "≡", null, true, onPlaylist),
-        GridTile(stringResource(R.string.live_favorites), stringResource(R.string.home_favorites_count, home.favoriteCount), "★", null, true) { guarded(onFavorites) },
-        GridTile(stringResource(R.string.epg_title), stringResource(R.string.home_guide_hint), "▦", null, true) { guarded(onGuide) },
-        GridTile(stringResource(R.string.home_settings), config?.macAddress.orEmpty(), "⚙", null, true, onSettings),
+        GridTile(stringResource(R.string.home_live), if (demo) demoSubtitle else stringResource(R.string.live_channels_count, home.channelCount), R.drawable.ic_tile_live, null, true) { guarded(onLive) },
+        GridTile(stringResource(R.string.home_movies), if (demo) demoSubtitle else stringResource(R.string.home_movies_count, home.movieCount), R.drawable.ic_tile_movies, home.movieCover, demo || home.movieCount > 0) { guarded(onMovies) },
+        GridTile(stringResource(R.string.home_series), if (demo) demoSubtitle else stringResource(R.string.home_series_count, home.seriesCount), R.drawable.ic_tile_series, home.seriesCover, demo || home.seriesCount > 0) { guarded(onSeries) },
+        if (demo) {
+            GridTile(stringResource(R.string.home_playlist), config?.macAddress.orEmpty(), R.drawable.ic_tile_playlist, null, true, onPlaylist)
+        } else {
+            GridTile(
+                stringResource(R.string.home_refresh),
+                if (state.syncing) stringResource(R.string.playlist_syncing) else activeName,
+                R.drawable.ic_tile_refresh,
+                null,
+                !state.syncing,
+            ) { viewModel.syncActive(force = true, doneMessage = refreshed) }
+        },
+        GridTile(stringResource(R.string.live_favorites), stringResource(R.string.home_favorites_count, home.favoriteCount), R.drawable.ic_tile_favorites, null, true) { guarded(onFavorites) },
+        GridTile(stringResource(R.string.epg_title), stringResource(R.string.home_guide_hint), R.drawable.ic_tile_guide, null, true) { guarded(onGuide) },
+        GridTile(stringResource(R.string.home_settings), config?.macAddress.orEmpty(), R.drawable.ic_tile_settings, null, true, onSettings),
     )
     // In demo mode the Playlist card holds the MAC, so it takes the first focus (F2-001).
     val firstFocus = if (demo) 3 else 0
@@ -136,6 +155,24 @@ fun HomeScreen(
             HomePoster(series.name, series.year, series.coverUrl) { guarded(onSeries) }
         },
     )
+
+    // Phones get their own rendering of the same layout (M5-029).
+    if (!LocalIsTv.current) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            CompactHomeScreen(
+                layout = layout,
+                config = config,
+                tiles = tiles,
+                artwork = artwork,
+                notice = state.notice,
+                continueWatching = home.continueWatching,
+                onResume = { progress -> guarded { homeViewModel.resolve(progress, onResume) } },
+                demo = demo,
+            )
+            PinGateDialog(gate)
+        }
+        return
+    }
 
     if (layout != AppLayout.DEFAULT) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -197,7 +234,7 @@ fun HomeScreen(
             ) {
                 MenuCard(
                     title = stringResource(R.string.home_live),
-                    icon = "▶",
+                    icon = R.drawable.ic_tile_live,
                     subtitle = when {
                         demo -> demoSubtitle
                         state.syncing -> stringResource(R.string.playlist_syncing)
@@ -211,7 +248,7 @@ fun HomeScreen(
                 )
                 MenuCard(
                     title = stringResource(R.string.home_movies),
-                    icon = "🎬",
+                    icon = R.drawable.ic_tile_movies,
                     subtitle = if (demo) demoSubtitle else stringResource(R.string.home_movies_count, home.movieCount),
                     enabled = demo || home.movieCount > 0,
                     onClick = { guarded(onMovies) },
@@ -219,26 +256,32 @@ fun HomeScreen(
                 )
                 MenuCard(
                     title = stringResource(R.string.home_series),
-                    icon = "📺",
+                    icon = R.drawable.ic_tile_series,
                     subtitle = if (demo) demoSubtitle else stringResource(R.string.home_series_count, home.seriesCount),
                     enabled = demo || home.seriesCount > 0,
                     onClick = { guarded(onSeries) },
                     modifier = Modifier.weight(1f),
                 )
                 MenuCard(
-                    title = stringResource(R.string.home_playlist),
-                    icon = "≡",
-                    subtitle = if (demo) config?.macAddress.orEmpty() else activeName,
+                    title = stringResource(if (demo) R.string.home_playlist else R.string.home_refresh),
+                    icon = if (demo) R.drawable.ic_tile_playlist else R.drawable.ic_tile_refresh,
+                    subtitle = when {
+                        demo -> config?.macAddress.orEmpty()
+                        state.syncing -> stringResource(R.string.playlist_syncing)
+                        else -> activeName
+                    },
                     subtitleMono = demo,
-                    enabled = true,
+                    enabled = demo || !state.syncing,
                     focusRequester = if (demo) liveRequester else null,
-                    onClick = onPlaylist,
+                    onClick = {
+                        if (demo) onPlaylist() else viewModel.syncActive(force = true, doneMessage = refreshed)
+                    },
                     modifier = Modifier.weight(1f),
                 )
                 MenuCard(
                     // Short title: five cards share the row since F2-001.
                     title = stringResource(R.string.home_settings_short),
-                    icon = "⚙",
+                    icon = R.drawable.ic_tile_settings,
                     // The MAC already sits on the Playlist card while waiting for activation.
                     subtitle = if (demo) "" else config?.macAddress.orEmpty(),
                     enabled = true,
@@ -338,7 +381,7 @@ internal fun formatDate(iso: String): String {
 @Composable
 private fun MenuCard(
     title: String,
-    icon: String,
+    @DrawableRes icon: Int,
     subtitle: String,
     enabled: Boolean,
     onClick: () -> Unit,
@@ -366,7 +409,12 @@ private fun MenuCard(
             .onSelect { if (enabled) onClick() }
             .padding(horizontal = 16.dp, vertical = 24.dp),
     ) {
-        Text(text = icon, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(32.dp),
+        )
         Spacer(Modifier.height(12.dp))
         Text(
             text = title,

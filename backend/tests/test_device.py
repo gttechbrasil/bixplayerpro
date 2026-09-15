@@ -46,7 +46,8 @@ async def test_new_device_is_unregistered(client: AsyncClient) -> None:
     assert cfg["status"] == "unregistered"
     assert cfg["mac_address"] == data["mac_address"]
     assert cfg["playlists"] == []
-    assert cfg["theme"] == "default"
+    # Side menu out of the box for a device nobody registered yet (F2-006).
+    assert cfg["theme"] == "rail"
     assert cfg["pin"] == "0000"
     assert cfg["min_app_version"] == "1.0.0"
 
