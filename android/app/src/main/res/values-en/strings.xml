@@ -156,6 +156,12 @@
     <string name="settings_layout">Home layout</string>
     <string name="settings_layout_default">Default</string>
     <string name="settings_layout_grid">Grid</string>
+    <string name="settings_layout_cinema">Cinema</string>
+    <string name="settings_layout_rail">Side menu</string>
+    <string name="settings_layout_mosaic">Mosaic</string>
+    <string name="home_featured">Featured</string>
+    <string name="home_recent_movies">Recently added movies</string>
+    <string name="home_recent_series">Recently added series</string>
     <string name="player_compat_mode">Compatibility mode</string>
     <string name="settings_engine">Player</string>
     <string name="settings_engine_auto">Automatic</string>

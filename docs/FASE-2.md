@@ -8,6 +8,8 @@ grosseira para a próxima proposta. Nada daqui entra no M5.
 |---|---|---|---|---|
 | F2-001 ✅ **entregue na 1.3.0 (11/09/2026)** | **Home antes da ativação.** Ao abrir sem playlist, o app entra direto na tela inicial (TV ao vivo, Filmes, Séries) com conteúdo de demonstração (cartazes genéricos), em vez da tela do MAC. O MAC e o QR passam para um item de menu "Playlist" (TV e celular). A ativação continua automática: assim que a revenda cadastra o MAC, a home carrega a lista de verdade. | Cliente, 11/09/2026 (referência: comportamento do "Pop Play") | Contraria o Anexo I §Ativação ("ao abrir, o app exibe o MAC"). Toca `LaunchActivity`/`BootScreen`, `HomeScreen` das duas UIs, novo destino "Playlist" com o conteúdo da `ActivationScreen`, estado "sem lista" nos catálogos, polling de ativação em segundo plano e textos. Não muda backend nem painel. Implementação: `ui/demo/DemoMode`, `DemoShowcase`, `PlaylistScreen`, polling de 20 s no `BootViewModel`; detalhes em `ANDROID.md` §11. | Feito em 1 dia; reteste na MXQ pendente (cliente) |
 
+| F2-002 ✅ **entregue na 1.4.0 (15/09/2026)** | **Mais layouts de tela inicial.** O Anexo I previa 2; o cliente pediu algo mais próximo do "Pop Play", que oferece 5. | Cliente, 15/09/2026 (via WhatsApp, antes de distribuir para os primeiros testadores) | Três layouts novos (Cinema, Menu lateral, Mosaico) que usam as capas da lista do cliente, seleção no painel e override por aparelho. Backend: só a lista de valores aceitos em `theme`. | Feito em 1 dia |
+
 ## Observação sobre a motivação do F2-001
 
 O cliente entende que a home de demonstração faz o app parecer "100 % legal" para o Google.

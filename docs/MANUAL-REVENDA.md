@@ -95,7 +95,24 @@ abertura.
 | **Background** ![](screens/web/painel-05-background.png) | Imagem de fundo da tela inicial (recomendado 1920×1080) |
 | **QR Code** ![](screens/web/painel-06-qrcode.png) | Conteúdo do QR mostrado no app (link do seu WhatsApp, site ou texto). O cliente aponta a câmera para falar com você |
 | **Banners** ![](screens/web/painel-07-banners.png) | Até 10 imagens por URL (hospedadas por você). Ative/desative cada uma; só as ativas aparecem no app, em rodízio |
-| **Layout** ![](screens/web/painel-08-layout.png) | Escolha entre os 2 layouts da tela inicial (menu lateral com destaques ou grade de blocos) |
+| **Layout** ![](screens/web/painel-08-layout.png) | Escolha entre os **5 layouts** da tela inicial (§5.1) |
+
+### 5.1. Os cinco layouts
+
+| Layout | Como é | Combina com |
+|---|---|---|
+| **Padrão** | Cartões de menu sobre o seu fundo, com "continuar assistindo" e banners | Quem quer o fundo personalizado em evidência |
+| **Grade** | Seis blocos grandes | Controle remoto simples, TVs pequenas |
+| **Cinema** | Capa do filme mais recente ocupando a tela, menu em botões e fileira de lançamentos | Listas com capas boas (Xtream) |
+| **Menu lateral** | Menu vertical à esquerda, capas de filmes e séries à direita | Quem vem de outros apps de IPTV |
+| **Mosaico** | Um painel grande de TV ao vivo e blocos de Filmes e Séries com capas | Uso misto de canais e catálogo |
+
+Cinema, Menu lateral e Mosaico usam as **capas da lista do cliente**. Se o servidor não enviar
+capas, eles continuam funcionando, só ficam sem as imagens. O cliente também pode trocar o
+layout no próprio aparelho em *Configurações → Layout da tela inicial*; essa escolha vale só
+para aquele aparelho.
+
+![Cinema](screens/android/layouts/cinema.png)
 
 ## 6. Renovar (Pix)
 

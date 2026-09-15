@@ -45,6 +45,13 @@ async def test_branding_get_and_update(
     assert body["bg_url"] is None
 
     assert (await reseller_client.put(BRANDING, json={"theme": "theme_8"})).status_code == 422
+
+    # Five layouts since F2-002; the app falls back to `default` for anything it does not know.
+    for theme in ("default", "grid", "cinema", "rail", "mosaic"):
+        resp = await reseller_client.put(BRANDING, json={"theme": theme})
+        assert resp.status_code == 200, (theme, resp.text)
+        assert resp.json()["theme"] == theme
+    await reseller_client.put(BRANDING, json={"theme": "grid"})
     resp = await reseller_client.put(BRANDING, json={"logo_url": ""})
     assert resp.json()["logo_url"] is None
 

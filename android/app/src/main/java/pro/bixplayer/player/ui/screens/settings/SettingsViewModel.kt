@@ -25,6 +25,7 @@ import pro.bixplayer.player.data.db.BixDatabase
 import pro.bixplayer.player.data.repository.ConfigRepository
 import pro.bixplayer.player.data.work.ConfigRefreshWorker
 import pro.bixplayer.player.data.work.EpgSyncWorker
+import pro.bixplayer.player.domain.model.AppLayout
 import pro.bixplayer.player.domain.model.ConfigState
 import pro.bixplayer.player.domain.usecase.PlaylistSyncUseCase
 import pro.bixplayer.player.domain.usecase.SyncResult
@@ -73,7 +74,7 @@ class SettingsViewModel @Inject constructor(
         store.uiMode.onEach { mode -> _uiState.value = _uiState.value.copy(uiMode = UiMode.parse(mode)) }.launchIn(viewModelScope)
         combine(store.refreshHours, store.language, store.macAddress, store.layoutOverride, repository.state) { values ->
             val override = values[3] as String?
-            val panel = ((values[4] as? ConfigState.Ready)?.config?.layout ?: pro.bixplayer.player.domain.model.AppLayout.DEFAULT).name.lowercase()
+            val panel = ((values[4] as? ConfigState.Ready)?.config?.layout ?: AppLayout.DEFAULT).slug
             _uiState.value = _uiState.value.copy(
                 refreshHours = values[0] as Long,
                 language = values[1] as String,
@@ -129,8 +130,11 @@ class SettingsViewModel @Inject constructor(
     }
 
     /** Local layout switch; the panel's choice returns on the next config refresh. */
+    /** Cycles through every layout the panel offers (F2-002), wrapping at the end. */
     fun toggleLayout() {
-        val next = if (_uiState.value.layout == "grid") "default" else "grid"
+        val slugs = AppLayout.SELECTABLE.map { it.slug }
+        val current = slugs.indexOf(AppLayout.from(_uiState.value.layout).slug)
+        val next = slugs[(current + 1) % slugs.size]
         viewModelScope.launch { store.setLayoutOverride(next) }
     }
 

@@ -156,6 +156,12 @@
     <string name="settings_layout">Diseño de la pantalla inicial</string>
     <string name="settings_layout_default">Estándar</string>
     <string name="settings_layout_grid">Cuadrícula</string>
+    <string name="settings_layout_cinema">Cine</string>
+    <string name="settings_layout_rail">Menú lateral</string>
+    <string name="settings_layout_mosaic">Mosaico</string>
+    <string name="home_featured">Destacado</string>
+    <string name="home_recent_movies">Películas agregadas recientemente</string>
+    <string name="home_recent_series">Series agregadas recientemente</string>
     <string name="player_compat_mode">Modo de compatibilidad</string>
     <string name="settings_engine">Reproductor</string>
     <string name="settings_engine_auto">Automático</string>

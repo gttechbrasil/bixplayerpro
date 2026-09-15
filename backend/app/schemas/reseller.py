@@ -65,7 +65,7 @@ class BatchDeleteResult(BaseModel):
 # ---- branding ------------------------------------------------------------------
 from typing import Literal  # noqa: E402
 
-Theme = Literal["default", "grid"]
+Theme = Literal["default", "grid", "cinema", "rail", "mosaic"]
 
 
 class BrandingOut(ORMModel):

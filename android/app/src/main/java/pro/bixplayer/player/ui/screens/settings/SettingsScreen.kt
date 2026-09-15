@@ -138,7 +138,7 @@ fun SettingsScreen(
             )
             SettingRow(
                 title = stringResource(R.string.settings_layout),
-                value = stringResource(if (state.layout == "grid") R.string.settings_layout_grid else R.string.settings_layout_default),
+                value = stringResource(layoutLabel(state.layout)),
                 onClick = viewModel::toggleLayout,
             )
             SettingRow(
@@ -248,6 +248,15 @@ fun SettingsScreen(
     }
     PinGateDialog(gate)
     }
+}
+
+/** Label for the layout in force on this device (F2-002); five to cycle through. */
+private fun layoutLabel(slug: String): Int = when (slug) {
+    "grid" -> R.string.settings_layout_grid
+    "cinema" -> R.string.settings_layout_cinema
+    "rail" -> R.string.settings_layout_rail
+    "mosaic" -> R.string.settings_layout_mosaic
+    else -> R.string.settings_layout_default
 }
 
 @Composable

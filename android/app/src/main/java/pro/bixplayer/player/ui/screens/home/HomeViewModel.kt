@@ -20,7 +20,10 @@ import pro.bixplayer.player.data.db.MovieDao
 import pro.bixplayer.player.data.db.PlaylistSyncDao
 import pro.bixplayer.player.data.db.SeriesDao
 import pro.bixplayer.player.data.db.WatchProgressDao
+import pro.bixplayer.player.data.db.MovieEntity
+import pro.bixplayer.player.data.db.SeriesEntity
 import pro.bixplayer.player.data.db.WatchProgressEntity
+import pro.bixplayer.player.util.DeviceClass
 
 data class HomeUiState(
     val playlistId: Long? = null,
@@ -33,6 +36,9 @@ data class HomeUiState(
     val layoutOverride: String? = null,
     val movieCover: String? = null,
     val seriesCover: String? = null,
+    /** Recently added titles, for the artwork layouts (F2-002). Empty on the menu layouts. */
+    val recentMovies: List<MovieEntity> = emptyList(),
+    val recentSeries: List<SeriesEntity> = emptyList(),
 )
 
 /** Counts and "continue watching" for both home layouts. Sync itself stays in PlaylistViewModel. */
@@ -62,6 +68,9 @@ class HomeViewModel @Inject constructor(
 
     val uiState: StateFlow<HomeUiState> = store.activePlaylistId.flatMapLatest { id ->
         if (id == null) return@flatMapLatest flowOf(HomeUiState())
+        // One query each instead of one per layout: the rows and the covers share the result,
+        // and a 1 GB box only ever holds `ROW_LIMIT` rows in memory (M5-018).
+        val limit = if (DeviceClass.lowRam) ROW_LIMIT_LOW_RAM else ROW_LIMIT
         combine(
             syncDao.observe(id),
             movieDao.observeCount(id),
@@ -70,6 +79,8 @@ class HomeViewModel @Inject constructor(
             progressDao.observeContinueWatching(id, CONTINUE_LIMIT),
             store.layoutOverride,
         ) { values ->
+            val recentMovies = movieDao.recent(id, limit)
+            val recentSeries = seriesDao.recent(id, limit)
             @Suppress("UNCHECKED_CAST")
             HomeUiState(
                 playlistId = id,
@@ -79,13 +90,17 @@ class HomeViewModel @Inject constructor(
                 favoriteCount = values[3] as Int,
                 continueWatching = values[4] as List<WatchProgressEntity>,
                 layoutOverride = values[5] as String?,
-                movieCover = movieDao.recent(id, 1).firstOrNull()?.posterUrl,
-                seriesCover = seriesDao.recent(id, 1).firstOrNull()?.coverUrl,
+                movieCover = recentMovies.firstOrNull()?.posterUrl,
+                seriesCover = recentSeries.firstOrNull()?.coverUrl,
+                recentMovies = recentMovies,
+                recentSeries = recentSeries,
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
     companion object {
         const val CONTINUE_LIMIT = 12
+        const val ROW_LIMIT = 12
+        const val ROW_LIMIT_LOW_RAM = 6
     }
 }

@@ -99,11 +99,15 @@ def build_playlist(
         lines.append(url)
 
     rng = random.Random(42)
+    # Distinct artwork per title: the home layouts that show covers (F2-002) are unreadable
+    # when every poster is the same platform logo. `make_posters.py` writes these files.
+    posters = [f"{host}/uploads/posters/p{i}.png" for i in range(1, 9)]
     for n in range(1, movies + 1):
         genre = MOVIE_GENRES[(n - 1) % len(MOVIE_GENRES)]
         year = 1980 + rng.randrange(46)
         lines.append(
-            f'#EXTINF:-1 tvg-logo="{logo}" group-title="Filmes | {genre}",Filme {n} ({year})'
+            f'#EXTINF:-1 tvg-logo="{posters[(n - 1) % len(posters)]}" '
+            f'group-title="Filmes | {genre}",Filme {n} ({year})'
         )
         lines.append(f"{host}/uploads/fixture/sample.mp4?movie={n}")
 
@@ -112,7 +116,8 @@ def build_playlist(
         for season in range(1, 4):
             for episode in range(1, 9):
                 lines.append(
-                    f'#EXTINF:-1 tvg-logo="{logo}" group-title="Séries | {genre}",'
+                    f'#EXTINF:-1 tvg-logo="{posters[(n - 1) % len(posters)]}" '
+                    f'group-title="Séries | {genre}",'
                     f"Série {n} S{season:02d}E{episode:02d} - Episódio {episode}"
                 )
                 lines.append(f"{host}/uploads/fixture/sample.mp4?series={n}&s={season}&e={episode}")

@@ -349,7 +349,7 @@ Publicado no fechamento do M4: `1.1.0` (versionCode 2), universal ARM de 50 MB, 
 Histórico do M5: `1.2.0` (3, marca), `1.2.1` (4, entrada única + diagnóstico; `min_app_version`
 forçada para 1.2.1), `1.2.2` (5, medidas de memória/HEVC), `1.2.3` (6, RAM via `/proc/meminfo` e
 `X-App-Version` em toda chamada), `1.2.4` (7, cor base `#050404`), `1.3.0` (8, home antes da
-ativação — F2-001). A partir da 1.2.2 as publicações **não** mexem em `min_app_version` (segue
+ativação — F2-001), `1.4.0` (9, cinco layouts de tela inicial — F2-002). A partir da 1.2.2 as publicações **não** mexem em `min_app_version` (segue
 1.2.1): o cliente atualiza quando quiser, e o admin passa a mostrar a versão real do device na
 primeira chamada de `config` feita pela 1.2.3 (M5-022).
 
@@ -360,6 +360,15 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
 
 ## 11. Decisões que valem lembrar
 
+- **Cinco layouts de tela inicial (F2-002, 1.4.0)**: `AppLayout` agora tem `DEFAULT`, `GRID`,
+  `CINEMA`, `RAIL` e `MOSAIC`; o valor vem do `theme` da revenda e o dispositivo pode
+  sobrepor em *Configurações → Layout da tela inicial* (o `SettingsViewModel` cicla pelos cinco).
+  `AppLayout.from()` cai em `DEFAULT` para qualquer valor desconhecido, então um app antigo não
+  quebra quando o painel ganhar um sexto. Os três novos ficam em `ui/screens/home/HomeLayouts.kt`
+  e recebem os mesmos `GridTile` da grade, mais um `HomeArtwork` com o filme mais recente e as
+  fileiras de capas (`HomeViewModel` lê 12 títulos, 6 em `lowRam`). Sem capas na lista, todos
+  continuam funcionando — só perdem as imagens. Medido no AVD de 1 GB: 78–96 MB de PSS, sem
+  kills; capturas em `docs/screens/android/layouts/`.
 - **Home antes da ativação (F2-001, 1.3.0)**: não existe mais a "parede" do MAC. Sem lista
   utilizável (`AppConfig.canWatch == false`, regra em `ui/demo/DemoMode`) o `BootRouting` manda
   para `HOME` mesmo assim e `LocalDemoState` liga o **modo demonstração**: os cartões da home

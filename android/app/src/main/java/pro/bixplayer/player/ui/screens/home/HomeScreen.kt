@@ -110,23 +110,49 @@ fun HomeScreen(
     }
 
     val layout = home.layoutOverride?.let { AppLayout.from(it) } ?: config?.layout ?: AppLayout.DEFAULT
-    if (layout == AppLayout.GRID) {
+
+    // Every layout is fed the same menu, so a reseller switching layouts never loses an entry.
+    val tiles = listOf(
+        GridTile(stringResource(R.string.home_live), if (demo) demoSubtitle else stringResource(R.string.live_channels_count, home.channelCount), "▶", null, true) { guarded(onLive) },
+        GridTile(stringResource(R.string.home_movies), if (demo) demoSubtitle else stringResource(R.string.home_movies_count, home.movieCount), "🎬", home.movieCover, demo || home.movieCount > 0) { guarded(onMovies) },
+        GridTile(stringResource(R.string.home_series), if (demo) demoSubtitle else stringResource(R.string.home_series_count, home.seriesCount), "📺", home.seriesCover, demo || home.seriesCount > 0) { guarded(onSeries) },
+        GridTile(stringResource(R.string.home_playlist), if (demo) config?.macAddress.orEmpty() else activeName, "≡", null, true, onPlaylist),
+        GridTile(stringResource(R.string.live_favorites), stringResource(R.string.home_favorites_count, home.favoriteCount), "★", null, true) { guarded(onFavorites) },
+        GridTile(stringResource(R.string.epg_title), stringResource(R.string.home_guide_hint), "▦", null, true) { guarded(onGuide) },
+        GridTile(stringResource(R.string.home_settings), config?.macAddress.orEmpty(), "⚙", null, true, onSettings),
+    )
+    // In demo mode the Playlist card holds the MAC, so it takes the first focus (F2-001).
+    val firstFocus = if (demo) 3 else 0
+    val artwork = HomeArtwork(
+        featuredTitle = home.recentMovies.firstOrNull()?.name,
+        featuredSubtitle = home.recentMovies.firstOrNull()?.let { movie ->
+            listOfNotNull(movie.year, movie.genre).joinToString(" · ").takeIf { it.isNotBlank() }
+        },
+        featuredImage = home.recentMovies.firstOrNull()?.let { it.backdropUrl ?: it.posterUrl },
+        movies = home.recentMovies.map { movie ->
+            HomePoster(movie.name, movie.year, movie.posterUrl) { guarded(onMovies) }
+        },
+        series = home.recentSeries.map { series ->
+            HomePoster(series.name, series.year, series.coverUrl) { guarded(onSeries) }
+        },
+    )
+
+    if (layout != AppLayout.DEFAULT) {
         Box(modifier = Modifier.fillMaxSize()) {
-            GridHomeScreen(
-                config = config,
-                tiles = listOf(
-                    GridTile(stringResource(R.string.home_live), if (demo) demoSubtitle else stringResource(R.string.live_channels_count, home.channelCount), "▶", null, true) { guarded(onLive) },
-                    GridTile(stringResource(R.string.home_movies), if (demo) demoSubtitle else stringResource(R.string.home_movies_count, home.movieCount), "🎬", home.movieCover, demo || home.movieCount > 0) { guarded(onMovies) },
-                    GridTile(stringResource(R.string.home_series), if (demo) demoSubtitle else stringResource(R.string.home_series_count, home.seriesCount), "📺", home.seriesCover, demo || home.seriesCount > 0) { guarded(onSeries) },
-                    GridTile(stringResource(R.string.home_playlist), if (demo) config?.macAddress.orEmpty() else activeName, "≡", null, true, onPlaylist),
-                    GridTile(stringResource(R.string.live_favorites), stringResource(R.string.home_favorites_count, home.favoriteCount), "★", null, true) { guarded(onFavorites) },
-                    GridTile(stringResource(R.string.epg_title), stringResource(R.string.home_guide_hint), "▦", null, true) { guarded(onGuide) },
-                    GridTile(stringResource(R.string.home_settings), config?.macAddress.orEmpty(), "⚙", null, true, onSettings),
-                ),
-                firstFocus = if (demo) 3 else 0,
-                banners = config?.banners.orEmpty().map { it.url to it.title },
-                notice = state.notice,
-            )
+            when (layout) {
+                AppLayout.GRID -> GridHomeScreen(
+                    config = config,
+                    tiles = tiles,
+                    firstFocus = firstFocus,
+                    banners = config?.banners.orEmpty().map { it.url to it.title },
+                    notice = state.notice,
+                )
+
+                AppLayout.CINEMA -> CinemaHomeScreen(config, tiles, artwork, state.notice, firstFocus)
+                AppLayout.RAIL -> RailHomeScreen(config, tiles, artwork, state.notice, firstFocus)
+                AppLayout.MOSAIC -> MosaicHomeScreen(config, tiles, artwork, state.notice, firstFocus)
+                AppLayout.DEFAULT -> Unit
+            }
             PinGateDialog(gate)
         }
         return

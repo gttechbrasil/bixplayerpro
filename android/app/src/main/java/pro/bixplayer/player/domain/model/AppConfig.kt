@@ -24,16 +24,37 @@ enum class DeviceStatus {
     }
 }
 
-/** Home-screen layout chosen by the reseller. Only two exist in v1 (Anexo I §2.3). */
+/**
+ * Home-screen layout chosen by the reseller (`theme` in the panel). The Anexo I asked for two;
+ * three more were added for the client in 1.4.0 (F2-002). Unknown values fall back to DEFAULT so
+ * an old build never lands on a blank screen when the panel gains a sixth.
+ */
 enum class AppLayout {
+    /** Row of menu cards over the reseller's background. */
     DEFAULT,
+
+    /** Six big tiles, remote-friendly. */
     GRID,
+
+    /** Full-bleed artwork with the menu as a chip row. */
+    CINEMA,
+
+    /** Vertical menu on the left, artwork and poster rows on the right. */
+    RAIL,
+
+    /** One tall panel plus stacked ones, all wearing real covers. */
+    MOSAIC,
 
     ;
 
+    /** The value stored in the panel and sent in `theme`. */
+    val slug: String get() = name.lowercase()
+
     companion object {
+        val SELECTABLE = entries.toList()
+
         fun from(value: String): AppLayout =
-            if (value.equals("grid", ignoreCase = true)) GRID else DEFAULT
+            entries.firstOrNull { it.slug.equals(value.trim(), ignoreCase = true) } ?: DEFAULT
     }
 }
 
