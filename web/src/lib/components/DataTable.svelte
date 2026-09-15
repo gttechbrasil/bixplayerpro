@@ -13,7 +13,7 @@
 </script>
 
 <script lang="ts" generics="T">
-	import type { Snippet } from 'svelte';
+	import { untrack, type Snippet } from 'svelte';
 
 	let {
 		columns,
@@ -73,11 +73,21 @@
 		selected = next;
 	}
 
-	let searchValue = $state('');
+	// svelte-ignore state_referenced_locally
+	let searchValue = $state(search);
 	let timer: ReturnType<typeof setTimeout> | undefined;
+	/** True while the box has focus, i.e. while the user owns what is in it. */
+	let typing = $state(false);
 
+	// Every debounced search navigates, and the reload hands `search` back a few hundred
+	// milliseconds later. Copying that echo into the box erased the characters typed during the
+	// round trip — one letter vanishing, or a backspace appearing to eat two (M5-027). So the
+	// echo is only accepted when the user is not in the field (deep link, browser back, reset).
 	$effect(() => {
-		searchValue = search;
+		const incoming = search;
+		untrack(() => {
+			if (!typing && incoming !== searchValue) searchValue = incoming;
+		});
 	});
 
 	const pages = $derived(Math.max(1, Math.ceil(total / perPage)));
@@ -114,6 +124,8 @@
 					placeholder={searchPlaceholder}
 					bind:value={searchValue}
 					oninput={onSearchInput}
+					onfocus={() => (typing = true)}
+					onblur={() => (typing = false)}
 				/>
 			</form>
 		{/if}
