@@ -4,7 +4,7 @@
 
 <button
 	type="button"
-	class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+	class="min-h-11 min-w-11 rounded-lg p-2 text-slate-500 hover:bg-slate-100 sm:min-h-0 sm:min-w-0 dark:text-slate-300 dark:hover:bg-slate-800"
 	onclick={toggleTheme}
 	aria-label={theme.value === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'}
 	title={theme.value === 'dark' ? 'Tema claro' : 'Tema escuro'}

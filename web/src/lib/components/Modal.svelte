@@ -28,7 +28,7 @@
 <svelte:window {onkeydown} />
 
 {#if open}
-	<div class="fixed inset-0 z-40 flex items-center justify-center p-4">
+	<div class="fixed inset-0 z-40 flex items-end justify-center sm:items-center sm:p-4">
 		<button
 			type="button"
 			class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
@@ -39,7 +39,9 @@
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="modal-title"
-			class="card relative z-50 w-full {sizes[size]} max-h-[90vh] overflow-y-auto"
+			class="card relative z-50 max-h-[90vh] w-full overflow-y-auto rounded-b-none sm:rounded-xl {sizes[
+				size
+			]}"
 		>
 			<div
 				class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800"

@@ -76,6 +76,33 @@
 			onchange={(e) => updateQuery(page.url, { to: e.currentTarget.value, page: 1 })}
 		/>
 	{/snippet}
+	{#snippet card(p)}
+		{@const st = statuses[p.status] ?? { tone: 'gray', label: p.status }}
+		<div class="flex items-start justify-between gap-2">
+			<span class="font-medium tabular-nums">{formatMoney(p.amount)}</span>
+			<Badge tone={st.tone}>{st.label}</Badge>
+		</div>
+		<p class="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
+			{#if p.reseller_id}
+				<a class="text-brand-700 dark:text-brand-300" href="/admin/revendedores/{p.reseller_id}">
+					{p.reseller_username ?? `#${p.reseller_id}`}
+				</a>
+			{:else}
+				<span class="text-slate-400">(excluído)</span>
+			{/if}
+			· {p.months} mês(es)
+		</p>
+		<p class="mt-1 text-xs text-slate-500">Criado em {formatDateTime(p.created_at)}</p>
+		{#if p.paid_at}
+			<p class="text-xs text-slate-500">Pago em {formatDateTime(p.paid_at)}</p>
+		{/if}
+		{#if p.new_expires_at}
+			<p class="text-xs text-slate-500">
+				Vencimento {formatDate(p.previous_expires_at)} → {formatDate(p.new_expires_at)}
+			</p>
+		{/if}
+		<p class="truncate font-mono text-xs text-slate-400">{p.provider_id ?? '—'}</p>
+	{/snippet}
 	{#snippet row(p)}
 		{@const st = statuses[p.status] ?? { tone: 'gray', label: p.status }}
 		<td class="table-td whitespace-nowrap">{formatDateTime(p.created_at)}</td>

@@ -91,6 +91,30 @@
 			onchange={(e) => updateQuery(page.url, { to: e.currentTarget.value, page: 1 })}
 		/>
 	{/snippet}
+	{#snippet card(entry)}
+		{@const link = targetLink(entry.target)}
+		<div class="flex items-start justify-between gap-2">
+			<span class="font-mono text-sm">{entry.action}</span>
+			<Badge tone={actorTones[entry.actor_type] ?? 'gray'}>
+				{actorLabels[entry.actor_type] ?? entry.actor_type}{entry.actor_id
+					? ` #${entry.actor_id}`
+					: ''}
+			</Badge>
+		</div>
+		<p class="mt-0.5 font-mono text-xs break-all text-slate-500">
+			{#if link}
+				<a class="text-brand-700 dark:text-brand-300" href={link}>{entry.target}</a>
+			{:else}
+				{entry.target ?? '—'}
+			{/if}
+		</p>
+		{#if summary(entry.payload)}
+			<p class="mt-1 text-xs break-words text-slate-500">{summary(entry.payload)}</p>
+		{/if}
+		<p class="mt-1 text-xs text-slate-400">
+			{formatDateTime(entry.created_at)}{entry.ip ? ` · ${entry.ip}` : ''}
+		</p>
+	{/snippet}
 	{#snippet row(entry)}
 		{@const link = targetLink(entry.target)}
 		<td class="table-td whitespace-nowrap">{formatDateTime(entry.created_at)}</td>

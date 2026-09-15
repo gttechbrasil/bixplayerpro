@@ -91,54 +91,62 @@
 </label>
 
 <div class="card overflow-hidden">
-	<table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-		<thead class="bg-slate-50 dark:bg-slate-900/60">
-			<tr>
-				<th class="table-th">Pré-visualização</th>
-				<th class="table-th">Título</th>
-				<th class="table-th">URL</th>
-				<th class="table-th">Status</th>
-				<th class="table-th text-right">Ações</th>
-			</tr>
-		</thead>
-		<tbody class="divide-y divide-slate-100 dark:divide-slate-800/70">
-			{#if data.banners.length === 0}
-				<tr
-					><td class="table-td py-10 text-center text-slate-500" colspan="5"
-						>Nenhum banner cadastrado.</td
-					></tr
-				>
-			{/if}
-			{#each data.banners as b (b.id)}
+	<!-- The table keeps its columns on a phone; the wrapper scrolls instead of clipping (M5-026). -->
+	<div class="overflow-x-auto">
+		<table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+			<thead class="bg-slate-50 dark:bg-slate-900/60">
 				<tr>
-					<td class="table-td">
-						<img src={b.url} alt={b.title} class="h-12 w-24 rounded object-cover" loading="lazy" />
-					</td>
-					<td class="table-td font-medium">{b.title}</td>
-					<td class="table-td max-w-xs truncate text-xs text-slate-500" title={b.url}>{b.url}</td>
-					<td class="table-td">
-						{#if b.is_active}<Badge tone="green">Ativo</Badge>{:else}<Badge tone="gray"
-								>Inativo</Badge
-							>{/if}
-					</td>
-					<td class="table-td text-right whitespace-nowrap">
-						<button
-							type="button"
-							class="text-sm font-medium text-brand-700 hover:underline dark:text-brand-300"
-							onclick={() => toggleActive(b)}
-						>
-							{b.is_active ? 'Desativar' : 'Ativar'}
-						</button>
-						<button
-							type="button"
-							class="ml-3 text-sm font-medium text-red-600 hover:underline"
-							onclick={() => askDelete(b)}>Excluir</button
-						>
-					</td>
+					<th class="table-th">Pré-visualização</th>
+					<th class="table-th">Título</th>
+					<th class="table-th">URL</th>
+					<th class="table-th">Status</th>
+					<th class="table-th text-right">Ações</th>
 				</tr>
-			{/each}
-		</tbody>
-	</table>
+			</thead>
+			<tbody class="divide-y divide-slate-100 dark:divide-slate-800/70">
+				{#if data.banners.length === 0}
+					<tr
+						><td class="table-td py-10 text-center text-slate-500" colspan="5"
+							>Nenhum banner cadastrado.</td
+						></tr
+					>
+				{/if}
+				{#each data.banners as b (b.id)}
+					<tr>
+						<td class="table-td">
+							<img
+								src={b.url}
+								alt={b.title}
+								class="h-12 w-24 rounded object-cover"
+								loading="lazy"
+							/>
+						</td>
+						<td class="table-td font-medium">{b.title}</td>
+						<td class="table-td max-w-xs truncate text-xs text-slate-500" title={b.url}>{b.url}</td>
+						<td class="table-td">
+							{#if b.is_active}<Badge tone="green">Ativo</Badge>{:else}<Badge tone="gray"
+									>Inativo</Badge
+								>{/if}
+						</td>
+						<td class="table-td text-right whitespace-nowrap">
+							<button
+								type="button"
+								class="text-sm font-medium text-brand-700 hover:underline dark:text-brand-300"
+								onclick={() => toggleActive(b)}
+							>
+								{b.is_active ? 'Desativar' : 'Ativar'}
+							</button>
+							<button
+								type="button"
+								class="ml-3 text-sm font-medium text-red-600 hover:underline"
+								onclick={() => askDelete(b)}>Excluir</button
+							>
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	</div>
 </div>
 
 <Modal bind:open={newOpen} title="Novo banner" size="sm">

@@ -75,7 +75,7 @@
 		{/if}
 		<a
 			href="/painel/dispositivos/novo"
-			class="inline-flex items-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-slate-950 shadow-sm hover:bg-brand-400"
+			class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-slate-950 shadow-sm hover:bg-brand-400"
 			>+ Adicionar dispositivo</a
 		>
 	{/snippet}
@@ -105,6 +105,44 @@
 			<option value="active">Licença ativa</option>
 			<option value="expired">Licença vencida</option>
 		</select>
+	{/snippet}
+	{#snippet card(d)}
+		<a
+			class="block font-medium text-brand-700 hover:underline dark:text-brand-300"
+			href="/painel/dispositivos/{d.id}"
+		>
+			{d.client_name || '(sem nome)'}
+		</a>
+		<p class="mt-0.5 font-mono text-xs text-slate-500">{d.mac_address}</p>
+		<div class="mt-2 flex flex-wrap items-center gap-2">
+			{#if d.connected}
+				<Badge tone="green">conectado</Badge>
+			{:else}
+				<Badge tone="gray">nunca conectou</Badge>
+			{/if}
+			{#if d.status === 'expired'}
+				<Badge tone="red">Vencida em {formatDate(d.license_expires_at)}</Badge>
+			{:else}
+				<Badge tone="gray">
+					{d.license_expires_at ? `Licença até ${formatDate(d.license_expires_at)}` : 'Vitalícia'}
+				</Badge>
+			{/if}
+		</div>
+		<p class="mt-2 truncate text-xs text-slate-500">
+			{d.playlist_name ?? '—'}{d.playlist_host ? ` · ${d.playlist_host}` : ''}
+		</p>
+		<p class="text-xs text-slate-500">Último acesso: {formatDateTime(d.last_seen_at)}</p>
+		<div class="mt-2 flex gap-4">
+			<a
+				class="py-1 text-sm font-medium text-brand-700 dark:text-brand-300"
+				href="/painel/dispositivos/{d.id}">Editar</a
+			>
+			<button
+				type="button"
+				class="py-1 text-sm font-medium text-red-600"
+				onclick={() => askDelete(d)}>Excluir</button
+			>
+		</div>
 	{/snippet}
 	{#snippet row(d)}
 		<td class="table-td">

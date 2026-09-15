@@ -105,6 +105,25 @@
 			{/each}
 		</select>
 	{/snippet}
+	{#snippet card(r)}
+		{@const st = statusOf(r)}
+		<div class="flex items-start justify-between gap-2">
+			<a
+				class="font-medium text-brand-700 hover:underline dark:text-brand-300"
+				href="/admin/revendedores/{r.id}">{r.username}</a
+			>
+			<Badge tone={st.tone}>{st.label}</Badge>
+		</div>
+		<p class="truncate text-sm text-slate-600 dark:text-slate-300">{r.name}</p>
+		<p class="mt-1 text-xs text-slate-500">
+			{r.devices_count} dispositivo(s){data.creditsEnabled ? ` · ${r.credits} crédito(s)` : ''} ·
+			{r.expires_at ? formatDate(r.expires_at) : 'Sem vencimento'}
+		</p>
+		<a
+			class="mt-2 inline-block py-1 text-sm font-medium text-brand-700 dark:text-brand-300"
+			href="/admin/revendedores/{r.id}">Gerenciar</a
+		>
+	{/snippet}
 	{#snippet row(r)}
 		{@const st = statusOf(r)}
 		<td class="table-td font-medium">

@@ -45,7 +45,7 @@ body {
 }
 
 .input {
-	@apply block w-full rounded-lg border-slate-300 bg-white text-sm text-slate-900 shadow-sm focus:border-brand-500 focus:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100;
+	@apply block min-h-11 w-full rounded-lg border-slate-300 bg-white text-sm text-slate-900 shadow-sm focus:border-brand-500 focus:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100;
 }
 .label {
 	@apply mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300;

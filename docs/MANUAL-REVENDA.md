@@ -15,6 +15,17 @@ No topo você vê o **vencimento** da sua conta e, se a plataforma usar crédito
 Com a conta vencida, só as telas *Renovar* e *Perfil* continuam acessíveis e os apps dos
 seus clientes mostram "Expirado" até você renovar (§6).
 
+## 1.1. No celular
+
+O painel funciona no celular do mesmo jeito que no computador. A diferença é o **botão de menu**
+(☰) no canto superior esquerdo: toque nele para abrir Dispositivos, Personalização e Perfil. O
+menu fecha sozinho quando você escolhe uma opção.
+
+Nas listas (Dispositivos, Banners) cada registro aparece como um **cartão** com nome, MAC,
+situação e os botões *Editar* e *Excluir*, em vez da tabela larga que o computador mostra.
+
+![Painel no celular](screens/web/mobile/dispositivos.png)
+
 ## 2. Cadastrar um dispositivo (cliente)
 
 Cada cliente instala o app na TV ou no celular (`https://<dominio>/downloads/app.apk`, ver

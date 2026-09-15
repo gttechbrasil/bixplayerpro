@@ -28,27 +28,53 @@
 		toast.info('Sessão encerrada.');
 		await goto('/admin/login');
 	}
+	let menuOpen = $state(false);
 </script>
 
 <svelte:head><title>{data.platformName} · Admin</title></svelte:head>
 
-<div class="flex h-screen overflow-hidden">
-	<Sidebar platformName={data.platformName} {groups} footer="Painel administrativo" />
+<div class="flex min-h-dvh lg:h-screen lg:overflow-hidden">
+	<Sidebar
+		bind:open={menuOpen}
+		platformName={data.platformName}
+		{groups}
+		footer="Painel administrativo"
+	/>
 	<div class="flex min-w-0 flex-1 flex-col">
 		<header
-			class="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-slate-200 bg-white px-6 dark:border-slate-800 dark:bg-slate-900"
+			class="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-4 sm:gap-3 lg:px-6 dark:border-slate-800 dark:bg-slate-900"
 		>
-			<span class="text-sm text-slate-500 dark:text-slate-400">
-				Olá, <strong class="text-slate-800 dark:text-slate-100">{data.user.username}</strong>
+			<button
+				type="button"
+				class="-ml-2 rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden dark:text-slate-300 dark:hover:bg-slate-800"
+				aria-label="Abrir menu"
+				aria-expanded={menuOpen}
+				onclick={() => (menuOpen = true)}
+			>
+				<svg
+					class="size-6"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					aria-hidden="true"
+				>
+					<path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round" />
+				</svg>
+			</button>
+			<span class="ml-auto min-w-0 truncate text-sm text-slate-500 dark:text-slate-400">
+				<span class="hidden sm:inline">Olá, </span><strong
+					class="text-slate-800 dark:text-slate-100">{data.user.username}</strong
+				>
 			</span>
 			<ThemeToggle />
 			<button
 				type="button"
-				class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+				class="min-h-11 shrink-0 rounded-lg px-2 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 sm:min-h-0 sm:px-3 dark:text-slate-300 dark:hover:bg-slate-800"
 				onclick={logout}>Sair</button
 			>
 		</header>
-		<main class="flex-1 overflow-y-auto p-6">
+		<main class="flex-1 p-4 lg:overflow-y-auto lg:p-6">
 			<div class="mx-auto max-w-7xl">{@render children()}</div>
 		</main>
 	</div>

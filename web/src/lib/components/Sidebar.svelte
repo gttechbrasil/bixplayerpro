@@ -20,21 +20,59 @@
 		platformName = 'Painel',
 		groups,
 		footer = '',
-		top
-	}: { platformName?: string; groups: NavGroup[]; footer?: string; top?: Snippet } = $props();
+		top,
+		open = $bindable(false)
+	}: {
+		platformName?: string;
+		groups: NavGroup[];
+		footer?: string;
+		top?: Snippet;
+		open?: boolean;
+	} = $props();
 
 	function active(href: string, exact?: boolean) {
 		const p = page.url.pathname;
 		return exact ? p === href : p === href || p.startsWith(href + '/');
 	}
+
+	// Below `lg` the sidebar is a drawer over the content (M5-026): a 240px column left a
+	// phone with ~130px of usable width. Navigating, Escape and the backdrop all close it.
+	function close() {
+		open = false;
+	}
+
+	function onkeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') close();
+	}
 </script>
 
+<svelte:window {onkeydown} />
+
+{#if open}
+	<button
+		type="button"
+		class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm lg:hidden"
+		aria-label="Fechar menu"
+		onclick={close}
+	></button>
+{/if}
+
 <aside
-	class="flex h-full w-60 shrink-0 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+	class="fixed inset-y-0 left-0 z-50 flex h-full w-72 max-w-[85vw] shrink-0 flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:static lg:z-auto lg:w-60 lg:max-w-none lg:translate-x-0 dark:border-slate-800 dark:bg-slate-900 {open
+		? 'translate-x-0'
+		: '-translate-x-full'}"
 >
-	<div class="flex h-16 items-center gap-2 border-b border-slate-200 px-5 dark:border-slate-800">
+	<div
+		class="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-slate-200 px-5 dark:border-slate-800"
+	>
 		<img src={logoLight} alt={platformName} class="h-8 w-auto dark:hidden" />
 		<img src={logoDark} alt={platformName} class="hidden h-8 w-auto dark:block" />
+		<button
+			type="button"
+			class="-mr-2 min-h-11 min-w-11 rounded-lg p-2 text-lg leading-none text-slate-500 hover:bg-slate-100 lg:hidden dark:hover:bg-slate-800"
+			aria-label="Fechar menu"
+			onclick={close}>✕</button
+		>
 	</div>
 	{#if top}
 		<div class="border-b border-slate-200 p-3 dark:border-slate-800">{@render top()}</div>
@@ -52,7 +90,8 @@
 				{#each group.items as item (item.href)}
 					<a
 						href={item.href}
-						class="block rounded-lg px-3 py-2 text-sm font-medium transition {active(
+						onclick={close}
+						class="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium transition {active(
 							item.href,
 							item.exact
 						)
