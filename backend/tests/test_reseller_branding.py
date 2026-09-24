@@ -62,6 +62,15 @@ async def test_branding_get_and_update(
     assert cfg["theme"] == "grid" and cfg["qr_content"] == "https://wa.me/55" and cfg["auto_ads"]
 
 
+async def test_stock_backgrounds_are_offered(reseller_client: AsyncClient) -> None:
+    """The panel offers ready-made backgrounds so a reseller is not stuck with a blank app (F2-008)."""
+    resp = await reseller_client.get(f"{BRANDING}/backgrounds")
+    assert resp.status_code == 200, resp.text
+    for item in resp.json():
+        assert item["url"].endswith(f"/uploads/backgrounds/{item['id']}.jpg")
+        assert item["label"]
+
+
 async def test_upload_images(reseller_client: AsyncClient, db: AsyncSession) -> None:
     resp = await reseller_client.post(
         UPLOAD, params={"kind": "logo"}, files={"file": ("logo.png", PNG, "image/png")}

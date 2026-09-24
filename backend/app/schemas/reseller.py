@@ -76,6 +76,12 @@ class BrandingOut(ORMModel):
     auto_ads: bool
 
 
+class StockBackground(BaseModel):
+    id: str
+    label: str
+    url: str
+
+
 class BrandingUpdate(BaseModel):
     logo_url: str | None = Field(None, max_length=2048)
     bg_url: str | None = Field(None, max_length=2048)

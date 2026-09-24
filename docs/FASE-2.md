@@ -16,6 +16,10 @@ grosseira para a próxima proposta. Nada daqui entra no M5.
 | F2-006 ✅ **entregue na 1.5.0** | **Menu lateral como padrão** assim que o app é baixado. | Cliente, 16/09/2026 | Novas revendas nascem com `theme=rail` (migração `a4e71c92b8d5` muda só o padrão da coluna), o `GET /device/config` de aparelho sem revenda responde `rail`, e o app cai em `RAIL` quando ainda não tem configuração. Revendas existentes mantêm o que escolheram. | Feito |
 | F2-007 ✅ **entregue na 1.5.0** | **Prévia real dos layouts no painel** no lugar dos desenhos esquemáticos. | Cliente, 16/09/2026 | As capturas saem do próprio app (`docs/screens/android/layouts/`), entram no painel como JPEG de 960 px e abrem ampliadas em um modal. | Feito |
 
+| F2-008 ✅ **entregue na 1.6.0 (24/09/2026)** | **Três fundos prontos no painel.** | Cliente, 24/09/2026 | `GET /reseller/branding/backgrounds` lista os arquivos de `uploads/backgrounds/`; a tela Background mostra os três com prévia e aplica em um clique. As artes atuais são geradas por `backend/scripts/make_backgrounds.py` e servem de espaço reservado até o cliente enviar as dele — trocar é substituir os arquivos. | Feito |
+| F2-009 ✅ **entregue na 1.6.0** | **Pasta "Continuar assistindo" abaixo de Favoritos, em Filmes.** | Cliente, 24/09/2026 | Nova consulta no `MovieDao` (junção com `watch_progress`, mesmos limites da fileira da tela inicial) e uma categoria a mais no catálogo de filmes, que só aparece quando há algo começado. Séries não ganham a pasta: cada série já tem o próprio "continuar" na página dela. | Feito |
+| F2-010 ✅ **entregue na 1.6.0** | **App do celular abre em paisagem**, como o player de referência. | Cliente, 24/09/2026 | `MobileActivity` passou a `sensorLandscape`. O que era desenhado para retrato virou adaptativo por largura: tela inicial com quatro blocos por linha e menu em duas colunas, catálogo com até oito capas por linha em vez de três gigantes, lista de canais em duas colunas. O player parou de mexer na orientação, que agora é do app inteiro. | Feito |
+
 ## Observação sobre a motivação do F2-001
 
 O cliente entende que a home de demonstração faz o app parecer "100 % legal" para o Google.

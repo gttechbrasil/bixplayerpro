@@ -121,6 +121,7 @@
     <string name="movie_cast">Reparto</string>
     <string name="home_banners">Banners</string>
     <string name="home_continue_watching">Seguir viendo</string>
+    <string name="catalog_continue">Continuar viendo</string>
     <string name="home_movies_count">%1$d películas</string>
     <string name="home_series_count">%1$d series</string>
     <string name="player_pause_hint">OK pausa · ←→ adelantar/retroceder · MENU pistas</string>

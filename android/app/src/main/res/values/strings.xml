@@ -133,6 +133,7 @@
     <string name="movie_cast">Elenco</string>
     <string name="home_banners">Banners</string>
     <string name="home_continue_watching">Continuar assistindo</string>
+    <string name="catalog_continue">Continuar assistindo</string>
     <string name="home_movies_count">%1$d filmes</string>
     <string name="home_series_count">%1$d séries</string>
     <string name="player_pause_hint">OK pausa · ←→ avança/volta · MENU faixas</string>

@@ -213,9 +213,9 @@
 	{/snippet}
 </PageHeader>
 
-<div class="grid gap-6 lg:grid-cols-3">
+<div class="grid min-w-0 gap-6 lg:grid-cols-3">
 	<!-- credits / devices -->
-	<section class="card p-5">
+	<section class="card min-w-0 p-5">
 		{#if data.creditsEnabled}
 			<h2 class="text-sm font-medium text-slate-500">Créditos</h2>
 			<p class="mt-2 text-4xl font-semibold tabular-nums">{r.credits}</p>
@@ -232,7 +232,7 @@
 	</section>
 
 	<!-- expiration -->
-	<section class="card p-5">
+	<section class="card min-w-0 p-5">
 		<h2 class="text-sm font-medium text-slate-500">Vencimento</h2>
 		<p class="mt-2 text-2xl font-semibold">
 			{r.expires_at ? formatDate(r.expires_at) : 'Sem vencimento'}
@@ -250,7 +250,7 @@
 	</section>
 
 	<!-- access -->
-	<section class="card p-5">
+	<section class="card min-w-0 p-5">
 		<h2 class="text-sm font-medium text-slate-500">Acesso</h2>
 		<dl class="mt-2 space-y-1 text-sm">
 			<div class="flex justify-between">
@@ -272,8 +272,8 @@
 	</section>
 </div>
 
-<div class="mt-6 grid gap-6 lg:grid-cols-3">
-	<section class="card p-5">
+<div class="mt-6 grid min-w-0 gap-6 lg:grid-cols-3">
+	<section class="card min-w-0 p-5">
 		<h2 class="font-semibold">Editar dados</h2>
 		<form class="mt-4 space-y-4" onsubmit={saveEdit}>
 			<Input label="Nome" required bind:value={edit.name} />
@@ -290,7 +290,7 @@
 	</section>
 
 	{#if data.creditsEnabled}
-		<section class="card lg:col-span-2">
+		<section class="card min-w-0 lg:col-span-2">
 			<div
 				class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800"
 			>
@@ -361,8 +361,8 @@
 	{/if}
 </div>
 
-<div class="mt-6 grid gap-6 lg:grid-cols-2">
-	<section class="card">
+<div class="mt-6 grid min-w-0 gap-6 lg:grid-cols-2">
+	<section class="card min-w-0">
 		<div
 			class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800"
 		>
@@ -441,7 +441,7 @@
 		{/if}
 	</section>
 
-	<section class="card">
+	<section class="card min-w-0">
 		<div
 			class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800"
 		>

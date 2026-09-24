@@ -226,6 +226,39 @@ interface MovieDao {
     )
     fun paging(playlistId: Long, categoryRemoteId: String?, query: String, favoritesOnly: Int, sort: Int): PagingSource<Int, MovieEntity>
 
+    /**
+     * Movies the viewer started and did not finish, newest first: the "continuar assistindo"
+     * folder in the catalogue (F2-009). Same thresholds as the home row, so a title appears in
+     * both or in neither.
+     */
+    @Query(
+        """
+        SELECT m.* FROM movies m
+        INNER JOIN watch_progress w ON w.playlistId = m.playlistId
+            AND w.kind = 'movie' AND w.itemRemoteId = m.remoteId
+        WHERE m.playlistId = :playlistId
+          AND w.durationMs > 0
+          AND w.positionMs >= MIN(60000, w.durationMs * 0.10)
+          AND w.positionMs < w.durationMs * 0.95
+          AND (:query = '' OR m.name LIKE '%' || :query || '%')
+        ORDER BY w.updatedAt DESC
+        """
+    )
+    fun pagingContinue(playlistId: Long, query: String): PagingSource<Int, MovieEntity>
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM movies m
+        INNER JOIN watch_progress w ON w.playlistId = m.playlistId
+            AND w.kind = 'movie' AND w.itemRemoteId = m.remoteId
+        WHERE m.playlistId = :playlistId
+          AND w.durationMs > 0
+          AND w.positionMs >= MIN(60000, w.durationMs * 0.10)
+          AND w.positionMs < w.durationMs * 0.95
+        """
+    )
+    fun observeContinueCount(playlistId: Long): Flow<Int>
+
     @Query("SELECT * FROM movies WHERE id = :id LIMIT 1")
     suspend fun byId(id: Long): MovieEntity?
 

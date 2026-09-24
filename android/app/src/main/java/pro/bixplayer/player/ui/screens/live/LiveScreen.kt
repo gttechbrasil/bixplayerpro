@@ -48,6 +48,10 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -301,7 +305,15 @@ private fun LiveCompact(
                 Text(text = stringResource(R.string.live_no_channels), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxSize()) {
+            // Landscape on a phone (F2-010) is wide: one channel per row would waste two thirds
+            // of the screen, so the list splits into columns as the width allows.
+            val columns = (LocalConfiguration.current.screenWidthDp / 340).coerceIn(1, 3)
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(columns),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxSize(),
+            ) {
                 items(count = channels.itemCount, key = { index -> channels.peek(index)?.id ?: -index.toLong() }) { index ->
                     val channel = channels[index] ?: return@items
                     ChannelRow(

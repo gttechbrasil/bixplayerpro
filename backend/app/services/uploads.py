@@ -32,6 +32,23 @@ def upload_dir() -> Path:
     return path
 
 
+STOCK_BACKGROUNDS = (
+    ("bg1", "Aurora"),
+    ("bg2", "Holofote"),
+    ("bg3", "Grade"),
+)
+
+
+def stock_backgrounds() -> list[dict[str, str]]:
+    """The ready-made backgrounds offered in the panel, newest art wins on a file swap."""
+    base = get_settings().public_base_url.rstrip("/")
+    return [
+        {"id": name, "label": label, "url": f"{base}/uploads/backgrounds/{name}.jpg"}
+        for name, label in STOCK_BACKGROUNDS
+        if (upload_dir() / "backgrounds" / f"{name}.jpg").exists()
+    ]
+
+
 def save_image(data: bytes, reseller_id: int, kind: str) -> str:
     """Validates and stores the image; returns its public URL."""
     if len(data) > MAX_UPLOAD_BYTES:

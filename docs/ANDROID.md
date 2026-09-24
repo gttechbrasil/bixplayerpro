@@ -360,6 +360,12 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
 
 ## 11. Decisões que valem lembrar
 
+- **Celular em paisagem (F2-010, 1.6.0)**: `MobileActivity` é `sensorLandscape`, como os players
+  que o cliente usa de referência. As telas "compactas" deixaram de assumir retrato e passaram a
+  medir a largura (`LocalConfiguration.screenWidthDp`): tela inicial com quatro blocos por linha
+  e menu em duas colunas acima de 600 dp, catálogo com `(largura / 120)` colunas entre 3 e 8,
+  lista de canais em até três colunas. O `PlayerScreen` não mexe mais em `requestedOrientation`:
+  restaurar `UNSPECIFIED` ao sair desfazia o bloqueio do app inteiro.
 - **Detalhe em retrato (M5-031, 1.5.2)**: `MovieDetailScreen` e `SeriesDetailScreen` eram
   `Row` de TV. Agora `DetailFrame`/`SeriesFrame` escolhem entre lado a lado (TV) e empilhado
   (celular); os botões viram largura total no telefone.

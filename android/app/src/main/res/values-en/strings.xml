@@ -121,6 +121,7 @@
     <string name="movie_cast">Cast</string>
     <string name="home_banners">Banners</string>
     <string name="home_continue_watching">Continue watching</string>
+    <string name="catalog_continue">Continue watching</string>
     <string name="home_movies_count">%1$d movies</string>
     <string name="home_series_count">%1$d series</string>
     <string name="player_pause_hint">OK pause · ←→ seek · MENU tracks</string>

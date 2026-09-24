@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -62,6 +63,9 @@ fun CompactHomeScreen(
     onResume: (WatchProgressEntity) -> Unit,
     demo: Boolean,
 ) {
+    // Landscape on a phone is about 1000x450 dp: room for four tiles per row and a two-column
+    // menu, which is what the reference players look like (F2-010).
+    val wide = LocalConfiguration.current.screenWidthDp >= 600
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         val backdrop = artwork.featuredImage ?: config?.backgroundUrl
         if (layout != AppLayout.GRID && !backdrop.isNullOrBlank()) {
@@ -88,19 +92,31 @@ fun CompactHomeScreen(
 
             when (layout) {
                 AppLayout.CINEMA -> {
-                    CompactHero(artwork)
+                    CompactHero(artwork, wide)
                     CompactChips(tiles)
                 }
 
-                AppLayout.RAIL -> tiles.forEach { CompactMenuRow(it) }
+                AppLayout.RAIL -> if (wide) {
+                    tiles.chunked(2).forEach { pair ->
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            pair.forEach { tile -> CompactMenuRow(tile, Modifier.weight(1f)) }
+                            if (pair.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
+                } else {
+                    tiles.forEach { CompactMenuRow(it) }
+                }
 
                 AppLayout.MOSAIC -> {
-                    tiles.firstOrNull()?.let { CompactBigTile(it, artwork.featuredImage) }
-                    CompactTileGrid(tiles.drop(1).take(2))
+                    tiles.firstOrNull()?.let { CompactBigTile(it, artwork.featuredImage, wide) }
+                    CompactTileGrid(tiles.drop(1).take(2), wide)
                     CompactChips(tiles.drop(3))
                 }
 
-                else -> CompactTileGrid(tiles)
+                else -> CompactTileGrid(tiles, wide)
             }
 
             if (continueWatching.isNotEmpty()) {
@@ -189,12 +205,12 @@ private fun CompactSection(title: String, content: @Composable () -> Unit) {
 
 /** Cinema: the newest title as a 16:9 card with its name over the artwork. */
 @Composable
-private fun CompactHero(artwork: HomeArtwork) {
+private fun CompactHero(artwork: HomeArtwork, wide: Boolean = false) {
     val title = artwork.featuredTitle ?: return
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(16f / 9f)
+            .then(if (wide) Modifier.height(190.dp) else Modifier.aspectRatio(16f / 9f))
             .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.surface),
     ) {
@@ -257,11 +273,11 @@ private fun CompactChips(tiles: List<GridTile>) {
 
 /** Rail: one full-width row per entry, the vertical menu the layout is named after. */
 @Composable
-private fun CompactMenuRow(tile: GridTile) {
+private fun CompactMenuRow(tile: GridTile, modifier: Modifier = Modifier) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surface)
@@ -294,11 +310,11 @@ private fun CompactMenuRow(tile: GridTile) {
 
 /** Mosaic: the first entry as a wide cover card. */
 @Composable
-private fun CompactBigTile(tile: GridTile, fallbackCover: String?) {
+private fun CompactBigTile(tile: GridTile, fallbackCover: String?, wide: Boolean = false) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(16f / 9f)
+            .then(if (wide) Modifier.height(190.dp) else Modifier.aspectRatio(16f / 9f))
             .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.surface)
             .focusable()
@@ -323,12 +339,13 @@ private fun CompactBigTile(tile: GridTile, fallbackCover: String?) {
 
 /** Two tiles per row: the widest a finger-friendly card can be in portrait. */
 @Composable
-private fun CompactTileGrid(tiles: List<GridTile>) {
+private fun CompactTileGrid(tiles: List<GridTile>, wide: Boolean = false) {
+    val columns = if (wide) 4 else 2
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        tiles.chunked(2).forEach { row ->
+        tiles.chunked(columns).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 row.forEach { tile -> CompactTile(tile, Modifier.weight(1f)) }
-                if (row.size == 1) Spacer(Modifier.weight(1f))
+                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }

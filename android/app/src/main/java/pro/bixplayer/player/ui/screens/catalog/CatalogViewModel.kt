@@ -67,6 +67,9 @@ data class CatalogUiState(
     companion object {
         const val KEY_ALL = "all"
         const val KEY_FAVORITES = "fav"
+
+        /** Movies started and not finished (F2-009); only the movies catalogue has it. */
+        const val KEY_CONTINUE = "cont"
     }
 }
 
@@ -100,13 +103,25 @@ class CatalogViewModel @Inject constructor(
         .flatMapLatest { favoriteDao.observeIds(it, kind) }
         .map { it.toSet() }
 
+    /** Zero for series: episodes already carry their own "continue" entry on the show page. */
+    private val continueCount: Flow<Int> =
+        if (kind == ContentKind.SERIES) flowOf(0)
+        else playlistId.filterNotNull().flatMapLatest { movieDao.observeContinueCount(it) }
+
     private val categories: Flow<List<CatalogCategory>> = playlistId.filterNotNull()
         .flatMapLatest { id ->
-            combine(categoryDao.observeByPlaylist(id, kind), ruleDao.observeByPlaylist(id), favoriteIds) { cats, rules, favs ->
+            combine(
+                categoryDao.observeByPlaylist(id, kind),
+                ruleDao.observeByPlaylist(id),
+                favoriteIds,
+                continueCount,
+            ) { cats, rules, favs, started ->
                 val byId = rules.filter { it.kind == kind }.associateBy { it.remoteId }
                 buildList {
                     add(CatalogCategory(CatalogUiState.KEY_ALL, "", cats.sumOf { it.channelCount }))
                     add(CatalogCategory(CatalogUiState.KEY_FAVORITES, "", favs.size))
+                    // Right below Favoritos, where the client asked for it (F2-009).
+                    if (started > 0) add(CatalogCategory(CatalogUiState.KEY_CONTINUE, "", started))
                     cats.filter { byId[it.remoteId]?.hidden != true }.forEach {
                         add(CatalogCategory("cat:${it.remoteId}", it.name, it.channelCount, it.remoteId, byId[it.remoteId]?.locked == true))
                     }
@@ -136,6 +151,7 @@ class CatalogViewModel @Inject constructor(
         if (id == null) return@flatMapLatest flowOf(PagingData.empty())
         val category = key.removePrefix("cat:").takeIf { key.startsWith("cat:") }
         val favorites = if (key == CatalogUiState.KEY_FAVORITES) 1 else 0
+        val continuing = key == CatalogUiState.KEY_CONTINUE
         Pager(
             PagingConfig(
                 pageSize = DeviceClass.pageSize,
@@ -146,8 +162,11 @@ class CatalogViewModel @Inject constructor(
                 enablePlaceholders = false,
             ),
         ) {
-            if (kind == ContentKind.SERIES) seriesDao.paging(id, category, q, favorites, s.ordinal)
-            else movieDao.paging(id, category, q, favorites, s.ordinal)
+            when {
+                kind == ContentKind.SERIES -> seriesDao.paging(id, category, q, favorites, s.ordinal)
+                continuing -> movieDao.pagingContinue(id, q)
+                else -> movieDao.paging(id, category, q, favorites, s.ordinal)
+            }
         }.flow.map { paging ->
             if (kind == ContentKind.SERIES) {
                 @Suppress("UNCHECKED_CAST")

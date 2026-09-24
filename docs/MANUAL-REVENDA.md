@@ -92,7 +92,7 @@ abertura.
 | Tela | O que faz |
 |---|---|
 | **Logomarca** ![](screens/web/painel-04-logomarca.png) | Envie PNG/JPG/WebP de até 2 MB (fundo transparente fica melhor). Aparece na tela inicial do app |
-| **Background** ![](screens/web/painel-05-background.png) | Imagem de fundo da tela inicial (recomendado 1920×1080) |
+| **Background** ![](screens/web/painel-05-background.png) | Escolha um dos **três fundos prontos** com um clique ou envie a sua imagem (recomendado 1920×1080) |
 | **QR Code** ![](screens/web/painel-06-qrcode.png) | Conteúdo do QR mostrado no app (link do seu WhatsApp, site ou texto). O cliente aponta a câmera para falar com você |
 | **Banners** ![](screens/web/painel-07-banners.png) | Até 10 imagens por URL (hospedadas por você). Ative/desative cada uma; só as ativas aparecem no app, em rodízio |
 | **Layout** ![](screens/web/painel-08-layout.png) | Escolha entre os **5 layouts** da tela inicial (§5.1) |

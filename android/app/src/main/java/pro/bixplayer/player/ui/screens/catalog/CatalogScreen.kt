@@ -49,6 +49,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -111,9 +112,13 @@ fun CatalogScreen(
     }
 
     val compact = !LocalIsTv.current
-    val columns = if (compact) 3 else COLUMNS
+    // Columns follow the width, not the form factor: a phone in landscape (F2-010) is as wide as
+    // a small TV, and three columns turned the covers into billboards whose titles fell below
+    // the fold. Roughly 120 dp per cover keeps poster plus title inside the visible height.
+    val columns = if (compact) (LocalConfiguration.current.screenWidthDp / 120).coerceIn(3, 8) else COLUMNS
     val all = stringResource(R.string.live_all)
     val favorites = stringResource(R.string.live_favorites)
+    val continuing = stringResource(R.string.catalog_continue)
 
     Box(modifier = Modifier.fillMaxSize()) {
     Row(
@@ -153,6 +158,7 @@ fun CatalogScreen(
                         val label = when (category.key) {
                             CatalogUiState.KEY_ALL -> all
                             CatalogUiState.KEY_FAVORITES -> favorites
+                            CatalogUiState.KEY_CONTINUE -> continuing
                             else -> category.name
                         }
                         val selected = category.key == state.selectedKey
@@ -260,11 +266,13 @@ private fun CatalogCategoryColumn(
 ) {
     val all = stringResource(R.string.live_all)
     val favorites = stringResource(R.string.live_favorites)
+    val continuing = stringResource(R.string.catalog_continue)
     LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         itemsIndexed(state.categories, key = { _, c -> c.key }) { index, category ->
             val label = when (category.key) {
                 CatalogUiState.KEY_ALL -> all
                 CatalogUiState.KEY_FAVORITES -> favorites
+                CatalogUiState.KEY_CONTINUE -> continuing
                 else -> category.name
             }
             CategoryRow(

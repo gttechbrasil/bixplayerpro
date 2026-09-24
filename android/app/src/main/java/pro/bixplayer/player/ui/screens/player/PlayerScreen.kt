@@ -76,7 +76,6 @@ import pro.bixplayer.player.ui.theme.BixScrim
 import pro.bixplayer.player.ui.theme.bixFocusable
 import pro.bixplayer.player.util.TimeFormat
 import pro.bixplayer.player.ui.components.onSelect
-import android.content.pm.ActivityInfo
 import androidx.compose.ui.platform.LocalContext
 import coil3.SingletonImageLoader
 import android.os.Build
@@ -113,8 +112,8 @@ fun PlayerScreen(
     // which is what "deita mas não preenche" meant (M5-032). TVs match the content already.
     val videoFill = state.videoFill ?: !isTv
 
-    // Phones watch in landscape, full screen (bars hidden, video under the camera cutout);
-    // orientation, bars and cutout mode all go back to the system's when leaving.
+    // Phones already run landscape (F2-010); here the bars go away and the video reaches under
+    // the camera cutout. Both go back to the system's on the way out.
     // The catalogue's posters are worthless while a video plays; on a 1 GB box the decoder
     // needs that memory more (M5-018).
     val appContext = LocalContext.current.applicationContext
@@ -124,7 +123,6 @@ fun PlayerScreen(
         val window = activity?.window
         val controller = window?.let { WindowCompat.getInsetsController(it, it.decorView) }
         if (!isTv && activity != null && window != null && controller != null) {
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             controller.hide(WindowInsetsCompat.Type.systemBars())
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -136,7 +134,6 @@ fun PlayerScreen(
         onDispose {
             viewModel.session.inPlayerScreen = false
             if (!isTv && activity != null && window != null && controller != null) {
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 controller.show(WindowInsetsCompat.Type.systemBars())
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     window.attributes = window.attributes.apply {
