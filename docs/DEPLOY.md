@@ -396,3 +396,18 @@ curl -sI https://bixplayer.pro/downloads/app.apk | head -3
 Em seguida, em **Admin → Configurações**, `apk_url = https://bixplayer.pro/downloads/app.apk` e
 `min_app_version` igual ao `bix.versionName` do build. O diretório é gitignored: o APK não passa
 pelo repositório, só pelo `scp` do script. Build e assinatura estão em `docs/ANDROID.md`.
+
+## Fundos prontos do painel
+
+Os três fundos que o painel oferece (F2-008) ficam no volume `uploads`, que também não passa pelo
+repositório. Depois do deploy, e sempre que a arte mudar:
+
+```bash
+py -3.12 backend/scripts/make_backgrounds.py   # só para regerar os espaços reservados
+./deploy/push-backgrounds.sh
+curl -sI https://bixplayer.pro/uploads/backgrounds/bg1.jpg | head -3
+```
+
+Para trocar por arte do cliente, basta sobrescrever `backend/uploads/backgrounds/bg1..3.jpg`
+(1920×1080) e rodar o script: as URLs são fixas, então quem já escolheu um fundo recebe a arte
+nova sem mexer em nada.
