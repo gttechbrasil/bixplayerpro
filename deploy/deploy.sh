@@ -13,7 +13,9 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$DIR")"
-KEY="$DIR/id_deploy"
+# No WSL o /mnt/c monta tudo como 0444 e o ssh recusa a chave; copie-a para o home do Linux
+# (chmod 600) e aponte DEPLOY_KEY para lá, ou rode este script pelo Git Bash do Windows.
+KEY="${DEPLOY_KEY:-$DIR/id_deploy}"
 ENV_FILE="$DIR/.vps.env"
 REMOTE_DIR="/home/deploy/app"
 BRANCH="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD)"
@@ -63,7 +65,8 @@ if [ "$PUSH" = 1 ]; then
 fi
 
 echo "==> atualizando o código no servidor"
-PREVIOUS="$(ssh_run "cd $REMOTE_DIR && git rev-parse HEAD" | tr -d '')"
+PREVIOUS="$(ssh_run "cd $REMOTE_DIR && git rev-parse HEAD" | tr -d '
+')"
 ssh_run "cd $REMOTE_DIR && git fetch --quiet origin && git reset --hard origin/$BRANCH && git log -1 --oneline"
 
 if [ -n "$APK" ]; then

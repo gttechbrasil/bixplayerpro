@@ -11,7 +11,9 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$DIR")"
-KEY="$DIR/id_deploy"
+# No WSL o /mnt/c monta tudo como 0444 e o ssh recusa a chave; copie-a para o home do Linux
+# (chmod 600) e aponte DEPLOY_KEY para lá, ou rode este script pelo Git Bash do Windows.
+KEY="${DEPLOY_KEY:-$DIR/id_deploy}"
 ENV_FILE="$DIR/.vps.env"
 REMOTE_DIR="/home/deploy/app"
 SRC="$ROOT/backend/uploads/backgrounds"

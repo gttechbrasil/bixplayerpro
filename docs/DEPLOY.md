@@ -397,6 +397,18 @@ Em seguida, em **Admin → Configurações**, `apk_url = https://bixplayer.pro/d
 `min_app_version` igual ao `bix.versionName` do build. O diretório é gitignored: o APK não passa
 pelo repositório, só pelo `scp` do script. Build e assinatura estão em `docs/ANDROID.md`.
 
+## Rodando os scripts pelo WSL
+
+Os scripts são feitos para o **Git Bash do Windows**, onde a permissão da chave já está certa.
+No WSL o `/mnt/c` monta tudo como `0444` e o `ssh` ignora a chave ("UNPROTECTED PRIVATE KEY
+FILE"). Para usar o WSL mesmo assim, copie a chave uma vez para o home do Linux e aponte
+`DEPLOY_KEY` para ela:
+
+```bash
+mkdir -p ~/.ssh && cp deploy/id_deploy ~/.ssh/bix_deploy && chmod 600 ~/.ssh/bix_deploy
+export DEPLOY_KEY=~/.ssh/bix_deploy
+```
+
 ## Fundos prontos do painel
 
 Os três fundos que o painel oferece (F2-008) ficam no volume `uploads`, que também não passa pelo
