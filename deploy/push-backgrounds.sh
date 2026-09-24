@@ -22,7 +22,7 @@ COMPOSE="docker compose -f deploy/docker-compose.yml --env-file deploy/.env"
 VPS_HOST="$(grep -E '^VPS_HOST=' "$ENV_FILE" | cut -d= -f2- | tr -d '"'"'"' \r')"
 
 ssh_run() {
-	MSYS_NO_PATHCONV=1 ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
+	MSYS_NO_PATHCONV=1 ssh -n -i "$KEY" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
 		"deploy@$VPS_HOST" "$1"
 }
 
