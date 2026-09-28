@@ -152,6 +152,9 @@ fun LiveScreen(
         return
     }
 
+    // An ordinary phone in landscape is ~800 dp wide against 960 on a TV: with the TV's fixed
+    // side columns the channel names were cut to a few letters (client, 28/09/2026).
+    val narrow = LocalConfiguration.current.screenWidthDp < 900
     Box(modifier = Modifier.fillMaxSize()) {
     Row(
         modifier = Modifier
@@ -165,14 +168,14 @@ fun LiveScreen(
                     false
                 }
             }
-            .padding(start = 32.dp, end = 32.dp, top = 24.dp, bottom = 24.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(horizontal = if (narrow) 16.dp else 32.dp, vertical = if (narrow) 12.dp else 24.dp),
+        horizontalArrangement = Arrangement.spacedBy(if (narrow) 12.dp else 16.dp),
     ) {
         CategoryColumn(
             state = state,
             firstRequester = categoryRequester,
             onSelect = { item -> gate.require(item.locked, R.string.pin_locked_category) { viewModel.selectCategory(item) } },
-            modifier = Modifier.width(200.dp).fillMaxHeight(),
+            modifier = Modifier.width(if (narrow) 150.dp else 200.dp).fillMaxHeight(),
         )
 
         Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
@@ -250,7 +253,7 @@ fun LiveScreen(
 
         PreviewPanel(
             state = state,
-            modifier = Modifier.width(340.dp).fillMaxHeight(),
+            modifier = Modifier.width(if (narrow) 230.dp else 340.dp).fillMaxHeight(),
             viewModel = viewModel,
             onOpenGuide = { onOpenGuide(state.focusedChannel) },
         )
@@ -352,7 +355,6 @@ private fun CategoryColumn(
                 count = item.count,
                 selected = item.scope.key == state.selectedKey,
                 focusRequester = if (index == 0) firstRequester else null,
-                onFocused = { if (!item.locked) onSelect(item) },
                 onSelect = { onSelect(item) },
             )
         }
@@ -365,7 +367,6 @@ private fun CategoryRow(
     count: Int,
     selected: Boolean,
     focusRequester: FocusRequester?,
-    onFocused: () -> Unit,
     onSelect: () -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
@@ -384,7 +385,7 @@ private fun CategoryRow(
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .bixFocusable(focused, scale = 1f, shape = shape)
             .background(container, shape)
-            .onFocusChanged { if (it.isFocused) onFocused() }
+            // Highlight follows the D-pad, the folder opens on OK (client request, 28/09/2026).
             .focusable(interactionSource = interaction)
             .onSelect { onSelect() }
             .padding(horizontal = 16.dp, vertical = 12.dp),

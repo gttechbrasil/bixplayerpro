@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { del, errorMessage, patch, post, put } from '$lib/api';
+	import { del, errorMessage, get, patch, post, put } from '$lib/api';
 	import Badge from '$lib/components/Badge.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -10,9 +10,37 @@
 	import { toast } from '$lib/stores/toast.svelte';
 	import type { Banner } from '$lib/types';
 
+	interface StockBanner {
+		id: string;
+		label: string;
+		url: string;
+	}
+
 	let { data } = $props();
 
 	let newOpen = $state(false);
+	// Ready-made banners (F2-012): the platform's promo art, added with one click. The list comes
+	// from the API so a file swap on the server updates every panel.
+	let stock = $state<StockBanner[]>([]);
+	let adding = $state<string | null>(null);
+	$effect(() => {
+		get<StockBanner[]>('reseller/branding/banners/stock')
+			.then((list) => (stock = list))
+			.catch(() => (stock = []));
+	});
+
+	async function addStock(b: StockBanner) {
+		adding = b.id;
+		try {
+			await post<Banner>('reseller/branding/banners', { title: b.label, url: b.url });
+			toast.success('Banner adicionado.');
+			await invalidateAll();
+		} catch (err) {
+			toast.error(errorMessage(err));
+		} finally {
+			adding = null;
+		}
+	}
 	let creating = $state(false);
 	let form = $state({ title: '', url: '' });
 	let deleteTarget = $state<Banner | null>(null);
@@ -89,6 +117,43 @@
 	</span>
 	<input type="checkbox" class="h-5 w-5 rounded" checked={autoAds} onchange={toggleAutoAds} />
 </label>
+
+{#if stock.length > 0}
+	<section class="mb-6">
+		<h2 class="mb-1 font-semibold">Banners prontos</h2>
+		<p class="mb-3 text-sm text-slate-500">
+			Arte pronta da plataforma: clique em Adicionar e o banner entra na sua lista, já ativo.
+		</p>
+		<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+			{#each stock as b (b.id)}
+				{@const added = data.banners.some((x) => x.url === b.url)}
+				<div class="card min-w-0 overflow-hidden">
+					<img
+						src={b.url}
+						alt={b.label}
+						width="1920"
+						height="1080"
+						loading="lazy"
+						class="aspect-video w-full bg-slate-900 object-cover"
+					/>
+					<div class="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+						<span class="font-medium">{b.label}</span>
+						{#if added}
+							<Badge tone="green">Adicionado</Badge>
+						{:else}
+							<Button
+								size="sm"
+								loading={adding === b.id}
+								disabled={adding !== null || data.banners.length >= 10}
+								onclick={() => addStock(b)}>Adicionar</Button
+							>
+						{/if}
+					</div>
+				</div>
+			{/each}
+		</div>
+	</section>
+{/if}
 
 <div class="card overflow-hidden">
 	<!-- The table keeps its columns on a phone; the wrapper scrolls instead of clipping (M5-026). -->

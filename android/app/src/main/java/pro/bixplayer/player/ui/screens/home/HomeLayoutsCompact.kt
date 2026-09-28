@@ -67,7 +67,7 @@ fun CompactHomeScreen(
     // menu, which is what the reference players look like (F2-010).
     val wide = LocalConfiguration.current.screenWidthDp >= 600
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        val backdrop = artwork.featuredImage ?: config?.backgroundUrl
+        val backdrop = config?.backgroundUrl?.takeIf { it.isNotBlank() } ?: artwork.featuredImage
         if (layout != AppLayout.GRID && !backdrop.isNullOrBlank()) {
             AsyncImage(
                 model = backdrop,

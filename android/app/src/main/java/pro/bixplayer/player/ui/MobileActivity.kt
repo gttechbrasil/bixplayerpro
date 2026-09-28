@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.util.Rational
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -44,7 +45,10 @@ class MobileActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         compact = UiMode.parse(runBlocking { store.currentUiMode() }) == UiMode.MOBILE
-        if (!compact) hideStatusBar()
+        if (!compact) {
+            hideStatusBar()
+            drawUnderCutout()
+        }
         setContent {
             if (compact) {
                 BixMobileTheme {
@@ -76,6 +80,19 @@ class MobileActivity : ComponentActivity() {
         val controller = WindowCompat.getInsetsController(window, window.decorView)
         controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         controller.hide(WindowInsetsCompat.Type.statusBars())
+    }
+
+    /**
+     * In landscape the system letterboxes the camera-hole side unless told otherwise, which left a
+     * black band down the left of every screen ("fica sempre em recorte"). The TV layouts keep
+     * 32 dp or more of margin, so the hole never sits on anything that matters.
+     */
+    private fun drawUnderCutout() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
     }
 
     @Deprecated("Deprecated in Java")

@@ -71,6 +71,22 @@ async def test_stock_backgrounds_are_offered(reseller_client: AsyncClient) -> No
         assert item["label"]
 
 
+async def test_stock_banners_are_offered(reseller_client: AsyncClient) -> None:
+    """Ready-made promo banners the reseller adds with one click (F2-012)."""
+    stock = os.path.join(os.environ["UPLOAD_DIR"], "banners")
+    os.makedirs(stock, exist_ok=True)
+    with open(os.path.join(stock, "b1.jpg"), "wb") as fh:
+        fh.write(b"\xff\xd8\xff\xd9")
+    try:
+        resp = await reseller_client.get(f"{BRANDING}/banners/stock")
+        assert resp.status_code == 200, resp.text
+        items = resp.json()
+        assert [i["id"] for i in items] == ["b1"]
+        assert items[0]["url"].endswith("/uploads/banners/b1.jpg") and items[0]["label"]
+    finally:
+        os.remove(os.path.join(stock, "b1.jpg"))
+
+
 async def test_upload_images(reseller_client: AsyncClient, db: AsyncSession) -> None:
     resp = await reseller_client.post(
         UPLOAD, params={"kind": "logo"}, files={"file": ("logo.png", PNG, "image/png")}

@@ -39,7 +39,7 @@ digitou o MAC errado. Confira os caracteres com ele.
 | **TV ao vivo** | ↑/↓ trocam de canal; digite o número do canal no controle; **OK** mostra informações; **MENU** abre áudio e legendas; ←/→ abrem a lista rápida; **VOLTAR** sai |
 | **Favoritos** | Na lista de canais, **MENU** marca/desmarca; a categoria *Favoritos* fica no topo |
 | **Busca** | Na TV, OK na linha "Buscar canal" e digite; no celular, toque na busca e use o teclado |
-| **Filmes e Séries** | Escolha a capa e **Assistir**; o app lembra onde você parou (*Continuar assistindo* na tela inicial); em séries o próximo episódio começa sozinho |
+| **Filmes e Séries** | Na lista de pastas à esquerda, ↑/↓ só destacam; **OK** abre a pasta. Escolha a capa e **Assistir**; o app lembra onde você parou (*Continuar assistindo* na tela inicial e pasta própria em Filmes); em séries o próximo episódio começa sozinho |
 | **Guia (EPG)** | Botão **Guia** na TV ao vivo: grade com o que está passando agora e nas próximas horas; OK no programa atual troca para o canal |
 | **Controle parental** | Configurações → **Controle parental**: defina um PIN, bloqueie ou oculte categorias. O PIN padrão é `0000` |
 | **Idioma** | Configurações → **Idioma** (Português, English, Español) |

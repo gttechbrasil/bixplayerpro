@@ -409,10 +409,10 @@ mkdir -p ~/.ssh && cp deploy/id_deploy ~/.ssh/bix_deploy && chmod 600 ~/.ssh/bix
 export DEPLOY_KEY=~/.ssh/bix_deploy
 ```
 
-## Fundos prontos do painel
+## Fundos e banners prontos do painel
 
-Os três fundos que o painel oferece (F2-008) ficam no volume `uploads`, que também não passa pelo
-repositório. Depois do deploy, e sempre que a arte mudar:
+Os três fundos (F2-008) e os três banners (F2-012) que o painel oferece ficam no volume `uploads`,
+que também não passa pelo repositório. Depois do deploy, e sempre que a arte mudar:
 
 ```bash
 py -3.12 backend/scripts/make_backgrounds.py   # só para regerar os espaços reservados
@@ -420,7 +420,8 @@ py -3.12 backend/scripts/make_backgrounds.py   # só para regerar os espaços re
 curl -sI https://bixplayer.pro/uploads/backgrounds/bg1.jpg | head -3
 ```
 
-A arte do cliente fica em `docs/brand/BACKGROUND NN.png`; o dicionário `ART` no script diz qual
-vai em cada `bgN` (hoje: 06 → `bg1`, o vermelho e padrão de quem não escolheu nada; 03 → `bg2`;
-`bg3` ainda é gerado). Para trocar, ponha o PNG em `docs/brand`, ajuste o mapa e rode os dois
-comandos: as URLs são fixas, então quem já escolheu um fundo recebe a arte nova sem mexer em nada.
+A arte do cliente fica em `docs/brand/` (`BACKGROUND NN.png`, `Banner - NN.png`); os dicionários
+`ART` e `BANNERS` no script dizem qual vai em cada `bgN`/`bN` (hoje: fundo 06 → `bg1`, o vermelho e
+padrão de quem não escolheu nada; 03 → `bg2`; `bg3` ainda é gerado; banners 01/12/14 → `b1..b3`).
+Para trocar, ponha o PNG em `docs/brand`, ajuste o mapa e rode os dois comandos: as URLs são fixas,
+então quem já escolheu um fundo ou adicionou um banner recebe a arte nova sem mexer em nada.

@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -90,7 +91,9 @@ fun CinemaHomeScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        val hero = artwork.featuredImage ?: config?.backgroundUrl
+        // The reseller's background wins over the featured cover (client: "backgrounds só
+        // funcionam no padrão e na grade"); the cover is the fallback when there is none.
+        val hero = config?.backgroundUrl?.takeIf { it.isNotBlank() } ?: artwork.featuredImage
         if (!hero.isNullOrBlank()) {
             AsyncImage(
                 model = hero,
@@ -106,13 +109,14 @@ fun CinemaHomeScreen(
             ),
         )
 
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 28.dp)) {
+        val short = LocalConfiguration.current.screenHeightDp < 500
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = if (short) 28.dp else 48.dp, vertical = if (short) 14.dp else 28.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 BrandLogo(
                     url = config?.logoUrl,
                     contentDescription = config?.platformName?.takeIf { it.isNotBlank() }
                         ?: stringResource(R.string.app_name),
-                    modifier = Modifier.heightIn(max = 44.dp).width(190.dp),
+                    modifier = Modifier.heightIn(max = if (short) 34.dp else 44.dp).width(190.dp),
                 )
                 Spacer(Modifier.weight(1f))
                 notice?.let {
@@ -160,11 +164,11 @@ fun CinemaHomeScreen(
             }
 
             if (artwork.movies.isNotEmpty()) {
-                Spacer(Modifier.height(22.dp))
+                Spacer(Modifier.height(if (short) 12.dp else 22.dp))
                 PosterRow(
                     title = stringResource(R.string.home_recent_movies),
                     posters = artwork.movies,
-                    posterHeight = 148.dp,
+                    posterHeight = if (short) 110.dp else 148.dp,
                 )
             }
         }
@@ -190,7 +194,7 @@ fun RailHomeScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        val backdrop = artwork.featuredImage ?: config?.backgroundUrl
+        val backdrop = config?.backgroundUrl?.takeIf { it.isNotBlank() } ?: artwork.featuredImage
         if (!backdrop.isNullOrBlank()) {
             AsyncImage(
                 model = backdrop,
@@ -287,7 +291,7 @@ fun MosaicHomeScreen(
     val strip = tiles.drop(3)
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        val backdrop = artwork.featuredImage ?: config?.backgroundUrl
+        val backdrop = config?.backgroundUrl?.takeIf { it.isNotBlank() } ?: artwork.featuredImage
         if (!backdrop.isNullOrBlank()) {
             AsyncImage(
                 model = backdrop,
@@ -299,22 +303,23 @@ fun MosaicHomeScreen(
         }
         Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(BixScrim, Color(0xD9000000)))))
 
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp, vertical = 24.dp)) {
+        val short = LocalConfiguration.current.screenHeightDp < 500
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = if (short) 24.dp else 40.dp, vertical = if (short) 12.dp else 24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 BrandLogo(
                     url = config?.logoUrl,
                     contentDescription = config?.platformName?.takeIf { it.isNotBlank() }
                         ?: stringResource(R.string.app_name),
-                    modifier = Modifier.heightIn(max = 42.dp).width(180.dp),
+                    modifier = Modifier.heightIn(max = if (short) 34.dp else 42.dp).width(180.dp),
                 )
                 Spacer(Modifier.weight(1f))
                 notice?.let {
                     Text(text = it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
                 }
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(if (short) 10.dp else 16.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth().weight(1f)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(if (short) 10.dp else 16.dp), modifier = Modifier.fillMaxWidth().weight(1f)) {
                 hero?.let {
                     MosaicPanel(
                         tile = it,
@@ -324,7 +329,7 @@ fun MosaicHomeScreen(
                         modifier = Modifier.weight(1.4f).fillMaxHeight(),
                     )
                 }
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.weight(1f).fillMaxHeight()) {
+                Column(verticalArrangement = Arrangement.spacedBy(if (short) 10.dp else 16.dp), modifier = Modifier.weight(1f).fillMaxHeight()) {
                     side.forEachIndexed { index, tile ->
                         MosaicPanel(
                             tile = tile,
@@ -337,7 +342,7 @@ fun MosaicHomeScreen(
             }
 
             if (strip.isNotEmpty()) {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(if (short) 10.dp else 16.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                     strip.forEachIndexed { index, tile ->
                         ActionChip(
@@ -475,29 +480,48 @@ private fun MosaicPanel(
             )
         }
         Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC000000)))))
-        Column(modifier = Modifier.align(Alignment.BottomStart).padding(if (tall) 26.dp else 18.dp)) {
-            Icon(
-                painter = painterResource(tile.icon),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(if (tall) 44.dp else 30.dp),
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = tile.title,
-                style = if (tall) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = tile.subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        // On a short screen the two stacked panels are ~80 dp tall: icon and title side by side,
+        // smaller, and no subtitle, so nothing falls below the panel's edge.
+        val short = LocalConfiguration.current.screenHeightDp < 500
+        val compactPanel = short && !tall
+        Column(modifier = Modifier.align(Alignment.BottomStart).padding(if (tall) (if (short) 16.dp else 26.dp) else (if (short) 12.dp else 18.dp))) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(tile.icon),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(if (tall) (if (short) 34.dp else 44.dp) else (if (short) 22.dp else 30.dp)),
+                )
+                if (compactPanel) {
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = tile.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            if (!compactPanel) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = tile.title,
+                    style = if (tall) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = tile.subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

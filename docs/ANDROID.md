@@ -373,6 +373,13 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
   abas) não foi apagado: é o *Modo de interface → Compacto (celular)*. `LaunchActivity` manda
   hardware sem toque para `TvActivity` e todo o resto para `MobileActivity`; o override `TV`
   num celular dá no mesmo que `Automático`.
+- **Telas baixas e estreitas (F2-014, 1.8.0)**: as telas da TV medem `LocalConfiguration`
+  em dois pontos — `screenHeightDp < 500` ("short": Grade com 4 blocos por linha e margens
+  menores, Mosaico com painéis laterais compactos, Cinema e Ajustes com margens menores) e
+  `screenWidthDp < 900` ("narrow": colunas laterais menores em TV ao vivo e no catálogo, uma
+  coluna a menos de capas). Um Pixel 3a em paisagem é 807×393 dp; a TV é 960×540. No celular o
+  `Scaffold` da `BixNavHost` reserva só `WindowInsets.navigationBars`: o `Scaffold` padrão do
+  Material 3 acolchoa também o recorte da câmera, e isso era a faixa preta à esquerda.
 - **Celular em paisagem (F2-010, 1.6.0)**: `MobileActivity` é `sensorLandscape`, como os players
   que o cliente usa de referência. As telas compactas passaram a medir a largura
   (`LocalConfiguration.screenWidthDp`). O `PlayerScreen` não mexe mais em `requestedOrientation`:

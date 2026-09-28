@@ -42,6 +42,8 @@ import pro.bixplayer.player.ui.screens.settings.SettingsScreen
 import pro.bixplayer.player.ui.screens.splash.SplashScreen
 import pro.bixplayer.player.ui.screens.update.UpdateScreen
 import androidx.compose.foundation.layout.padding
+import pro.bixplayer.player.ui.theme.LocalTouch
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material3.MaterialTheme
 import androidx.annotation.DrawableRes
 import androidx.compose.material3.Icon
@@ -184,7 +186,14 @@ fun BixNavHost(navController: NavHostController = rememberNavController()) {
             },
             containerColor = MaterialTheme.colorScheme.background,
             // The player draws edge to edge, under the bars and the camera cutout.
-            contentWindowInsets = if (inPlayer) WindowInsets(0) else ScaffoldDefaults.contentWindowInsets,
+            contentWindowInsets = when {
+                inPlayer -> WindowInsets(0)
+                // TV layout on a phone (F2-011): the layouts carry their own margins, and padding
+                // the camera-hole side as well left a black band down the left of every screen
+                // ("fica sempre em recorte", 28/09/2026). Only the navigation bar is kept clear.
+                isTv && LocalTouch.current -> WindowInsets.navigationBars
+                else -> ScaffoldDefaults.contentWindowInsets
+            },
             bottomBar = {
                 if (showBar) {
                     Column {

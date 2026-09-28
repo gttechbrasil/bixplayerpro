@@ -115,7 +115,14 @@ fun CatalogScreen(
     // Columns follow the width, not the form factor: a phone in landscape (F2-010) is as wide as
     // a small TV, and three columns turned the covers into billboards whose titles fell below
     // the fold. Roughly 120 dp per cover keeps poster plus title inside the visible height.
-    val columns = if (compact) (LocalConfiguration.current.screenWidthDp / 120).coerceIn(3, 8) else COLUMNS
+    // An ordinary phone in landscape is ~800 dp wide, a TV 960: the TV proportions there left the
+    // covers 80 dp wide, so the category column and the grid both give a little.
+    val narrow = LocalConfiguration.current.screenWidthDp < 900
+    val columns = when {
+        compact -> (LocalConfiguration.current.screenWidthDp / 120).coerceIn(3, 8)
+        narrow -> COLUMNS - 1
+        else -> COLUMNS
+    }
     val all = stringResource(R.string.live_all)
     val favorites = stringResource(R.string.live_favorites)
     val continuing = stringResource(R.string.catalog_continue)
@@ -134,7 +141,7 @@ fun CatalogScreen(
             onSelect = { category ->
                 gate.require(category.locked, R.string.pin_locked_category) { viewModel.selectCategory(category) }
             },
-            modifier = Modifier.width(220.dp).fillMaxHeight(),
+            modifier = Modifier.width(if (narrow) 170.dp else 220.dp).fillMaxHeight(),
         )
 
         Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
@@ -281,7 +288,6 @@ private fun CatalogCategoryColumn(
                 selected = category.key == state.selectedKey,
                 focusRequester = if (index == 0) firstRequester else null,
                 onSelect = { onSelect(category) },
-                selectOnFocus = !category.locked,
             )
         }
     }
@@ -294,7 +300,6 @@ private fun CategoryRow(
     selected: Boolean,
     focusRequester: FocusRequester?,
     onSelect: () -> Unit,
-    selectOnFocus: Boolean,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
@@ -311,7 +316,8 @@ private fun CategoryRow(
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .bixFocusable(focused, scale = 1f, shape = shape)
             .background(container, shape)
-            .onFocusChanged { if (it.isFocused && selectOnFocus) onSelect() }
+            // Walking the list with the D-pad only moves the highlight; the folder opens on OK
+            // (client request, 28/09/2026). A tap is a select, so phones behave the same.
             .focusable(interactionSource = interaction)
             .onSelect { onSelect() }
             .padding(horizontal = 16.dp, vertical = 12.dp),

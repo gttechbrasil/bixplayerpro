@@ -141,7 +141,12 @@ fun PlayerScreen(
                 controller.show(if (isTv) WindowInsetsCompat.Type.navigationBars() else WindowInsetsCompat.Type.systemBars())
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     window.attributes = window.attributes.apply {
-                        layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                        // The TV interface on a phone draws under the cutout everywhere (MobileActivity).
+                        layoutInDisplayCutoutMode = if (isTv) {
+                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                        } else {
+                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                        }
                     }
                 }
             }

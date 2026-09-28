@@ -25,6 +25,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -91,7 +94,13 @@ fun GridHomeScreen(
         }
         Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(BixScrim, Color(0x99000000), BixScrim))))
 
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
+        // A phone in landscape is ~390 dp tall against 540 on a TV: three rows of three tiles
+        // left each tile shorter than its own text (client, 28/09/2026). Two rows of four fit.
+        val short = LocalConfiguration.current.screenHeightDp < 500
+        val perRow = if (short) 4 else 3
+        Column(
+            modifier = Modifier.fillMaxSize().padding(horizontal = if (short) 24.dp else 48.dp, vertical = if (short) 12.dp else 24.dp),
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 BrandLogo(
                     url = config?.logoUrl,
@@ -107,19 +116,21 @@ fun GridHomeScreen(
             notice?.let {
                 Text(text = it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 6.dp))
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(if (short) 10.dp else 16.dp))
 
-            tiles.chunked(3).forEachIndexed { rowIndex, row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth().weight(1f)) {
+            tiles.chunked(perRow).forEachIndexed { rowIndex, row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(if (short) 10.dp else 16.dp), modifier = Modifier.fillMaxWidth().weight(1f)) {
                     row.forEachIndexed { colIndex, tile ->
                         GridTileCard(
                             tile = tile,
-                            focusRequester = if (rowIndex * 3 + colIndex == firstFocus) firstRequester else null,
+                            focusRequester = if (rowIndex * perRow + colIndex == firstFocus) firstRequester else null,
                             modifier = Modifier.weight(1f).fillMaxSize(),
                         )
                     }
+                    // Keep the last row's tiles the same width as the others.
+                    repeat(perRow - row.size) { Spacer(Modifier.weight(1f)) }
                 }
-                if (rowIndex < (tiles.size - 1) / 3) Spacer(Modifier.height(16.dp))
+                if (rowIndex < (tiles.size - 1) / perRow) Spacer(Modifier.height(if (short) 10.dp else 16.dp))
             }
 
             if (banners.isNotEmpty()) {
@@ -153,17 +164,18 @@ private fun GridTileCard(tile: GridTile, focusRequester: FocusRequester?, modifi
                 modifier = Modifier.fillMaxSize(),
             )
         }
-        Column(modifier = Modifier.align(Alignment.BottomStart).padding(20.dp)) {
+        val short = LocalConfiguration.current.screenHeightDp < 500
+        Column(modifier = Modifier.align(Alignment.BottomStart).padding(if (short) 14.dp else 20.dp)) {
             Icon(
                 painter = painterResource(tile.icon),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(34.dp),
+                modifier = Modifier.size(if (short) 26.dp else 34.dp),
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(if (short) 4.dp else 6.dp))
             Text(
                 text = tile.title,
-                style = MaterialTheme.typography.titleLarge,
+                style = if (short) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
                 color = if (tile.enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -181,9 +193,12 @@ private fun GridTileCard(tile: GridTile, focusRequester: FocusRequester?, modifi
 
 @Composable
 private fun BannerStrip(banners: List<Pair<String, String>>) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth().height(90.dp)) {
+    // Banners are 16:9 frames (the platform's ready-made ones are, F2-012): shown whole, side by
+    // side, instead of cropped to a band that lost their text.
+    val short = LocalConfiguration.current.screenHeightDp < 500
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth().height(if (short) 72.dp else 96.dp)) {
         banners.take(3).forEach { (url, title) ->
-            Box(modifier = Modifier.weight(1f).fillMaxSize().clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.surface)) {
+            Box(modifier = Modifier.fillMaxHeight().aspectRatio(16f / 9f).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.surface)) {
                 AsyncImage(model = url, contentDescription = title, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             }
         }

@@ -14,6 +14,7 @@ from app.schemas.reseller import (
     BrandingUpdate,
     ResellerBannerOut,
     StockBackground,
+    StockBanner,
     UploadResult,
 )
 from app.services import audit
@@ -22,6 +23,7 @@ from app.services.uploads import (
     MSG_TOO_LARGE,
     save_image,
     stock_backgrounds,
+    stock_banners,
 )
 
 router = APIRouter(prefix="/branding", tags=["reseller: branding"])
@@ -45,6 +47,15 @@ async def get_branding(reseller: CurrentReseller) -> BrandingOut:
 )
 async def list_stock_backgrounds(_: CurrentReseller) -> list[StockBackground]:
     return [StockBackground(**bg) for bg in stock_backgrounds()]
+
+
+@router.get(
+    "/banners/stock",
+    summary="Banners prontos oferecidos pela plataforma",
+    response_model=list[StockBanner],
+)
+async def list_stock_banners(_: CurrentReseller) -> list[StockBanner]:
+    return [StockBanner(**b) for b in stock_banners()]
 
 
 @router.put("", summary="Atualiza a personalização", response_model=BrandingOut)
