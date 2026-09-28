@@ -32,6 +32,7 @@ W, H = 1920, 1080
 ART = {
     "bg1": "BACKGROUND 06.png",
     "bg2": "BACKGROUND 03.png",
+    "bg3": "BACKGROUND AZUL.png",
 }
 
 # Base (#050404) with the brand orange (#FF8A00) used sparingly: the home draws white titles and

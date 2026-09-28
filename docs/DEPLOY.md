@@ -422,6 +422,6 @@ curl -sI https://bixplayer.pro/uploads/backgrounds/bg1.jpg | head -3
 
 A arte do cliente fica em `docs/brand/` (`BACKGROUND NN.png`, `Banner - NN.png`); os dicionários
 `ART` e `BANNERS` no script dizem qual vai em cada `bgN`/`bN` (hoje: fundo 06 → `bg1`, o vermelho e
-padrão de quem não escolheu nada; 03 → `bg2`; `bg3` ainda é gerado; banners 01/12/14 → `b1..b3`).
+padrão de quem não escolheu nada; 03 → `bg2`; o azul → `bg3`; banners 01/12/14 → `b1..b3`).
 Para trocar, ponha o PNG em `docs/brand`, ajuste o mapa e rode os dois comandos: as URLs são fixas,
 então quem já escolheu um fundo ou adicionou um banner recebe a arte nova sem mexer em nada.

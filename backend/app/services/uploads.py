@@ -32,12 +32,11 @@ def upload_dir() -> Path:
     return path
 
 
-# bg1 and bg2 are the client's art (docs/brand, converted by scripts/make_backgrounds.py); bg3 is
-# still a generated placeholder. bg1 is also what the app shows when a reseller picked nothing.
+# bg1..bg3 are the client's art (docs/brand, converted by scripts/make_backgrounds.py). bg1 is also what the app shows when a reseller picked nothing.
 STOCK_BACKGROUNDS = (
     ("bg1", "Vermelho"),
     ("bg2", "Cinema"),
-    ("bg3", "Grade"),
+    ("bg3", "Azul"),
 )
 DEFAULT_BACKGROUND = "bg1"
 
