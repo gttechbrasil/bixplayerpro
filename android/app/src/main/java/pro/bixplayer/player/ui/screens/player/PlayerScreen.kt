@@ -88,6 +88,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import pro.bixplayer.player.ui.theme.LocalIsTv
+import pro.bixplayer.player.ui.theme.LocalTouch
 import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
 /**
@@ -107,22 +108,23 @@ fun PlayerScreen(
     val notFound = stringResource(R.string.player_channel_not_found)
     val rootRequester = remember { FocusRequester() }
     val isTv = LocalIsTv.current
+    val touch = LocalTouch.current
     val activity = LocalActivity.current
     // Phones fill the screen by default: their 20:9 panels leave thick side bars on 16:9 video,
     // which is what "deita mas não preenche" meant (M5-032). TVs match the content already.
-    val videoFill = state.videoFill ?: !isTv
+    val videoFill = state.videoFill ?: touch
 
     // Phones already run landscape (F2-010); here the bars go away and the video reaches under
     // the camera cutout. Both go back to the system's on the way out.
     // The catalogue's posters are worthless while a video plays; on a 1 GB box the decoder
     // needs that memory more (M5-018).
     val appContext = LocalContext.current.applicationContext
-    DisposableEffect(isTv) {
+    DisposableEffect(touch) {
         viewModel.session.inPlayerScreen = true
         runCatching { SingletonImageLoader.get(appContext).memoryCache?.clear() }
         val window = activity?.window
         val controller = window?.let { WindowCompat.getInsetsController(it, it.decorView) }
-        if (!isTv && activity != null && window != null && controller != null) {
+        if (touch && activity != null && window != null && controller != null) {
             controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             controller.hide(WindowInsetsCompat.Type.systemBars())
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -133,8 +135,10 @@ fun PlayerScreen(
         }
         onDispose {
             viewModel.session.inPlayerScreen = false
-            if (!isTv && activity != null && window != null && controller != null) {
-                controller.show(WindowInsetsCompat.Type.systemBars())
+            if (touch && activity != null && window != null && controller != null) {
+                // The TV interface on a phone keeps the status bar hidden for the whole app
+                // (MobileActivity); only the compact layout gets it back.
+                controller.show(if (isTv) WindowInsetsCompat.Type.navigationBars() else WindowInsetsCompat.Type.systemBars())
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     window.attributes = window.attributes.apply {
                         layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
@@ -198,7 +202,7 @@ fun PlayerScreen(
             .focusable()
             // Touch: tap shows/hides controls, double tap seeks ±10 s, horizontal drag scrubs.
             .then(
-                if (isTv) Modifier else Modifier
+                if (!touch) Modifier else Modifier
                     .pointerInput(state.isLive) {
                         detectTapGestures(
                             onTap = { viewModel.toggleOverlay() },
@@ -350,7 +354,7 @@ fun PlayerScreen(
         ) {
             InfoOverlay(
                 state = state,
-                touch = !isTv,
+                touch = touch,
                 onTogglePause = viewModel::togglePause,
                 onTracks = viewModel::openTracks,
                 videoFill = videoFill,

@@ -420,6 +420,7 @@ py -3.12 backend/scripts/make_backgrounds.py   # só para regerar os espaços re
 curl -sI https://bixplayer.pro/uploads/backgrounds/bg1.jpg | head -3
 ```
 
-Para trocar por arte do cliente, basta sobrescrever `backend/uploads/backgrounds/bg1..3.jpg`
-(1920×1080) e rodar o script: as URLs são fixas, então quem já escolheu um fundo recebe a arte
-nova sem mexer em nada.
+A arte do cliente fica em `docs/brand/BACKGROUND NN.png`; o dicionário `ART` no script diz qual
+vai em cada `bgN` (hoje: 06 → `bg1`, o vermelho e padrão de quem não escolheu nada; 03 → `bg2`;
+`bg3` ainda é gerado). Para trocar, ponha o PNG em `docs/brand`, ajuste o mapa e rode os dois
+comandos: as URLs são fixas, então quem já escolheu um fundo recebe a arte nova sem mexer em nada.

@@ -44,9 +44,9 @@ digitou o MAC errado. Confira os caracteres com ele.
 | **Controle parental** | Configurações → **Controle parental**: defina um PIN, bloqueie ou oculte categorias. O PIN padrão é `0000` |
 | **Idioma** | Configurações → **Idioma** (Português, English, Español) |
 | **Trocar de lista** | Configurações → **Trocar playlist**, quando o revendedor cadastrar mais de uma |
-| **Modo de interface** | Configurações → **Modo de interface**: *Automático* escolhe TV ou celular pelo aparelho; force **TV** numa box que abriu a tela de celular (ou **Celular** num tablet). O app reabre no modo escolhido |
+| **Modo de interface** | Configurações → **Modo de interface**: *Automático* mostra a mesma interface da TV em qualquer aparelho; **Compacto (celular)** troca para um layout de abas, se preferir. O app reabre no modo escolhido |
 | **Enviar diagnóstico** | Configurações → **Enviar diagnóstico** quando o app fechar sozinho ou travar: manda para o suporte o registro do problema (sem senhas). Anote o número mostrado |
-| **Celular** | Abas na parte de baixo (TV / Filmes / Séries / Guia / Mais). O vídeo abre deitado em tela cheia; toque uma vez para ver os controles, duas vezes para avançar/voltar 10 s. Ao sair do app durante um vídeo ele continua em janela flutuante (PiP) |
+| **Celular** | Abre deitado, com a mesma tela da TV: toque nos blocos e nas capas, deslize para rolar. O vídeo preenche a tela; toque uma vez para ver os controles, duas vezes para avançar/voltar 10 s. Ao sair do app durante um vídeo ele continua em janela flutuante (PiP) |
 
 ## 4. Problemas comuns
 

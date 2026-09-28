@@ -1,8 +1,9 @@
-"""Generate the stock backgrounds the panel offers to every reseller (F2-008).
+"""Build the stock backgrounds the panel offers to every reseller (F2-008).
 
-Placeholders until the client sends his own art: three 1920x1080 images in the brand palette,
-dark enough for the app's white text and the orange accent to stay readable on top. Replacing
-them is a file swap — the panel points at fixed URLs.
+The client's own art lives in docs/brand ("BACKGROUND NN.png"); this script converts it to the
+1920x1080 JPEGs the panel points at, and generates a placeholder for any slot that has no art yet.
+Replacing a background is therefore: drop the PNG in docs/brand, map it below, run the script and
+`./deploy/push-backgrounds.sh`. bg1 is also the app's default when a reseller has not chosen one.
 
     py -3.12 backend/scripts/make_backgrounds.py
 """
@@ -14,11 +15,19 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter
 
-OUT = Path(__file__).resolve().parents[1] / "uploads" / "backgrounds"
+ROOT = Path(__file__).resolve().parents[2]
+BRAND = ROOT / "docs" / "brand"
+OUT = ROOT / "backend" / "uploads" / "backgrounds"
 W, H = 1920, 1080
 
+# Slot -> client art. "BACKGROUND 06" is the red one he asked to be the default (24/09/2026).
+ART = {
+    "bg1": "BACKGROUND 06.png",
+    "bg2": "BACKGROUND 03.png",
+}
+
 # Base (#050404) with the brand orange (#FF8A00) used sparingly: the home draws white titles and
-# orange focus rings over these, so the art stays dark and low-contrast on purpose.
+# orange focus rings over these, so the placeholder art stays dark and low-contrast on purpose.
 BASE = (0x05, 0x04, 0x04)
 ORANGE = (0xFF, 0x8A, 0x00)
 
@@ -83,12 +92,28 @@ def grid() -> Image.Image:
     return img
 
 
+PLACEHOLDERS = {"bg1": aurora, "bg2": spotlight, "bg3": grid}
+
+
+def from_art(name: str) -> Image.Image:
+    """The client's PNG as an opaque 1920x1080 frame: flattened on black, cover-scaled, centred."""
+    src = Image.open(BRAND / name).convert("RGBA")
+    flat = Image.new("RGBA", src.size, (0, 0, 0, 255))
+    flat.alpha_composite(src)
+    img = flat.convert("RGB")
+    scale = max(W / img.width, H / img.height)
+    img = img.resize((round(img.width * scale), round(img.height * scale)), Image.LANCZOS)
+    left, top = (img.width - W) // 2, (img.height - H) // 2
+    return img.crop((left, top, left + W, top + H))
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    for name, build in (("bg1", aurora), ("bg2", spotlight), ("bg3", grid)):
-        img = build()
-        img.save(OUT / f"{name}.jpg", quality=86, optimize=True)
-        print("wrote", OUT / f"{name}.jpg", img.size)
+    for slot, build in PLACEHOLDERS.items():
+        art = ART.get(slot)
+        img = from_art(art) if art else build()
+        img.save(OUT / f"{slot}.jpg", quality=88, optimize=True)
+        print("wrote", OUT / f"{slot}.jpg", img.size, "from", art or f"placeholder {build.__name__}")
 
 
 if __name__ == "__main__":

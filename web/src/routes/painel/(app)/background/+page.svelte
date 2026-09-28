@@ -44,15 +44,16 @@
 	<section class="mb-6">
 		<h2 class="mb-1 font-semibold">Fundos prontos</h2>
 		<p class="mb-3 text-sm text-slate-500">
-			Escolha um destes e o app dos seus clientes já fica com cara de pronto. Você pode trocar por
-			uma imagem sua a qualquer momento, logo abaixo.
+			Enquanto você não escolher nada, o app dos seus clientes usa o primeiro. Pode trocar por
+			outro com um clique, ou por uma imagem sua logo abaixo.
 		</p>
 		<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 			{#each stock as bg (bg.id)}
 				{@const active = data.user.bg_url === bg.url}
+				{@const fallback = !data.user.bg_url && bg.id === 'bg1'}
 				<button
 					type="button"
-					class="card min-w-0 overflow-hidden text-left transition disabled:opacity-100 {active
+					class="card min-w-0 overflow-hidden text-left transition disabled:opacity-100 {active || fallback
 						? 'ring-2 ring-brand-500'
 						: 'hover:brightness-110'}"
 					disabled={applying !== null}
@@ -69,7 +70,7 @@
 					<span class="flex items-center justify-between px-4 py-3 text-sm">
 						<span class="font-medium">{bg.label}</span>
 						<span class="text-xs text-slate-500">
-							{#if active}Em uso{:else if applying === bg.id}Aplicando…{:else}Usar{/if}
+							{#if active}Em uso{:else if fallback}Padrão (em uso){:else if applying === bg.id}Aplicando…{:else}Usar{/if}
 						</span>
 					</span>
 				</button>

@@ -32,11 +32,14 @@ def upload_dir() -> Path:
     return path
 
 
+# bg1 and bg2 are the client's art (docs/brand, converted by scripts/make_backgrounds.py); bg3 is
+# still a generated placeholder. bg1 is also what the app shows when a reseller picked nothing.
 STOCK_BACKGROUNDS = (
-    ("bg1", "Aurora"),
-    ("bg2", "Holofote"),
+    ("bg1", "Vermelho"),
+    ("bg2", "Cinema"),
     ("bg3", "Grade"),
 )
+DEFAULT_BACKGROUND = "bg1"
 
 
 def stock_backgrounds() -> list[dict[str, str]]:
@@ -47,6 +50,14 @@ def stock_backgrounds() -> list[dict[str, str]]:
         for name, label in STOCK_BACKGROUNDS
         if (upload_dir() / "backgrounds" / f"{name}.jpg").exists()
     ]
+
+
+def default_background_url() -> str | None:
+    """The background a device gets when its reseller has none (client's request, 24/09/2026)."""
+    if not (upload_dir() / "backgrounds" / f"{DEFAULT_BACKGROUND}.jpg").exists():
+        return None
+    base = get_settings().public_base_url.rstrip("/")
+    return f"{base}/uploads/backgrounds/{DEFAULT_BACKGROUND}.jpg"
 
 
 def save_image(data: bytes, reseller_id: int, kind: str) -> str:

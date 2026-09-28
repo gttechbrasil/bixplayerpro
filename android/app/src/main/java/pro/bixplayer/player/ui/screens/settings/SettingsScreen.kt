@@ -41,9 +41,10 @@ import pro.bixplayer.player.R
 import android.content.Intent
 import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import pro.bixplayer.player.ui.LaunchActivity
 import pro.bixplayer.player.util.UiMode
-import pro.bixplayer.player.ui.theme.LocalIsTv
+import pro.bixplayer.player.ui.theme.LocalTouch
 import pro.bixplayer.player.ui.components.BixButton
 import pro.bixplayer.player.ui.components.PinGateDialog
 import pro.bixplayer.player.ui.components.rememberPinGate
@@ -81,12 +82,15 @@ fun SettingsScreen(
         firstRequester.requestFocusWithRetry()
     }
 
+    // A phone in landscape is ~90 dp shorter than a TV (F2-011): tighter margins there keep one
+    // more row of the list on screen before it has to scroll.
+    val short = LocalConfiguration.current.screenHeightDp < 500
     Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 64.dp, vertical = 40.dp),
+            .padding(horizontal = if (short) 40.dp else 64.dp, vertical = if (short) 16.dp else 40.dp),
     ) {
         Text(
             text = stringResource(R.string.home_settings),
@@ -94,7 +98,7 @@ fun SettingsScreen(
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            text = stringResource(if (LocalIsTv.current) R.string.settings_hint else R.string.settings_hint_touch),
+            text = stringResource(if (LocalTouch.current) R.string.settings_hint_touch else R.string.settings_hint),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 6.dp),

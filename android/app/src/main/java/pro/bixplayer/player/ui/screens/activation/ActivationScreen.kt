@@ -52,6 +52,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import pro.bixplayer.player.ui.theme.LocalIsTv
+import pro.bixplayer.player.ui.theme.LocalTouch
 import pro.bixplayer.player.ui.components.requestFocusSafely
 import pro.bixplayer.player.ui.components.requestFocusWithRetry
 
@@ -168,7 +169,7 @@ fun ActivationScreen(
                 )
             }
 
-            if (!LocalIsTv.current && state.macAddress.isNotBlank()) {
+            if (LocalTouch.current && state.macAddress.isNotBlank()) {
                 // On a phone the MAC goes to the reseller by clipboard or WhatsApp, not by dictation.
                 val context = LocalContext.current
                 val clipboard = LocalClipboardManager.current

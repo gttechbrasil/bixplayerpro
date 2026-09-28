@@ -24,7 +24,11 @@ class LaunchActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val override = UiMode.parse(runBlocking { store.currentUiMode() })
-        val tv = UiModeDecider.useTvUi(this, override)
+        // TvActivity is for hardware without a touchscreen. A phone always goes through
+        // MobileActivity, which draws the same TV interface with touch on top (F2-011); the only
+        // way to the old compact layout is choosing it in Ajustes, and that works on a box too
+        // (M5-017).
+        val tv = UiModeDecider.isTvHardware(this) && override != UiMode.MOBILE
         Timber.i("launch: override=%s -> %s", override, if (tv) "TvActivity" else "MobileActivity")
         val target = if (tv) TvActivity::class.java else MobileActivity::class.java
         startActivity(

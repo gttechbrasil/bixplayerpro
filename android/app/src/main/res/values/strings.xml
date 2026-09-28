@@ -85,7 +85,7 @@
     <string name="settings_ui_mode">Modo de interface</string>
     <string name="settings_ui_mode_auto">Automático</string>
     <string name="settings_ui_mode_tv">TV</string>
-    <string name="settings_ui_mode_mobile">Celular</string>
+    <string name="settings_ui_mode_mobile">Compacto (celular)</string>
     <string name="settings_cache_cleared">Cache limpo. As listas serão baixadas novamente.</string>
     <string name="settings_mac">Endereço MAC</string>
     <string name="settings_version">Versão</string>

@@ -360,11 +360,22 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
 
 ## 11. Decisões que valem lembrar
 
+- **Celular desenha a interface da TV (F2-011, 1.7.0)**: `MobileActivity` hospeda
+  `BixTvTheme(touch = true)`, ou seja, `LocalIsTv = true` **e** `LocalTouch = true`. As duas
+  locais têm papéis distintos: `LocalIsTv` escolhe o layout de 10 pés (telas, tamanhos, lista
+  de categorias), `LocalTouch` liga o que depende de dedo (gestos e controles do player,
+  preenchimento da tela por padrão, barras imersivas, botões Copiar/Compartilhar MAC, dica
+  "Toque para alterar"). Um celular em paisagem tem ~1000×450 dp contra 960×540 dp de uma TV
+  1080p, então o layout cabe; a `MobileActivity` esconde a barra de status no app inteiro (a de
+  navegação fica, para o gesto de voltar funcionar no primeiro deslize) e o player, ao sair,
+  devolve só a de navegação. `Modifier.onSelect` já respondia a toque, por isso nada do menu,
+  catálogo ou detalhe precisou mudar. O layout compacto (`BixMobileTheme`, `CompactHomeScreen`,
+  abas) não foi apagado: é o *Modo de interface → Compacto (celular)*. `LaunchActivity` manda
+  hardware sem toque para `TvActivity` e todo o resto para `MobileActivity`; o override `TV`
+  num celular dá no mesmo que `Automático`.
 - **Celular em paisagem (F2-010, 1.6.0)**: `MobileActivity` é `sensorLandscape`, como os players
-  que o cliente usa de referência. As telas "compactas" deixaram de assumir retrato e passaram a
-  medir a largura (`LocalConfiguration.screenWidthDp`): tela inicial com quatro blocos por linha
-  e menu em duas colunas acima de 600 dp, catálogo com `(largura / 120)` colunas entre 3 e 8,
-  lista de canais em até três colunas. O `PlayerScreen` não mexe mais em `requestedOrientation`:
+  que o cliente usa de referência. As telas compactas passaram a medir a largura
+  (`LocalConfiguration.screenWidthDp`). O `PlayerScreen` não mexe mais em `requestedOrientation`:
   restaurar `UNSPECIFIED` ao sair desfazia o bloqueio do app inteiro.
 - **Detalhe em retrato (M5-031, 1.5.2)**: `MovieDetailScreen` e `SeriesDetailScreen` eram
   `Row` de TV. Agora `DetailFrame`/`SeriesFrame` escolhem entre lado a lado (TV) e empilhado
@@ -418,7 +429,8 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
   em runtime entre `TvActivity` e `MobileActivity` (`UiModeDecider`: `UiModeManager` = TV, feature
   `leanback`/`television` ou ausência de touchscreen → TV). TV boxes AOSP não têm leanback e
   disparam `LAUNCHER`; por isso a decisão não pode vir do manifesto. Override em Configurações →
-  *Modo de interface* (`ui_mode` no DataStore). A UI de celular continua navegável por D-pad:
+  *Modo de interface* (`ui_mode` no DataStore); desde a F2-011 ele só decide entre a interface
+  da TV e a compacta, o toque segue o hardware. A UI compacta continua navegável por D-pad:
   `Modifier.onSelect` é um só para as duas famílias (OK/ENTER no KEY UP + toque no mesmo nó).
 - **Diagnóstico (M5-013)**: `util/Diagnostics` planta uma `Timber.Tree` com arquivo rotativo
   (`files/diagnostics/app.log`), captura exceções não tratadas (`crash-*.txt`) e, no boot

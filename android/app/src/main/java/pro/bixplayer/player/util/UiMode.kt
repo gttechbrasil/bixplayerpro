@@ -86,10 +86,4 @@ object UiModeDecider {
 
     /** Fire OS feature flag; Fire TV also reports leanback and UI_MODE_TYPE_TELEVISION, this is belt and braces. */
     const val FEATURE_FIRE_TV = "amazon.hardware.fire_tv"
-
-    fun useTvUi(context: Context, override: UiMode): Boolean = when (override) {
-        UiMode.TV -> true
-        UiMode.MOBILE -> false
-        UiMode.AUTO -> isTvHardware(context)
-    }
 }

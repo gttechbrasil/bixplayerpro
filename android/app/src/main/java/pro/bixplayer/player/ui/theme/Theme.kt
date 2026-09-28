@@ -14,6 +14,13 @@ import androidx.tv.material3.MaterialTheme as TvMaterialTheme
  */
 val LocalIsTv = staticCompositionLocalOf { false }
 
+/**
+ * Whether the device has a touchscreen: taps on the player, soft keyboard, copy buttons. Since
+ * 1.7.0 a phone draws the TV interface (F2-011), so this is no longer the opposite of [LocalIsTv]:
+ * a phone is TV layout + touch, a box is TV layout without it.
+ */
+val LocalTouch = staticCompositionLocalOf { false }
+
 private val DarkColors = androidx.compose.material3.darkColorScheme(
     primary = BixAccent,
     onPrimary = BixBackground,
@@ -46,22 +53,22 @@ private val TvColors = tvDarkColorScheme(
  * components (text fields, dialogs) come from there.
  */
 @Composable
-fun BixTvTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalIsTv provides true) {
+fun BixTvTheme(touch: Boolean = false, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalIsTv provides true, LocalTouch provides touch) {
         TvMaterialTheme(colorScheme = TvColors, typography = TvTypography) {
             MaterialTheme(colorScheme = DarkColors, typography = TvTypographyM3, content = content)
         }
     }
 }
 
-/** Theme for the phone/tablet activity. Same tokens, smaller type scale. */
+/** Theme for the compact phone layout (opt-in since F2-011). Same tokens, smaller type scale. */
 @Composable
 fun BixMobileTheme(content: @Composable () -> Unit) {
     // The app is dark-only by design (it is a video player); the parameter is read so that a
     // future light theme is a one-line change.
     @Suppress("UNUSED_VARIABLE")
     val systemDark = isSystemInDarkTheme()
-    CompositionLocalProvider(LocalIsTv provides false) {
+    CompositionLocalProvider(LocalIsTv provides false, LocalTouch provides true) {
         MaterialTheme(colorScheme = DarkColors, typography = MobileTypography, content = content)
     }
 }

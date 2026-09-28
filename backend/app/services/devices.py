@@ -16,6 +16,7 @@ from app.core.security import (
 from app.models import Banner, Device, Reseller
 from app.schemas.device import BannerOut, DeviceConfig, PlaylistOut
 from app.services.playlists import playlist_url_for_app
+from app.services.uploads import default_background_url
 
 MAC_GENERATION_ATTEMPTS = 10
 
@@ -105,7 +106,8 @@ async def build_config(
         # No reseller yet (demo mode): the app opens on the default layout, F2-006.
         theme=reseller.theme if reseller else "rail",
         logo_url=reseller.logo_url if reseller else None,
-        bg_url=reseller.bg_url if reseller else None,
+        # A reseller who never chose a background still gets the platform's default one.
+        bg_url=(reseller.bg_url if reseller else None) or default_background_url(),
         qr_content=reseller.qr_content if reseller else None,
         banners=banners,
         auto_ads=reseller.auto_ads if reseller else False,

@@ -155,3 +155,31 @@ async def test_config_updates_app_version_from_headers(
     assert (await client.get(CONFIG, headers=bad)).status_code == 200
     await db.refresh(device)
     assert device.app_version == "1.2.3" and device.app_type == "mobile"
+
+
+async def test_config_falls_back_to_the_default_background(
+    client: AsyncClient, db: AsyncSession, reseller_user: Reseller
+) -> None:
+    """A reseller who never picked a background still ships the platform's default one (bg1)."""
+    import os
+    from pathlib import Path
+
+    stock = Path(os.environ["UPLOAD_DIR"]) / "backgrounds"
+    stock.mkdir(parents=True, exist_ok=True)
+    (stock / "bg1.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+    try:
+        data = await register(client, "bg-default-device")
+        device = await db.scalar(select(Device).where(Device.mac_address == data["mac_address"]))
+        assert device is not None
+        device.reseller_id = reseller_user.id
+        reseller_user.bg_url = None
+        await db.flush()
+        body = (await client.get(CONFIG, headers=bearer(data["token"]))).json()
+        assert body["bg_url"].endswith("/uploads/backgrounds/bg1.jpg")
+
+        reseller_user.bg_url = "https://cdn.exemplo.com/meu-fundo.jpg"
+        await db.flush()
+        body = (await client.get(CONFIG, headers=bearer(data["token"]))).json()
+        assert body["bg_url"] == "https://cdn.exemplo.com/meu-fundo.jpg"
+    finally:
+        (stock / "bg1.jpg").unlink(missing_ok=True)
