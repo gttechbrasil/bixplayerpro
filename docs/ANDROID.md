@@ -373,6 +373,15 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
   abas) não foi apagado: é o *Modo de interface → Compacto (celular)*. `LaunchActivity` manda
   hardware sem toque para `TvActivity` e todo o resto para `MobileActivity`; o override `TV`
   num celular dá no mesmo que `Automático`.
+- **Segurar para favoritar (F2-017, 1.10.0)**: `ChannelRow` (em `LiveScreen.kt`) não usa mais
+  `onSelect`/`tap`: tecla e toque passam por um `HoldToFavorite` que anima uma barra por
+  1,5 s e só então chama o favorito; soltar antes abre o canal. Na tecla, o KEY DOWN (só o de
+  `repeatCount == 0`) inicia e o KEY UP decide; no toque, `awaitFirstDown` inicia e
+  `waitForUpOrCancellation` decide — quando a lista começa a rolar ele devolve `null` e nada
+  acontece. Não depende de o controle mandar repetições de tecla.
+- **Programação no player (M5-036, 1.10.0)**: `data/epg/NowNext.kt` (`EpgDao.observeNowNext`)
+  é a única fonte de "agora/depois", relida a cada minuto; prévia e player usam o mesmo
+  componente `ui/components/EpgNowNext.kt`.
 - **Telas baixas e estreitas (F2-014, 1.8.0)**: as telas da TV medem `LocalConfiguration`
   em dois pontos — `screenHeightDp < 500` ("short": Grade com 4 blocos por linha e margens
   menores, Mosaico com painéis laterais compactos, Cinema e Ajustes com margens menores) e

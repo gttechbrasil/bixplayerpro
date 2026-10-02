@@ -1,5 +1,6 @@
 package pro.bixplayer.player.ui.screens.player
 
+import pro.bixplayer.player.ui.components.EpgNowNext
 import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -452,11 +453,7 @@ private fun InfoOverlay(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = if (state.isLive) {
-                        listOfNotNull(item?.subtitle?.takeIf { it.isNotBlank() }, stringResource(R.string.live_epg_slot)).joinToString("  ·  ")
-                    } else {
-                        item?.subtitle.orEmpty()
-                    },
+                    text = item?.subtitle.orEmpty(),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -468,6 +465,12 @@ private fun InfoOverlay(
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White,
             )
+        }
+
+        if (state.isLive) {
+            // Same block as the channel preview: programme now with its progress, then next.
+            Spacer(Modifier.height(12.dp))
+            EpgNowNext(now = state.epgNow, next = state.epgNext, modifier = Modifier.fillMaxWidth(0.6f))
         }
 
         if (!state.isLive) {

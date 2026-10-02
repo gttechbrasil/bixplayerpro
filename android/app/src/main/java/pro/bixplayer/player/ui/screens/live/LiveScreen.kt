@@ -1,5 +1,27 @@
 package pro.bixplayer.player.ui.screens.live
 
+import android.widget.Toast
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import pro.bixplayer.player.ui.components.EpgNowNext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -60,16 +82,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 import pro.bixplayer.player.R
 import pro.bixplayer.player.ui.demo.DemoKind
 import pro.bixplayer.player.ui.demo.DemoShowcase
 import pro.bixplayer.player.ui.demo.LocalDemoState
 import pro.bixplayer.player.data.db.ChannelEntity
-import pro.bixplayer.player.data.db.EpgProgramEntity
 import pro.bixplayer.player.player.SessionState
 import pro.bixplayer.player.ui.components.SearchRow
 import pro.bixplayer.player.ui.components.PinGateDialog
@@ -419,6 +437,21 @@ private fun ChannelRow(
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val shape = RoundedCornerShape(10.dp)
+    val barColor = MaterialTheme.colorScheme.primary
+
+    // Favouriting answers right away on the device itself: a vibration on phones and a toast on
+    // both, since the star alone is easy to miss from the sofa.
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    val added = stringResource(R.string.live_favorite_added)
+    val removed = stringResource(R.string.live_favorite_removed)
+    val toggleWithFeedback = {
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        Toast.makeText(context, if (favorite) removed else added, Toast.LENGTH_SHORT).show()
+        onToggleFavorite()
+    }
+    val hold = rememberHoldToFavorite(toggleWithFeedback)
+    val open by rememberUpdatedState(onOpen)
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -432,17 +465,49 @@ private fun ChannelRow(
             )
             .onFocusChanged { if (it.isFocused) onFocused() }
             .focusable(interactionSource = interaction)
-            .tap(onOpen)
+            // Touch: a tap opens, a finger held for 1.5 s favourites (F2-017). A drag that turns
+            // into a list scroll cancels both.
+            .pointerInput(channel.id) {
+                awaitEachGesture {
+                    awaitFirstDown()
+                    hold.start()
+                    val up = waitForUpOrCancellation()
+                    up?.consume()
+                    val fired = hold.stop()
+                    if (up != null && !fired) open()
+                }
+            }
+            // Remote: OK opens on release; held for 1.5 s it favourites instead and the release
+            // is swallowed. MENU still toggles at once, as before.
             .onKeyEvent { event ->
-                if (event.type != KeyEventType.KeyUp) return@onKeyEvent false
-                when (event.key) {
-                    Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> {
-                        onOpen(); true
+                val select = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
+                when {
+                    select && event.type == KeyEventType.KeyDown -> {
+                        if (event.nativeKeyEvent.repeatCount == 0) hold.start()
+                        true
                     }
-                    Key.Menu -> {
-                        onToggleFavorite(); true
+                    select && event.type == KeyEventType.KeyUp -> {
+                        if (!hold.stop()) open()
+                        true
+                    }
+                    event.key == Key.Menu && event.type == KeyEventType.KeyUp -> {
+                        toggleWithFeedback(); true
                     }
                     else -> false
+                }
+            }
+            // The hold fills a bar along the bottom of the row, so the user sees it coming.
+            .drawWithContent {
+                drawContent()
+                val progress = hold.progress.value
+                if (progress > 0f) {
+                    val thickness = 4.dp.toPx()
+                    drawRoundRect(
+                        color = barColor,
+                        topLeft = Offset(0f, size.height - thickness),
+                        size = Size(size.width * progress, thickness),
+                        cornerRadius = CornerRadius(thickness / 2),
+                    )
                 }
             }
             .padding(horizontal = 14.dp, vertical = 8.dp),
@@ -471,6 +536,47 @@ private fun ChannelRow(
             )
         }
     }
+}
+
+/** How long OK (or a finger) must stay down on a channel to (un)favourite it — client's ask. */
+private const val HOLD_TO_FAVORITE_MS = 1_500
+
+/**
+ * Press-and-hold on a channel row. [start] on key/finger down animates [progress] to 1 over
+ * [HOLD_TO_FAVORITE_MS] and then runs the action; [stop] on release cancels it and reports
+ * whether it had already run, so the caller knows not to open the channel as well.
+ */
+@Stable
+private class HoldToFavorite(private val scope: CoroutineScope, private val onHold: () -> Unit) {
+    val progress = Animatable(0f)
+    private var job: Job? = null
+    private var fired = false
+
+    fun start() {
+        job?.cancel()
+        fired = false
+        job = scope.launch {
+            progress.snapTo(0f)
+            progress.animateTo(1f, tween(HOLD_TO_FAVORITE_MS, easing = LinearEasing))
+            fired = true
+            onHold()
+            progress.snapTo(0f)
+        }
+    }
+
+    fun stop(): Boolean {
+        job?.cancel()
+        job = null
+        scope.launch { progress.snapTo(0f) }
+        return fired.also { fired = false }
+    }
+}
+
+@Composable
+private fun rememberHoldToFavorite(onHold: () -> Unit): HoldToFavorite {
+    val scope = rememberCoroutineScope()
+    val latest by rememberUpdatedState(onHold)
+    return remember { HoldToFavorite(scope) { latest() } }
 }
 
 @Composable
@@ -548,7 +654,7 @@ private fun PreviewPanel(
                 )
             }
             Spacer(Modifier.height(12.dp))
-            EpgSlot(now = state.nowProgramme, next = state.nextProgramme)
+            EpgNowNext(now = state.nowProgramme, next = state.nextProgramme)
         }
         Spacer(Modifier.weight(1f))
         GuideChip(onClick = onOpenGuide)
@@ -557,47 +663,6 @@ private fun PreviewPanel(
             text = stringResource(R.string.live_hints),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-/** Current programme with its progress, then the next one; a hint when the guide is empty. */
-@Composable
-private fun EpgSlot(now: EpgProgramEntity?, next: EpgProgramEntity?) {
-    val timeFormat = remember { DateTimeFormatter.ofPattern("HH:mm") }
-    val zone = remember { ZoneId.systemDefault() }
-    fun hhmm(ms: Long) = Instant.ofEpochMilli(ms).atZone(zone).format(timeFormat)
-    if (now == null && next == null) {
-        Text(
-            text = stringResource(R.string.live_epg_slot),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        return
-    }
-    now?.let { programme ->
-        Text(
-            text = stringResource(R.string.live_now, hhmm(programme.startAt), programme.title),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        val total = (programme.endAt - programme.startAt).coerceAtLeast(1L)
-        val fraction = ((System.currentTimeMillis() - programme.startAt).toFloat() / total).coerceIn(0f, 1f)
-        Spacer(Modifier.height(6.dp))
-        Box(modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = 0.2f))) {
-            Box(modifier = Modifier.fillMaxWidth(fraction).height(4.dp).background(MaterialTheme.colorScheme.primary))
-        }
-    }
-    next?.let { programme ->
-        Spacer(Modifier.height(6.dp))
-        Text(
-            text = stringResource(R.string.live_next, hhmm(programme.startAt), programme.title),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
         )
     }
 }

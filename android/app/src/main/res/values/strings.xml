@@ -60,12 +60,14 @@
     <string name="live_favorites">Favoritos</string>
     <string name="live_search">Buscar canal</string>
     <string name="live_no_channels">Nenhum canal nesta categoria.</string>
-    <string name="live_no_favorites">Você ainda não tem favoritos. Foque um canal e pressione MENU.</string>
+    <string name="live_no_favorites">Você ainda não tem favoritos. Segure OK sobre um canal (no celular, toque e segure) por 1,5 s.</string>
     <string name="live_favorite_add">Adicionar aos favoritos</string>
     <string name="live_favorite_remove">Remover dos favoritos</string>
+    <string name="live_favorite_removed">Removido dos favoritos</string>
+    <string name="live_favorite_added">★ Adicionado aos favoritos</string>
     <string name="live_channels_count">%1$d canais</string>
     <string name="live_epg_slot">Programação: em breve</string>
-    <string name="live_hints">OK assistir · MENU favoritar · VOLTAR menu</string>
+    <string name="live_hints">OK assistir · segure OK: favoritar · VOLTAR menu</string>
 
     <!-- Settings -->
     <string name="settings_hint">OK altera a opção</string>

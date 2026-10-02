@@ -1,5 +1,12 @@
 package pro.bixplayer.player.ui.screens.player
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import pro.bixplayer.player.data.db.EpgDao
+import pro.bixplayer.player.data.db.EpgProgramEntity
+import pro.bixplayer.player.data.epg.observeNowNext
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -104,11 +111,15 @@ data class PlayerUiState(
     val compatibilityMode: Boolean = false,
     /** Cropped (true), whole (false) or never chosen (null, the screen decides) — F2-005. */
     val videoFill: Boolean? = null,
+    /** What is on the live channel now and next, from the guide (M5-036). */
+    val epgNow: EpgProgramEntity? = null,
+    val epgNext: EpgProgramEntity? = null,
 ) {
     val isLive: Boolean get() = item?.isLive != false
     val channel: ChannelEntity? get() = (item as? PlaybackItem.Live)?.channel
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
     savedState: SavedStateHandle,
@@ -118,6 +129,7 @@ class PlayerViewModel @Inject constructor(
     private val seriesDao: SeriesDao,
     private val episodeDao: EpisodeDao,
     private val progressDao: WatchProgressDao,
+    private val epgDao: EpgDao,
     private val store: DeviceStore,
     val session: PlayerSession,
 ) : ViewModel() {
@@ -141,6 +153,14 @@ class PlayerViewModel @Inject constructor(
     private var endedHandled = false
 
     init {
+        // Now/next of the channel on screen, following every zap. The overlay used to print
+        // "Programação: em breve" whatever the guide had (M5-036).
+        _uiState.map { it.channel }
+            .distinctUntilChanged { a, b -> a?.id == b?.id }
+            .flatMapLatest { channel -> epgDao.observeNowNext(channel) }
+            .onEach { nn -> _uiState.value = _uiState.value.copy(epgNow = nn.now, epgNext = nn.next) }
+            .launchIn(viewModelScope)
+
         // The screen-fit choice is the user's and sticks between sessions (F2-005).
         store.videoFill
             .onEach { fill -> _uiState.value = _uiState.value.copy(videoFill = fill) }

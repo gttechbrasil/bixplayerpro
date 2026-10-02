@@ -1,5 +1,9 @@
 package pro.bixplayer.player.ui.screens.series
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -72,36 +76,54 @@ fun SeriesDetailScreen(
     }
 
     val compact = !LocalIsTv.current
+    // The TV interface on a phone (F2-011) is ~390 dp tall: the 300 dp poster pushed "Continuar"
+    // and "Favoritar" below the screen (M5-037). There the poster shrinks and sits beside the title.
+    val short = !compact && LocalConfiguration.current.screenHeightDp < 500
     SeriesFrame(
         compact = compact,
+        short = short,
         sheet = {
-            Box(
-                modifier = Modifier
-                    .then(if (compact) Modifier.width(120.dp) else Modifier.width(200.dp))
-                    .aspectRatio(2f / 3f)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surface),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (!show.coverUrl.isNullOrBlank()) {
-                    AsyncImage(model = show.coverUrl, contentDescription = show.name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                } else {
-                    Text(text = show.name.take(1).uppercase(), style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            val poster: @Composable (Dp) -> Unit = { width ->
+                Box(
+                    modifier = Modifier
+                        .width(width)
+                        .aspectRatio(2f / 3f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surface),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (!show.coverUrl.isNullOrBlank()) {
+                        AsyncImage(model = show.coverUrl, contentDescription = show.name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                    } else {
+                        Text(text = show.name.take(1).uppercase(), style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = show.name,
-                style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            val meta = listOfNotNull(show.year, show.genre, show.rating?.let { "★ $it" }).joinToString("  ·  ")
-            if (meta.isNotBlank()) {
-                Text(text = meta, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+            val heading: @Composable () -> Unit = {
+                Text(
+                    text = show.name,
+                    style = if (compact || short) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                val meta = listOfNotNull(show.year, show.genre, show.rating?.let { "★ $it" }).joinToString("  ·  ")
+                if (meta.isNotBlank()) {
+                    Text(text = meta, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                }
             }
-            Spacer(Modifier.height(16.dp))
+            if (short) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    poster(84.dp)
+                    Spacer(Modifier.width(16.dp))
+                    Column { heading() }
+                }
+            } else {
+                poster(if (compact) 120.dp else 200.dp)
+                Spacer(Modifier.height(16.dp))
+                heading()
+            }
+            Spacer(Modifier.height(if (short) 12.dp else 16.dp))
             val continueEp = state.continueEpisode
             if (continueEp != null) {
                 val saved = state.progress[continueEp.remoteId]
@@ -129,7 +151,7 @@ fun SeriesDetailScreen(
                     text = show.plot,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = if (compact) 3 else 6,
+                    maxLines = if (compact || short) 3 else 6,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -175,6 +197,7 @@ fun SeriesDetailScreen(
 @Composable
 private fun SeriesFrame(
     compact: Boolean,
+    short: Boolean,
     sheet: @Composable ColumnScope.() -> Unit,
     episodes: @Composable ColumnScope.() -> Unit,
 ) {
@@ -194,10 +217,14 @@ private fun SeriesFrame(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 48.dp, vertical = 32.dp),
-            horizontalArrangement = Arrangement.spacedBy(32.dp),
+                .padding(horizontal = if (short) 32.dp else 48.dp, vertical = if (short) 16.dp else 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(if (short) 24.dp else 32.dp),
         ) {
-            Column(modifier = Modifier.width(360.dp).fillMaxHeight(), content = sheet)
+            // Scrolls as a last resort: a long synopsis must never push the buttons out of reach.
+            Column(
+                modifier = Modifier.width(if (short) 320.dp else 360.dp).fillMaxHeight().verticalScroll(rememberScrollState()),
+                content = sheet,
+            )
             Column(modifier = Modifier.weight(1f).fillMaxHeight(), content = episodes)
         }
     }

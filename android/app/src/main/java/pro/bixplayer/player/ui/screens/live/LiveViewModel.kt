@@ -1,5 +1,7 @@
 package pro.bixplayer.player.ui.screens.live
 
+import pro.bixplayer.player.data.epg.NowNext
+import pro.bixplayer.player.data.epg.observeNowNext
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -153,17 +155,12 @@ class LiveViewModel @Inject constructor(
         }
 
     /** Now/next for the focused channel; empty when it has no EPG id or the guide is not synced. */
-    private val nowNext: Flow<List<EpgProgramEntity>> = focusedChannel.flatMapLatest { channel ->
-        val epgId = channel?.epgChannelId
-        if (channel == null || epgId == null) flowOf(emptyList())
-        else epgDao.observeUpcoming(channel.playlistId, epgId, System.currentTimeMillis(), 2)
-    }
+    private val nowNext: Flow<NowNext> = focusedChannel.flatMapLatest { channel -> epgDao.observeNowNext(channel) }
 
     val uiState: StateFlow<LiveUiState> = combine(
         playlistId, categories, scope, favoriteIds, focusedChannel, query, session.state, channelIndex, nowNext,
     ) { values ->
-        @Suppress("UNCHECKED_CAST")
-        val programmes = values[8] as List<EpgProgramEntity>
+        val programmes = values[8] as NowNext
         @Suppress("UNCHECKED_CAST")
         LiveUiState(
             playlistId = values[0] as Long?,
@@ -174,8 +171,8 @@ class LiveViewModel @Inject constructor(
             query = values[5] as String,
             preview = values[6] as SessionState,
             channelIndex = values[7] as Int,
-            nowProgramme = programmes.firstOrNull { it.startAt <= System.currentTimeMillis() },
-            nextProgramme = programmes.firstOrNull { it.startAt > System.currentTimeMillis() },
+            nowProgramme = programmes.now,
+            nextProgramme = programmes.next,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LiveUiState())
 
