@@ -23,7 +23,11 @@ fun PlaylistScreen(
     val canWatch = config?.canWatch == true
     val manage = remember { canWatch }
     if (manage) {
-        ChangePlaylistScreen(macAddress = config?.macAddress.orEmpty(), onBack = onBack)
+        ChangePlaylistScreen(
+            macAddress = config?.macAddress.orEmpty(),
+            qrContent = config?.qrContent,
+            onBack = onBack,
+        )
     } else {
         ActivationScreen(onActivated = onActivated, onBack = onBack)
     }

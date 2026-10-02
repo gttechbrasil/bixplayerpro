@@ -28,14 +28,18 @@
 
 <PageHeader
 	title="QR Code"
-	subtitle="O app renderiza um QR Code com este conteúdo (link, WhatsApp, texto)"
+	subtitle="Aparece no app em Configurações → Playlist, abaixo da lista. O cliente aponta a câmera do celular e cai no seu link."
 />
 <form class="card max-w-2xl space-y-4 p-6" onsubmit={save}>
 	<Input
 		label="Conteúdo do QR Code"
-		placeholder="Texto, link ou informação para o QR Code"
+		placeholder="https://wa.me/5511999999999"
 		maxlength={2048}
 		bind:value={content}
 	/>
+	<p class="text-sm text-slate-500">
+		Use o link do seu WhatsApp (<code>https://wa.me/55DDDNUMERO</code>), do seu site ou um texto.
+		Deixe vazio para não mostrar QR Code no app.
+	</p>
 	<Button type="submit" loading={saving}>Salvar QR Code</Button>
 </form>

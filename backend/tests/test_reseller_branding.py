@@ -59,32 +59,18 @@ async def test_branding_get_and_update(
     reg = await register(client, "dev-brand")
     await reseller_client.post(DEVICES, json=payload(reg["mac_address"]))
     cfg = (await client.get(CONFIG, headers=bearer(reg["token"]))).json()
-    assert cfg["theme"] == "grid" and cfg["qr_content"] == "https://wa.me/55" and cfg["auto_ads"]
+    assert cfg["theme"] == "grid" and cfg["qr_content"] == "https://wa.me/55"
+    # Banners left the product (F2-015): the stored flag no longer reaches the app.
+    assert cfg["auto_ads"] is False
 
 
 async def test_stock_backgrounds_are_offered(reseller_client: AsyncClient) -> None:
-    """The panel offers ready-made backgrounds so a reseller is not stuck with a blank app (F2-008)."""
+    """Ready-made backgrounds so a reseller is not stuck with a blank app (F2-008)."""
     resp = await reseller_client.get(f"{BRANDING}/backgrounds")
     assert resp.status_code == 200, resp.text
     for item in resp.json():
         assert item["url"].endswith(f"/uploads/backgrounds/{item['id']}.jpg")
         assert item["label"]
-
-
-async def test_stock_banners_are_offered(reseller_client: AsyncClient) -> None:
-    """Ready-made promo banners the reseller adds with one click (F2-012)."""
-    stock = os.path.join(os.environ["UPLOAD_DIR"], "banners")
-    os.makedirs(stock, exist_ok=True)
-    with open(os.path.join(stock, "b1.jpg"), "wb") as fh:
-        fh.write(b"\xff\xd8\xff\xd9")
-    try:
-        resp = await reseller_client.get(f"{BRANDING}/banners/stock")
-        assert resp.status_code == 200, resp.text
-        items = resp.json()
-        assert [i["id"] for i in items] == ["b1"]
-        assert items[0]["url"].endswith("/uploads/banners/b1.jpg") and items[0]["label"]
-    finally:
-        os.remove(os.path.join(stock, "b1.jpg"))
 
 
 async def test_upload_images(reseller_client: AsyncClient, db: AsyncSession) -> None:
@@ -151,14 +137,12 @@ async def test_banners_crud_and_limit(
     assert resp.status_code == 200 and resp.json()["is_active"] is False
     assert resp.json()["title"] == "Promo 2"
 
-    # only active banners reach the app
+    # banners no longer reach the app, not even active ones (F2-015)
     reg = await register(client, "dev-banner")
     await reseller_client.post(DEVICES, json=payload(reg["mac_address"]))
-    cfg = (await client.get(CONFIG, headers=bearer(reg["token"]))).json()
-    assert cfg["banners"] == []
     await reseller_client.patch(f"{b}/{bid}", json={"is_active": True})
     cfg = (await client.get(CONFIG, headers=bearer(reg["token"]))).json()
-    assert [x["title"] for x in cfg["banners"]] == ["Promo 2"]
+    assert cfg["banners"] == []
 
     for i in range(9):
         created = await reseller_client.post(b, json={"title": f"b{i}", "url": "https://cdn/x"})

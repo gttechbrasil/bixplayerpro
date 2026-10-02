@@ -1,4 +1,4 @@
-"""Build the stock backgrounds (F2-008) and banners (F2-012) the panel offers to every reseller.
+"""Build the stock backgrounds the panel offers to every reseller (F2-008).
 
 The client's own art lives in docs/brand ("BACKGROUND NN.png"); this script converts it to the
 1920x1080 JPEGs the panel points at, and generates a placeholder for any slot that has no art yet.
@@ -18,14 +18,6 @@ from PIL import Image, ImageDraw, ImageFilter
 ROOT = Path(__file__).resolve().parents[2]
 BRAND = ROOT / "docs" / "brand"
 OUT = ROOT / "backend" / "uploads" / "backgrounds"
-OUT_BANNERS = ROOT / "backend" / "uploads" / "banners"
-
-# Slot -> client banner art (28/09/2026). The grid layout shows them as 16:9 thumbnails.
-BANNERS = {
-    "b1": "Banner - 01.png",
-    "b2": "Banner - 12.png",
-    "b3": "Banner - 14.png",
-}
 W, H = 1920, 1080
 
 # Slot -> client art. "BACKGROUND 06" is the red one he asked to be the default (24/09/2026).
@@ -45,10 +37,14 @@ def vertical(img: Image.Image, top: tuple, bottom: tuple) -> None:
     d = ImageDraw.Draw(img)
     for y in range(H):
         t = y / (H - 1)
-        d.line([(0, y), (W, y)], fill=tuple(round(top[i] + (bottom[i] - top[i]) * t) for i in range(3)))
+        d.line(
+            [(0, y), (W, y)], fill=tuple(round(top[i] + (bottom[i] - top[i]) * t) for i in range(3))
+        )
 
 
-def glow(img: Image.Image, cx: float, cy: float, radius: float, colour: tuple, strength: float) -> None:
+def glow(
+    img: Image.Image, cx: float, cy: float, radius: float, colour: tuple, strength: float
+) -> None:
     """A soft radial light, drawn on its own layer and blurred so the edges never band."""
     layer = Image.new("RGB", (W, H), (0, 0, 0))
     d = ImageDraw.Draw(layer)
@@ -122,12 +118,9 @@ def main() -> None:
         art = ART.get(slot)
         img = from_art(art) if art else build()
         img.save(OUT / f"{slot}.jpg", quality=88, optimize=True)
-        print("wrote", OUT / f"{slot}.jpg", img.size, "from", art or f"placeholder {build.__name__}")
-    OUT_BANNERS.mkdir(parents=True, exist_ok=True)
-    for slot, art in BANNERS.items():
-        img = from_art(art)
-        img.save(OUT_BANNERS / f"{slot}.jpg", quality=85, optimize=True)
-        print("wrote", OUT_BANNERS / f"{slot}.jpg", img.size, "from", art)
+        print(
+            "wrote", OUT / f"{slot}.jpg", img.size, "from", art or f"placeholder {build.__name__}"
+        )
 
 
 if __name__ == "__main__":

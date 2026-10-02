@@ -21,7 +21,7 @@ O painel funciona no celular do mesmo jeito que no computador. A diferença é o
 (☰) no canto superior esquerdo: toque nele para abrir Dispositivos, Personalização e Perfil. O
 menu fecha sozinho quando você escolhe uma opção.
 
-Nas listas (Dispositivos, Banners) cada registro aparece como um **cartão** com nome, MAC,
+Na lista de Dispositivos cada registro aparece como um **cartão** com nome, MAC,
 situação e os botões *Editar* e *Excluir*, em vez da tabela larga que o computador mostra.
 
 ![Painel no celular](screens/web/mobile/dispositivos.png)
@@ -93,15 +93,14 @@ abertura.
 |---|---|
 | **Logomarca** ![](screens/web/painel-04-logomarca.png) | Envie PNG/JPG/WebP de até 2 MB (fundo transparente fica melhor). Aparece na tela inicial do app. **Usar logomarca padrão** volta para a logo da plataforma quando quiser |
 | **Background** ![](screens/web/painel-05-background.png) | Escolha um dos **três fundos prontos** com um clique ou envie a sua imagem (recomendado 1920×1080). Enquanto você não escolher, o app dos seus clientes usa o primeiro (vermelho) |
-| **QR Code** ![](screens/web/painel-06-qrcode.png) | Conteúdo do QR mostrado no app (link do seu WhatsApp, site ou texto). O cliente aponta a câmera para falar com você |
-| **Banners** ![](screens/web/painel-07-banners.png) | **Banners prontos**: arte da plataforma que entra na sua lista com um clique em Adicionar. Ou até 10 imagens por URL (hospedadas por você). Ative/desative cada uma; só as ativas aparecem no app, no layout Grade |
+| **QR Code** ![](screens/web/painel-06-qrcode.png) | Link do seu WhatsApp (`https://wa.me/55DDDNUMERO`), site ou texto. O app mostra o QR em **Configurações → Playlist**, abaixo da lista; o cliente aponta a câmera e fala com você. Vazio, não aparece |
 | **Layout** ![](screens/web/painel-08-layout.png) | Escolha entre os **5 layouts** da tela inicial (§5.1) |
 
 ### 5.1. Os cinco layouts
 
 | Layout | Como é | Combina com |
 |---|---|---|
-| **Padrão** | Cartões de menu sobre o seu fundo, com "continuar assistindo" e banners | Quem quer o fundo personalizado em evidência |
+| **Padrão** | Cartões de menu sobre o seu fundo, com "continuar assistindo" | Quem quer o fundo personalizado em evidência |
 | **Grade** | Seis blocos grandes | Controle remoto simples, TVs pequenas |
 | **Cinema** | Capa do filme mais recente ocupando a tela, menu em botões e fileira de lançamentos | Listas com capas boas (Xtream) |
 | **Menu lateral** (padrão) | Menu vertical à esquerda, capas de filmes e séries à direita | Quem vem de outros apps de IPTV |

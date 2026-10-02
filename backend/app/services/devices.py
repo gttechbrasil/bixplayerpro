@@ -13,8 +13,8 @@ from app.core.security import (
     hash_device_identifier,
     hash_token,
 )
-from app.models import Banner, Device, Reseller
-from app.schemas.device import BannerOut, DeviceConfig, PlaylistOut
+from app.models import Device, Reseller
+from app.schemas.device import DeviceConfig, PlaylistOut
 from app.services.playlists import playlist_url_for_app
 from app.services.uploads import default_background_url
 
@@ -77,7 +77,6 @@ async def build_config(
     status = device_status(device, reseller, today)
 
     playlists: list[PlaylistOut] = []
-    banners: list[BannerOut] = []
     if status == "active" and reseller is not None:
         playlists = [
             PlaylistOut(
@@ -89,12 +88,6 @@ async def build_config(
             )
             for p in device.playlists
         ]
-        rows = await db.scalars(
-            select(Banner)
-            .where(Banner.reseller_id == reseller.id, Banner.is_active.is_(True))
-            .order_by(Banner.id)
-        )
-        banners = [BannerOut.model_validate(b) for b in rows]
 
     return DeviceConfig(
         registered=reseller is not None,
@@ -109,8 +102,10 @@ async def build_config(
         # A reseller who never chose a background still gets the platform's default one.
         bg_url=(reseller.bg_url if reseller else None) or default_background_url(),
         qr_content=reseller.qr_content if reseller else None,
-        banners=banners,
-        auto_ads=reseller.auto_ads if reseller else False,
+        # Banners left the product on 02/10/2026 (F2-015): the panel no longer edits them and
+        # the app gets none, which also clears them from every version already installed.
+        banners=[],
+        auto_ads=False,
         pin=device.pin,
         min_app_version=str(settings_values.get("min_app_version", "")),
         apk_url=str(settings_values.get("apk_url", "")),

@@ -82,10 +82,6 @@ class StockBackground(BaseModel):
     url: str
 
 
-class StockBanner(StockBackground):
-    """Same shape: a platform-provided image the reseller can adopt with one click."""
-
-
 class BrandingUpdate(BaseModel):
     logo_url: str | None = Field(None, max_length=2048)
     bg_url: str | None = Field(None, max_length=2048)

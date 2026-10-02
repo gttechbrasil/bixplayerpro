@@ -27,7 +27,6 @@
 				{ href: '/painel/logomarca', label: 'Logomarca' },
 				{ href: '/painel/background', label: 'Background' },
 				{ href: '/painel/layout', label: 'Layout' },
-				{ href: '/painel/banners', label: 'Banners' },
 				{ href: '/painel/qrcode', label: 'QR Code' }
 			]
 		},

@@ -1,8 +1,8 @@
-"""E2E for the ready-made banners (F2-012) and the default-logo option (F2-013) in the reseller
-panel. Needs the dev server (npm run dev) on :5173, the API on :8001 with uploads/banners/b1..3.jpg
-present, and the local reseller `revenda`/`revenda123`.
+"""E2E for the reseller panel's personalization pages: banners removed (F2-015), QR code saved
+for the app's Playlist screen (F2-016) and the default-logo option (F2-013). Needs the dev server
+(npm run dev) on :5173, the API on :8001 and the local reseller `revenda`/`revenda123`.
 
-    py -3.12 web/e2e/stock_assets.py
+    py -3.12 web/e2e/panel_personalization.py
 """
 import json
 import re
@@ -15,7 +15,7 @@ from playwright.sync_api import sync_playwright
 sys.stdout.reconfigure(encoding="utf-8")
 BASE = "http://localhost:5173"
 API = "http://localhost:8001/api/v1"
-OUT = Path(__file__).resolve().parents[2] / "docs" / "screens" / "web" / "stock-assets"
+OUT = Path(__file__).resolve().parents[2] / "docs" / "screens" / "web" / "personalization"
 OUT.mkdir(parents=True, exist_ok=True)
 failures = []
 
@@ -52,27 +52,25 @@ with sync_playwright() as p:
     page.click("button[type=submit]")
     page.wait_for_url(re.compile(rf"{BASE}/painel/(?!login)"), timeout=20000)
 
-    # --- clean slate: drop banners that came from the stock, reset the logo --------------------
-    banners = api_json(page, "GET", "/reseller/branding/banners")["body"] or []
-    for b in banners:
-        if "/uploads/banners/" in b["url"]:
-            api_json(page, "DELETE", f"/reseller/branding/banners/{b['id']}")
+    # --- clean slate ---------------------------------------------------------------------------
     api_json(page, "PUT", "/reseller/branding", {"logo_url": None})
 
-    # --- banners: the stock section, one click adds -------------------------------------------
-    page.goto(f"{BASE}/painel/banners", wait_until="networkidle")
-    page.wait_for_selector("text=Banners prontos", timeout=15000)
-    cards = page.locator("section:has-text('Banners prontos') .card")
-    check(cards.count() == 3, f"três banners prontos na página ({cards.count()})")
-    page.screenshot(path=str(OUT / "banners-01-prontos.png"), full_page=True)
-    before = len(api_json(page, "GET", "/reseller/branding/banners")["body"] or [])
-    cards.nth(0).get_by_role("button", name="Adicionar").click()
-    page.wait_for_selector("section:has-text('Banners prontos') .card >> nth=0 >> text=Adicionado", timeout=15000)
-    after = api_json(page, "GET", "/reseller/branding/banners")["body"] or []
-    check(len(after) == before + 1, "Adicionar criou um banner")
-    check(any(b["url"].endswith("/uploads/banners/b1.jpg") and b["is_active"] for b in after), "banner b1 ativo na lista")
-    check(page.locator("table >> text=Indique 1 amigo").count() == 1, "banner aparece na tabela com o título da arte")
-    page.screenshot(path=str(OUT / "banners-02-adicionado.png"), full_page=True)
+    # --- banners left the panel (F2-015) ---------------------------------------------------
+    nav = page.get_by_role("navigation", name="Menu principal").inner_text()
+    check("Banners" not in nav, "menu da revenda sem a aba Banners")
+    resp = page.goto(f"{BASE}/painel/banners", wait_until="networkidle")
+    check(resp is not None and resp.status == 404, f"/painel/banners não existe mais ({resp and resp.status})")
+
+    # --- QR code: saved from the panel, shown in the app's Playlist screen (F2-016) ----------
+    page.goto(f"{BASE}/painel/qrcode", wait_until="networkidle")
+    check(page.locator("text=Configurações → Playlist").count() >= 1, "página do QR diz onde ele aparece no app")
+    qr_input = page.get_by_label("Conteúdo do QR Code")
+    qr_input.fill("https://wa.me/5511999999999")
+    page.get_by_role("button", name="Salvar QR Code").click()
+    page.wait_for_selector("text=QR Code salvo", timeout=15000)
+    branding = api_json(page, "GET", "/reseller/branding")["body"]
+    check(branding and branding.get("qr_content") == "https://wa.me/5511999999999", "qr_content salvo pela API")
+    page.screenshot(path=str(OUT / "qrcode-01-salvo.png"), full_page=True)
 
     # --- logo: default option ------------------------------------------------------------------
     page.goto(f"{BASE}/painel/logomarca", wait_until="networkidle")
@@ -97,7 +95,7 @@ with sync_playwright() as p:
     # --- phone width: nothing overflows ------------------------------------------------------
     phone = browser.new_context(viewport={"width": 390, "height": 844}, locale="pt-BR", storage_state=ctx.storage_state())
     pp = phone.new_page()
-    for path, name in (("/painel/banners", "banners"), ("/painel/logomarca", "logo")):
+    for path, name in (("/painel/qrcode", "qrcode"), ("/painel/logomarca", "logo")):
         pp.goto(f"{BASE}{path}", wait_until="networkidle")
         overflow = pp.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
         check(overflow == 0, f"{name} a 390 px sem transbordo horizontal (overflow={overflow})")

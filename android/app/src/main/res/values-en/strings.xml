@@ -24,6 +24,7 @@
     <string name="playlist_channel_count">%1$d channels synced</string>
     <string name="playlist_not_synced">Not synced yet</string>
     <string name="playlist_none">No playlist. Ask your reseller or add one.</string>
+    <string name="playlist_qr_hint">Point your phone camera here to reach your reseller</string>
     <string name="playlist_remove_hint">MENU removes</string>
     <string name="playlist_syncing">Syncing channels…</string>
 

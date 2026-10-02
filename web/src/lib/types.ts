@@ -157,14 +157,6 @@ export interface Branding {
 	auto_ads: boolean;
 }
 
-export interface Banner {
-	id: number;
-	title: string;
-	url: string;
-	is_active: boolean;
-	created_at: string;
-}
-
 export interface Plans {
 	monthly_price: string;
 	max_months: number;

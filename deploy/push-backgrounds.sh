@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Publish the stock backgrounds (F2-008) and banners (F2-012) offered in the panel.
+# Publish the stock backgrounds offered in the panel (F2-008).
 #
 #   ./deploy/push-backgrounds.sh
 #
@@ -50,6 +50,5 @@ publish() {
 }
 
 publish backgrounds bg1 bg2 bg3
-publish banners b1 b2 b3
 
-echo "pronto: https://bixplayer.pro/uploads/backgrounds/bg1.jpg e /uploads/banners/b1.jpg"
+echo "pronto: https://bixplayer.pro/uploads/backgrounds/bg1.jpg"

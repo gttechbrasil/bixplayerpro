@@ -32,20 +32,14 @@ def upload_dir() -> Path:
     return path
 
 
-# bg1..bg3 are the client's art (docs/brand, converted by scripts/make_backgrounds.py). bg1 is also what the app shows when a reseller picked nothing.
+# bg1..bg3 are the client's art (docs/brand, converted by scripts/make_backgrounds.py).
+# bg1 is also what the app shows when a reseller picked nothing.
 STOCK_BACKGROUNDS = (
     ("bg1", "Vermelho"),
     ("bg2", "Cinema"),
     ("bg3", "Azul"),
 )
 DEFAULT_BACKGROUND = "bg1"
-
-# Ready-made promo banners (F2-012), same mechanism: the client's art converted by the script.
-STOCK_BANNERS = (
-    ("b1", "Indique 1 amigo"),
-    ("b2", "Promoção relâmpago"),
-    ("b3", "3 meses + 1 grátis"),
-)
 
 
 def stock_backgrounds() -> list[dict[str, str]]:
@@ -55,16 +49,6 @@ def stock_backgrounds() -> list[dict[str, str]]:
         {"id": name, "label": label, "url": f"{base}/uploads/backgrounds/{name}.jpg"}
         for name, label in STOCK_BACKGROUNDS
         if (upload_dir() / "backgrounds" / f"{name}.jpg").exists()
-    ]
-
-
-def stock_banners() -> list[dict[str, str]]:
-    """The ready-made banners a reseller can add with one click; missing files are skipped."""
-    base = get_settings().public_base_url.rstrip("/")
-    return [
-        {"id": name, "label": label, "url": f"{base}/uploads/banners/{name}.jpg"}
-        for name, label in STOCK_BANNERS
-        if (upload_dir() / "banners" / f"{name}.jpg").exists()
     ]
 
 

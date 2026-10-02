@@ -93,7 +93,8 @@ async def test_registered_device_gets_playlists_and_branding(
     assert cfg["client_name"] == "João"
     assert cfg["theme"] == "grid"
     assert cfg["logo_url"] == "https://cdn/logo.png"
-    assert [b["title"] for b in cfg["banners"]] == ["Promo"]
+    # Banners left the product (F2-015): even active ones in the database are not sent.
+    assert cfg["banners"] == [] and cfg["auto_ads"] is False
     assert len(cfg["playlists"]) == 1
     assert cfg["playlists"][0]["type"] == "xtream"
     assert "password=p1" in cfg["playlists"][0]["url"]

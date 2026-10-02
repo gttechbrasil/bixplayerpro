@@ -1,5 +1,6 @@
 package pro.bixplayer.player.ui.screens.playlists
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -12,6 +13,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +26,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -29,6 +38,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,25 +49,30 @@ import pro.bixplayer.player.ui.components.BixButton
 import pro.bixplayer.player.ui.components.tap
 import pro.bixplayer.player.ui.theme.BixFocus
 import pro.bixplayer.player.ui.theme.bixFocusable
+import pro.bixplayer.player.util.QrCode
 
 /**
  * Lists the playlists the reseller assigned to this device, marks the active one and lets the
- * user switch, remove or add. Switching triggers a full resync of the local database.
+ * user switch, remove or add. Switching triggers a full resync of the local database. Below the
+ * list, the reseller's QR code from the panel (F2-016), when there is one.
  */
 @Composable
 fun ChangePlaylistScreen(
     macAddress: String,
+    qrContent: String?,
     onBack: () -> Unit,
     viewModel: PlaylistViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val invalidUrl = stringResource(R.string.playlist_invalid_url)
+    // A phone in landscape is ~390 dp tall: tighter margins leave room for list, QR and buttons.
+    val short = LocalConfiguration.current.screenHeightDp < 500
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 64.dp, vertical = 40.dp),
+            .padding(horizontal = if (short) 40.dp else 64.dp, vertical = if (short) 16.dp else 40.dp),
     ) {
         Text(
             text = stringResource(R.string.settings_playlist),
@@ -97,7 +112,7 @@ fun ChangePlaylistScreen(
             )
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(if (short) 12.dp else 24.dp))
 
         if (state.playlists.isEmpty()) {
             Text(
@@ -108,7 +123,8 @@ fun ChangePlaylistScreen(
         } else {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(1f),
+                // Wraps a short list so the QR sits right under it; still scrolls when long.
+                modifier = Modifier.weight(1f, fill = false),
             ) {
                 items(state.playlists, key = { it.id }) { playlist ->
                     PlaylistRow(
@@ -123,7 +139,12 @@ fun ChangePlaylistScreen(
             }
         }
 
-        Spacer(Modifier.height(24.dp))
+        qrContent?.takeIf { it.isNotBlank() }?.let { content ->
+            Spacer(Modifier.height(if (short) 12.dp else 20.dp))
+            ResellerQr(content = content, side = if (short) 104.dp else 150.dp)
+        }
+
+        Spacer(Modifier.height(if (short) 12.dp else 24.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             BixButton(
@@ -133,6 +154,32 @@ fun ChangePlaylistScreen(
             )
             BixButton(text = stringResource(R.string.close), primary = false, onClick = onBack)
         }
+    }
+}
+
+/** The QR the reseller set in the panel (WhatsApp, site, text), drawn locally by ZXing. */
+@Composable
+private fun ResellerQr(content: String, side: Dp) {
+    val density = LocalDensity.current
+    val sidePx = with(density) { side.roundToPx() }
+    val bitmap = remember(content, sidePx) { QrCode.encode(content, sidePx) } ?: return
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = stringResource(R.string.playlist_qr_hint),
+            modifier = Modifier
+                .size(side)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.White)
+                .padding(6.dp),
+        )
+        Spacer(Modifier.width(20.dp))
+        Text(
+            text = stringResource(R.string.playlist_qr_hint),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.widthIn(max = 360.dp),
+        )
     }
 }
 

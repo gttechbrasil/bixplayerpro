@@ -25,7 +25,6 @@
 			label: 'Menu lateral',
 			description:
 				'Menu vertical à esquerda e, à direita, destaque com as capas de filmes e séries.',
-			banner: '1920×1080',
 			shot: railShot
 		},
 		{
@@ -33,28 +32,24 @@
 			label: 'Cinema',
 			description:
 				'Capa do filme mais recente ocupando a tela, menu em botões e fileira de lançamentos.',
-			banner: '1920×1080',
 			shot: cinemaShot
 		},
 		{
 			value: 'mosaic',
 			label: 'Mosaico',
 			description: 'Um painel grande de TV ao vivo e blocos de Filmes e Séries com capas reais.',
-			banner: '1024×418',
 			shot: mosaicShot
 		},
 		{
 			value: 'default',
 			label: 'Padrão',
-			description: 'Cartões de menu sobre o seu fundo, com "continuar assistindo" e banners.',
-			banner: '1920×1080',
+			description: 'Cartões de menu sobre o seu fundo, com "continuar assistindo".',
 			shot: defaultShot
 		},
 		{
 			value: 'grid',
 			label: 'Grade',
 			description: 'Blocos grandes em grade, os maiores alvos para o controle remoto.',
-			banner: '1024×418',
 			shot: gridShot
 		}
 	];
@@ -107,7 +102,6 @@
 			<div class="space-y-3 p-5">
 				<h2 class="font-semibold">{t.label}</h2>
 				<p class="text-sm text-slate-500">{t.description}</p>
-				<p class="text-xs text-slate-500">Banners recomendados: {t.banner}</p>
 				<Button
 					variant={active ? 'secondary' : 'primary'}
 					disabled={active}

@@ -70,7 +70,7 @@ data class GridTile(
 /**
  * Home, layout `grid`: no side menu, six big tiles (live, movies, series, favourites, guide,
  * settings) with counts and a highlight cover, banners underneath. Same branding rules as the
- * default layout: logo, background, banners and QR come from the panel.
+ * default layout: logo and background come from the panel.
  */
 @Composable
 fun GridHomeScreen(
@@ -108,10 +108,6 @@ fun GridHomeScreen(
                         ?: stringResource(R.string.app_name),
                     modifier = Modifier.heightIn(max = 48.dp).width(200.dp),
                 )
-                Spacer(Modifier.weight(1f))
-                config?.qrContent?.let {
-                    Text(text = it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-                }
             }
             notice?.let {
                 Text(text = it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 6.dp))

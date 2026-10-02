@@ -24,6 +24,7 @@
     <string name="playlist_channel_count">%1$d canales sincronizados</string>
     <string name="playlist_not_synced">Aún no sincronizada</string>
     <string name="playlist_none">Ninguna lista. Pídala a su revendedor o agregue una.</string>
+    <string name="playlist_qr_hint">Apunte la cámara del teléfono para hablar con su revendedor</string>
     <string name="playlist_remove_hint">MENU elimina</string>
     <string name="playlist_syncing">Sincronizando canales…</string>
 

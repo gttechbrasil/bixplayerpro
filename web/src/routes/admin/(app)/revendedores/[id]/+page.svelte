@@ -261,10 +261,6 @@
 				<dt class="text-slate-500">Tema do app</dt>
 				<dd class="font-medium">{themes.find((t) => t.value === r.theme)?.label ?? r.theme}</dd>
 			</div>
-			<div class="flex justify-between">
-				<dt class="text-slate-500">Banners automáticos</dt>
-				<dd class="font-medium">{r.auto_ads ? 'Sim' : 'Não'}</dd>
-			</div>
 		</dl>
 		<Button class="mt-4" size="sm" variant="secondary" onclick={() => (pwOpen = true)}
 			>Redefinir senha</Button
