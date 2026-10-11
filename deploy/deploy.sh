@@ -98,7 +98,22 @@ ssh_run "cd $REMOTE_DIR && docker compose -f deploy/docker-compose.yml --env-fil
 
 DOMAIN="$(ssh_run "grep -E '^DOMAIN=' $REMOTE_DIR/deploy/.env | cut -d= -f2-" | tr -d '\r')"
 echo "==> healthcheck"
-curl -fsS "https://$DOMAIN/api/v1/health" && echo
+# The API runs its migrations on start and takes a few seconds to answer: a single try right
+# after `up -d` reported a 502 on a healthy deploy. Retry for a minute, then fail for real
+# (a bare `curl && echo` never stopped the script, `set -e` ignores failures inside `&&`).
+healthy=0
+for _ in $(seq 1 30); do
+	if curl -fsS "https://$DOMAIN/api/v1/health" 2>/dev/null; then
+		healthy=1
+		echo
+		break
+	fi
+	sleep 2
+done
+if [ "$healthy" != 1 ]; then
+	echo "a API não respondeu em 60 s: veja os logs com ./deploy/deploy.sh --no-push --logs" >&2
+	exit 1
+fi
 
 if [ "$LOGS" = 1 ]; then
 	ssh_run "cd $REMOTE_DIR && docker compose -f deploy/docker-compose.yml --env-file deploy/.env logs -f --tail=50 api web"
