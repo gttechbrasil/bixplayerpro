@@ -33,6 +33,8 @@ CATEGORIES = [
     "Música",
     "Variedades",
     "Abertos",
+    # Long names, as real lists have them: the app scrolls these (F2-018).
+    "CANAIS | GLOBOS CAPITAIS E REGIONAIS",
 ]
 MOVIE_GENRES = [
     "Ação",
@@ -45,6 +47,7 @@ MOVIE_GENRES = [
     "Suspense",
     "Aventura",
     "Nacional",
+    "Lançamentos e Clássicos do Cinema Nacional",  # long folder name (F2-018)
 ]
 SERIES_GENRES = ["Drama", "Comédia", "Crime", "Ficção", "Animes"]
 PROGRAMMES = [
@@ -102,6 +105,11 @@ def build_playlist(
     # Distinct artwork per title: the home layouts that show covers (F2-002) are unreadable
     # when every poster is the same platform logo. `make_posters.py` writes these files.
     posters = [f"{host}/uploads/posters/p{i}.png" for i in range(1, 9)]
+    # Long samples for seek tests (M5-038), used only when present: Filme 1 is an MP4 with AAC,
+    # like most movies (Media3), Série 1 an MKV with AC-3 audio, like most episodes (libVLC).
+    fixture_dir = Path("uploads/fixture")
+    long_movie = (fixture_dir / "movie_aac.mp4").exists()
+    long_episode = (fixture_dir / "episode_ac3.mkv").exists()
     for n in range(1, movies + 1):
         genre = MOVIE_GENRES[(n - 1) % len(MOVIE_GENRES)]
         year = 1980 + rng.randrange(46)
@@ -109,7 +117,8 @@ def build_playlist(
             f'#EXTINF:-1 tvg-logo="{posters[(n - 1) % len(posters)]}" '
             f'group-title="Filmes | {genre}",Filme {n} ({year})'
         )
-        lines.append(f"{host}/uploads/fixture/sample.mp4?movie={n}")
+        media = "movie_aac.mp4" if n == 1 and long_movie else "sample.mp4"
+        lines.append(f"{host}/uploads/fixture/{media}?movie={n}")
 
     for n in range(1, series + 1):
         genre = SERIES_GENRES[(n - 1) % len(SERIES_GENRES)]
@@ -120,7 +129,8 @@ def build_playlist(
                     f'group-title="Séries | {genre}",'
                     f"Série {n} S{season:02d}E{episode:02d} - Episódio {episode}"
                 )
-                lines.append(f"{host}/uploads/fixture/sample.mp4?series={n}&s={season}&e={episode}")
+                media = "episode_ac3.mkv" if n == 1 and long_episode else "sample.mp4"
+                lines.append(f"{host}/uploads/fixture/{media}?series={n}&s={season}&e={episode}")
 
     # Two broken entries providers routinely ship; the parser must skip them, not the file.
     lines.append("#EXTINF sem virgula")

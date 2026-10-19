@@ -1,5 +1,7 @@
 package pro.bixplayer.player.ui.screens.catalog
 
+import pro.bixplayer.player.ui.components.ScrollingLabel
+import pro.bixplayer.player.ui.theme.LocalTouch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -322,13 +324,17 @@ private fun CategoryRow(
             .onSelect { onSelect() }
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        Text(
+        // Long folder names ("CANAIS | GLOBOS CAPITAIS") scroll so they can be read in full
+        // (F2-018): the row under the focus and the open folder. A touchscreen has no focus, and
+        // scrolling every long name at once in the narrow phone column was unreadable, so there
+        // the others wrap onto a second line instead and only the open one scrolls.
+        ScrollingLabel(
             text = label,
+            active = focused || selected,
+            restingLines = if (LocalTouch.current) 2 else 1,
             style = MaterialTheme.typography.bodyLarge,
             color = if (selected || focused) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).padding(end = 8.dp),
         )
         Text(text = count.toString(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }

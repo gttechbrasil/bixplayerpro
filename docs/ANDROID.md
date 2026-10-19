@@ -373,6 +373,10 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
   abas) não foi apagado: é o *Modo de interface → Compacto (celular)*. `LaunchActivity` manda
   hardware sem toque para `TvActivity` e todo o resto para `MobileActivity`; o override `TV`
   num celular dá no mesmo que `Automático`.
+- **Nomes de pasta em letreiro (F2-018, 1.11.0)**: `ScrollingLabel` liga `basicMarquee` só
+  quando `active` (foco ou pasta aberta); parado, mostra até `restingLines` linhas (1 na TV, 2 no
+  toque, e só quando a primeira palavra cabe na largura, medida com `rememberTextMeasurer`). O marquee só anima quando o texto não cabe, e no máximo duas linhas animam por vez, o
+  que importa na box de 1 GB.
 - **Segurar para favoritar (F2-017, 1.10.0)**: `ChannelRow` (em `LiveScreen.kt`) não usa mais
   `onSelect`/`tap`: tecla e toque passam por um `HoldToFavorite` que anima uma barra por
   1,5 s e só então chama o favorito; soltar antes abre o canal. Na tecla, o KEY DOWN (só o de
