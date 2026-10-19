@@ -1,5 +1,10 @@
 package pro.bixplayer.player.ui.screens.player
 
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.shape.CircleShape
 import pro.bixplayer.player.ui.components.EpgNowNext
 import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
@@ -110,6 +115,8 @@ fun PlayerScreen(
     val rootRequester = remember { FocusRequester() }
     val isTv = LocalIsTv.current
     val touch = LocalTouch.current
+    // Width of the overlay's progress bar, so a swipe can move the bar exactly with the finger.
+    var seekBarWidthPx by remember { mutableIntStateOf(0) }
     val activity = LocalActivity.current
     // Phones fill the screen by default: their 20:9 panels leave thick side bars on 16:9 video,
     // which is what "deita mas não preenche" meant (M5-032). TVs match the content already.
@@ -222,8 +229,17 @@ fun PlayerScreen(
                             onDragCancel = { viewModel.commitDragSeek() },
                         ) { change, dragAmount ->
                             change.consume()
-                            // A full-width drag scrubs through 4 minutes.
-                            viewModel.dragSeekBy((dragAmount / size.width * DRAG_FULL_WIDTH_MS).toLong())
+                            // The bar follows the finger: moving it by the bar's width covers the
+                            // whole video. It used to be a fixed 4 minutes per screen width, so in
+                            // a movie the bar crawled far behind the finger (M5-038). Without a
+                            // known duration (some streams) the fixed step is all there is.
+                            val duration = state.progress.durationMs
+                            val deltaMs = if (duration > 0) {
+                                dragAmount / (seekBarWidthPx.takeIf { it > 0 } ?: size.width) * duration
+                            } else {
+                                dragAmount / size.width * DRAG_FULL_WIDTH_MS
+                            }
+                            viewModel.dragSeekBy(deltaMs.toLong())
                         }
                     },
             )
@@ -365,6 +381,8 @@ fun PlayerScreen(
                 onTracks = viewModel::openTracks,
                 videoFill = videoFill,
                 onToggleFill = { viewModel.toggleVideoFill(videoFill) },
+                onSeekTo = viewModel::seekToPosition,
+                onSeekBarWidth = { seekBarWidthPx = it },
             )
         }
 
@@ -419,6 +437,8 @@ private fun InfoOverlay(
     onTracks: () -> Unit = {},
     videoFill: Boolean = false,
     onToggleFill: () -> Unit = {},
+    onSeekTo: (Long) -> Unit = {},
+    onSeekBarWidth: (Int) -> Unit = {},
 ) {
     var now by remember { mutableStateOf(LocalTime.now()) }
     LaunchedEffect(state.overlayVisible) {
@@ -484,12 +504,43 @@ private fun InfoOverlay(
                     color = if (state.seekTargetMs != null) MaterialTheme.colorScheme.primary else Color.White,
                 )
                 Spacer(Modifier.width(16.dp))
-                LinearProgressIndicator(
-                    progress = { if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f },
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = Color.White.copy(alpha = 0.25f),
-                    modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
-                )
+                val fraction = if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f
+                // On a touchscreen the bar is a scrubber: a tall touch area, a handle that moves
+                // with the finger and a tap that jumps there (M5-038). On a TV it stays a plain bar.
+                BoxWithConstraints(
+                    contentAlignment = Alignment.CenterStart,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(if (touch) 36.dp else 6.dp)
+                        .onSizeChanged { onSeekBarWidth(it.width) }
+                        .then(
+                            if (touch && duration > 0) {
+                                Modifier.pointerInput(duration) {
+                                    detectTapGestures { offset ->
+                                        onSeekTo((offset.x / size.width * duration).toLong())
+                                    }
+                                }
+                            } else {
+                                Modifier
+                            },
+                        ),
+                ) {
+                    LinearProgressIndicator(
+                        progress = { fraction },
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = Color.White.copy(alpha = 0.25f),
+                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                    )
+                    if (touch) {
+                        val handle = 18.dp
+                        Box(
+                            modifier = Modifier
+                                .offset(x = (maxWidth - handle) * fraction)
+                                .size(handle)
+                                .background(MaterialTheme.colorScheme.primary, CircleShape),
+                        )
+                    }
+                }
                 Spacer(Modifier.width(16.dp))
                 Text(text = TimeFormat.clock(duration), style = MaterialTheme.typography.bodyLarge, color = Color.White)
             }

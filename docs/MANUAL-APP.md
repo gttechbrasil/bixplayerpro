@@ -46,7 +46,7 @@ digitou o MAC errado. Confira os caracteres com ele.
 | **Trocar de lista** | Configurações → **Trocar playlist**, quando o revendedor cadastrar mais de uma |
 | **Modo de interface** | Configurações → **Modo de interface**: *Automático* mostra a mesma interface da TV em qualquer aparelho; **Compacto (celular)** troca para um layout de abas, se preferir. O app reabre no modo escolhido |
 | **Enviar diagnóstico** | Configurações → **Enviar diagnóstico** quando o app fechar sozinho ou travar: manda para o suporte o registro do problema (sem senhas). Anote o número mostrado |
-| **Celular** | Abre deitado, com a mesma tela da TV: toque nos blocos e nas capas, deslize para rolar. O vídeo preenche a tela; toque uma vez para ver os controles, duas vezes para avançar/voltar 10 s. Ao sair do app durante um vídeo ele continua em janela flutuante (PiP) |
+| **Celular** | Abre deitado, com a mesma tela da TV: toque nos blocos e nas capas, deslize para rolar. O vídeo preenche a tela; toque uma vez para ver os controles, duas vezes para avançar/voltar 10 s. Para pular, arraste o dedo para os lados: a bolinha da barra anda junto com o dedo; ou toque direto num ponto da barra. Ao sair do app durante um vídeo ele continua em janela flutuante (PiP) |
 
 ## 4. Problemas comuns
 

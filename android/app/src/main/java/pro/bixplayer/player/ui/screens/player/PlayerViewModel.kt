@@ -360,6 +360,15 @@ class PlayerViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(seekTargetMs = null)
     }
 
+    /** A tap on the progress bar: straight to that point of the video. */
+    fun seekToPosition(positionMs: Long) {
+        if (_uiState.value.isLive || !_uiState.value.progress.seekable) return
+        seekJob?.cancel()
+        session.seekTo(positionMs.coerceIn(0L, _uiState.value.progress.durationMs))
+        _uiState.value = _uiState.value.copy(seekTargetMs = null)
+        showOverlay()
+    }
+
     private fun onEnded() {
         if (endedHandled) return
         endedHandled = true
