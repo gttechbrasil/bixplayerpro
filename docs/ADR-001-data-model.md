@@ -36,13 +36,14 @@ vencimentos são `DATE` (semântica "válido até o fim do dia"). Tabelas com
 | id | bigint PK | |
 | username | varchar(64) **unique** | login |
 | name | varchar(120) | |
+| cpf | varchar(11), nullable | só os dígitos, validado pelos dígitos verificadores; opcional, informativo (não é login). Só a API do admin devolve; na auditoria fica mascarado (F2-020) |
 | password_hash | varchar(255) | argon2id |
 | credits | integer, default 0, `CHECK (credits >= 0)` | saldo atual (derivável do ledger; materializado para leitura rápida) |
 | expires_at | date, **nullable** | vencimento da revenda. `NULL` = sem vencimento |
 | is_blocked | boolean, default false | bloqueio manual pelo admin |
 | logo_url, bg_url | text, nullable | personalização (URL externa) |
 | qr_content | text, nullable | conteúdo do QR exibido no app |
-| theme | varchar(16), default `theme_d` | catálogo fixo `theme_d`, `theme_1`..`theme_8` |
+| theme | varchar(16), default `rail` | layout da tela inicial: `rail` (Menu lateral), `cinema`, `mosaic`, `default` (Padrão), `grid` (Grade) |
 | auto_ads | boolean, default false | banners automáticos |
 | created_at, updated_at | timestamptz | |
 

@@ -10,9 +10,6 @@ if TYPE_CHECKING:
     from app.models.banner import Banner
     from app.models.device import Device
 
-# The two home layouts included in v1 (Anexo I §2.3).
-THEMES = ("default", "grid")
-
 
 class Reseller(TimestampMixin, Base):
     __tablename__ = "resellers"
@@ -21,6 +18,8 @@ class Reseller(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     username: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
+    # 11 digits, optional; only the admin API exposes it.
+    cpf: Mapped[str | None] = mapped_column(String(11), nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     credits: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     expires_at: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)

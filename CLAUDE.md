@@ -37,7 +37,7 @@ A plataforma é neutra: gerencia dispositivos, playlists e personalização. Nun
 
 ## Modelo de dados (núcleo — detalhar em `docs/ADR-001-data-model.md`)
 - `admins`
-- `resellers` (username, name, password_hash, credits, expires_at, is_blocked, logo_url, bg_url, qr_content, theme, auto_ads)
+- `resellers` (username, name, cpf, password_hash, credits, expires_at, is_blocked, logo_url, bg_url, qr_content, theme, auto_ads)
 - `devices` (reseller_id, mac_address, device_id ANDROID_ID hash, client_name, token_hash, license_expires_at, last_seen_at)
 - `playlists` (device_id, name, url, type xtream|m3u, host, username, password_enc, is_protected)
 - `banners` (reseller_id, title, url, is_active)

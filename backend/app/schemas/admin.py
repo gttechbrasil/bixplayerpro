@@ -4,7 +4,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.models.reseller import THEMES
 from app.schemas.common import ORMModel
 
 Theme = Literal["default", "grid", "cinema", "rail", "mosaic"]
@@ -14,6 +13,7 @@ Theme = Literal["default", "grid", "cinema", "rail", "mosaic"]
 class ResellerCreate(BaseModel):
     username: str = Field(min_length=3, max_length=64, pattern=r"^[a-zA-Z0-9_.-]+$")
     name: str = Field(min_length=1, max_length=120)
+    cpf: str | None = Field(None, max_length=20)
     password: str = Field(min_length=6, max_length=128)
     credits: int = Field(0, ge=0)
     expires_at: date | None = None
@@ -22,18 +22,12 @@ class ResellerCreate(BaseModel):
 class ResellerUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=120)
     username: str | None = Field(None, min_length=3, max_length=64, pattern=r"^[a-zA-Z0-9_.-]+$")
+    cpf: str | None = Field(None, max_length=20)
     theme: Theme | None = None
     logo_url: str | None = Field(None, max_length=2048)
     bg_url: str | None = Field(None, max_length=2048)
     qr_content: str | None = Field(None, max_length=2048)
     auto_ads: bool | None = None
-
-    @field_validator("theme")
-    @classmethod
-    def _theme(cls, v: str | None) -> str | None:
-        if v is not None and v not in THEMES:
-            raise ValueError("tema inválido")
-        return v
 
     @field_validator("logo_url", "bg_url")
     @classmethod
@@ -48,6 +42,7 @@ class ResellerOut(ORMModel):
     id: int
     username: str
     name: str
+    cpf: str | None
     credits: int
     expires_at: date | None
     is_blocked: bool

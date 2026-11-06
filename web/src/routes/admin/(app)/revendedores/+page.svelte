@@ -8,7 +8,7 @@
 	import Input from '$lib/components/Input.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
-	import { expirationState, formatDate } from '$lib/format';
+	import { expirationState, formatCpf, formatDate } from '$lib/format';
 	import { updateQuery } from '$lib/query';
 	import { toast } from '$lib/stores/toast.svelte';
 	import type { Reseller } from '$lib/types';
@@ -47,10 +47,10 @@
 	// ---- create modal ----------------------------------------------------------
 	let createOpen = $state(false);
 	let creating = $state(false);
-	let form = $state({ username: '', name: '', password: '', credits: 0, expires_at: '' });
+	let form = $state({ username: '', name: '', cpf: '', password: '', credits: 0, expires_at: '' });
 
 	function openCreate() {
-		form = { username: '', name: '', password: '', credits: 0, expires_at: '' };
+		form = { username: '', name: '', cpf: '', password: '', credits: 0, expires_at: '' };
 		createOpen = true;
 	}
 
@@ -61,6 +61,7 @@
 			await post<Reseller>('admin/resellers', {
 				username: form.username.trim(),
 				name: form.name.trim(),
+				cpf: form.cpf.trim() || null,
 				password: form.password,
 				credits: Number(form.credits) || 0,
 				expires_at: form.expires_at || null
@@ -161,6 +162,15 @@
 			bind:value={form.username}
 		/>
 		<Input label="Nome" required bind:value={form.name} />
+		<Input
+			label="CPF"
+			inputmode="numeric"
+			placeholder="000.000.000-00"
+			hint="Opcional."
+			autocomplete="off"
+			bind:value={form.cpf}
+			oninput={() => (form.cpf = formatCpf(form.cpf))}
+		/>
 		<Input
 			label="Senha inicial"
 			type="password"

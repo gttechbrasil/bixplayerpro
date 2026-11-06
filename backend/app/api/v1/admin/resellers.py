@@ -5,6 +5,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
+from app.core.cpf import mask_cpf, normalize_cpf
 from app.core.deps import CurrentAdmin, DbSession, get_client_ip
 from app.core.exceptions import bad_request, conflict, not_found
 from app.core.pagination import paginate
@@ -33,6 +34,7 @@ router = APIRouter(prefix="/resellers", tags=["admin: resellers"])
 MSG_USERNAME_TAKEN = "Já existe uma revenda com este usuário."
 MSG_NOT_FOUND = "Revenda não encontrada."
 MSG_CREDITS_DISABLED = "O sistema de créditos está desativado nas configurações."
+MSG_INVALID_CPF = "CPF inválido. Confira os números digitados."
 
 StatusFilter = Literal["active", "blocked", "expired"]
 
@@ -60,6 +62,13 @@ async def _ensure_username_free(
         stmt = stmt.where(Reseller.id != exclude_id)
     if await db.scalar(stmt) is not None:
         raise conflict(MSG_USERNAME_TAKEN, "username_taken")
+
+
+def _checked_cpf(value: str | None) -> str | None:
+    try:
+        return normalize_cpf(value)
+    except ValueError:
+        raise bad_request(MSG_INVALID_CPF, "invalid_cpf") from None
 
 
 async def _get_reseller(db: DbSession, reseller_id: int) -> Reseller:
@@ -119,6 +128,7 @@ async def create_reseller(
     reseller = Reseller(
         username=body.username,
         name=body.name,
+        cpf=_checked_cpf(body.cpf),
         password_hash=hash_password(body.password),
         credits=0,
         expires_at=body.expires_at,
@@ -166,6 +176,8 @@ async def update_reseller(
     changes = body.model_dump(exclude_unset=True)
     if "username" in changes:
         await _ensure_username_free(db, changes["username"], exclude_id=reseller.id)
+    if "cpf" in changes:
+        changes["cpf"] = _checked_cpf(changes["cpf"])
     for key, value in changes.items():
         setattr(reseller, key, value)
     try:
@@ -179,7 +191,8 @@ async def update_reseller(
         actor_id=admin.id,
         action="reseller.update",
         target=f"reseller:{reseller.id}",
-        payload=changes,
+        # The audit log is read by more people than the CPF needs.
+        payload={**changes, "cpf": mask_cpf(changes["cpf"])} if "cpf" in changes else changes,
         ip=get_client_ip(request),
     )
     await db.commit()

@@ -90,6 +90,14 @@ async def test_update_block_password(
     assert resp.json()["name"] == "Nova" and resp.json()["theme"] == "grid"
     assert (await admin_client.patch(f"{BASE}/{rid}", json={"theme": "theme_x"})).status_code == 422
 
+    # The admin form sends the current layout back with every save: all five must be accepted,
+    # or editing anything on a reseller using one of them fails.
+    assert created["theme"] == "rail"
+    for theme in ("rail", "cinema", "mosaic", "default", "grid"):
+        resp = await admin_client.patch(f"{BASE}/{rid}", json={"name": "Nova", "theme": theme})
+        assert resp.status_code == 200, theme
+        assert resp.json()["theme"] == theme
+
     resp = await admin_client.post(f"{BASE}/{rid}/block", json={"is_blocked": True})
     assert resp.json()["is_blocked"] is True
 
@@ -168,3 +176,80 @@ async def test_credits_disabled_by_default(admin_client: AsyncClient, db: AsyncS
     assert resp.status_code == 400
     assert resp.json()["detail"]["code"] == "credits_disabled"
     assert (await db.scalars(select(CreditLedger))).all() == []
+
+
+VALID_CPF = "52998224725"  # a well-known test number with valid check digits
+
+
+async def test_cpf_is_optional_validated_and_editable(
+    admin_client: AsyncClient, db: AsyncSession
+) -> None:
+    # optional: a reseller without one stays valid
+    resp = await admin_client.post(
+        BASE, json={"username": "semcpf", "name": "Sem CPF", "password": "secret123"}
+    )
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["cpf"] is None
+    no_cpf = resp.json()["id"]
+
+    # the mask is accepted and only the digits are kept
+    resp = await admin_client.post(
+        BASE,
+        json={
+            "username": "comcpf",
+            "name": "Com CPF",
+            "password": "secret123",
+            "cpf": "529.982.247-25",
+        },
+    )
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["cpf"] == VALID_CPF
+    rid = resp.json()["id"]
+    assert (await admin_client.get(f"{BASE}/{rid}")).json()["cpf"] == VALID_CPF
+
+    # wrong check digits, repeated digits and short numbers are refused, in Portuguese
+    for bad in ("529.982.247-26", "111.111.111-11", "123"):
+        resp = await admin_client.post(
+            BASE,
+            json={"username": "ruim", "name": "Ruim", "password": "secret123", "cpf": bad},
+        )
+        assert resp.status_code == 400, bad
+        assert resp.json()["detail"]["code"] == "invalid_cpf"
+        assert "CPF inválido" in resp.json()["detail"]["message"]
+    resp = await admin_client.patch(f"{BASE}/{rid}", json={"cpf": "000.000.000-00"})
+    assert resp.status_code == 400
+    assert (await admin_client.get(f"{BASE}/{rid}")).json()["cpf"] == VALID_CPF
+
+    # filled in later, then cleared with an empty value
+    resp = await admin_client.patch(f"{BASE}/{no_cpf}", json={"cpf": VALID_CPF})
+    assert resp.status_code == 200 and resp.json()["cpf"] == VALID_CPF
+    resp = await admin_client.patch(f"{BASE}/{no_cpf}", json={"cpf": ""})
+    assert resp.status_code == 200 and resp.json()["cpf"] is None
+
+    # editing something else leaves it alone
+    resp = await admin_client.patch(f"{BASE}/{rid}", json={"name": "Outro nome"})
+    assert resp.status_code == 200 and resp.json()["cpf"] == VALID_CPF
+
+
+async def test_cpf_stays_out_of_the_audit_log(admin_client: AsyncClient, db: AsyncSession) -> None:
+    resp = await admin_client.post(
+        BASE,
+        json={"username": "auditada", "name": "A", "password": "secret123", "cpf": VALID_CPF},
+    )
+    rid = resp.json()["id"]
+    await admin_client.patch(f"{BASE}/{rid}", json={"cpf": "529.982.247-25"})
+    rows = (await db.scalars(select(AuditLog).where(AuditLog.target == f"reseller:{rid}"))).all()
+    assert rows
+    assert all(VALID_CPF not in str(row.payload) for row in rows)
+    update = next(row for row in rows if row.action == "reseller.update")
+    assert update.payload["cpf"] == "*********25"
+
+
+async def test_reseller_session_does_not_expose_its_cpf(
+    admin_client: AsyncClient, reseller_client: AsyncClient, reseller_user: Reseller
+) -> None:
+    resp = await admin_client.patch(f"{BASE}/{reseller_user.id}", json={"cpf": VALID_CPF})
+    assert resp.status_code == 200, resp.text
+    me = await reseller_client.get("/api/v1/auth/me", params={"as": "reseller"})
+    assert me.status_code == 200, me.text
+    assert "cpf" not in me.json() and VALID_CPF not in me.text

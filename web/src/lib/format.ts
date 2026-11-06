@@ -2,6 +2,13 @@ const dateFmt = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' });
 const dateTimeFmt = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 const moneyFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
+/** `52998224725` -> `529.982.247-25`; also masks a CPF while it is being typed. */
+export function formatCpf(value: string | null | undefined): string {
+	const d = (value ?? '').replace(/\D/g, '').slice(0, 11);
+	return [d.slice(0, 3), d.slice(3, 6), d.slice(6, 9)].filter(Boolean).join('.') +
+		(d.length > 9 ? `-${d.slice(9)}` : '');
+}
+
 export function formatDate(value: string | null | undefined): string {
 	if (!value) return '—';
 	const [y, m, d] = value.slice(0, 10).split('-').map(Number);

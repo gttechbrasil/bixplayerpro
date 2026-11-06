@@ -19,15 +19,17 @@ vistos nas últimas 24 h) e pagamentos do mês (quantidade, valor, pendentes).
 
 ## 3. Revendedores
 
-**Revendedores → Nova revenda**: usuário (login), nome, senha inicial, vencimento e, se o
-sistema de créditos estiver ativo, créditos iniciais. O revendedor recebe usuário e senha de
-você e entra em `https://<dominio>/painel`.
+**Revendedores → Nova revenda**: usuário (login), nome, CPF (opcional), senha inicial, vencimento
+e, se o sistema de créditos estiver ativo, créditos iniciais. O revendedor recebe usuário e senha
+de você e entra em `https://<dominio>/painel`. O CPF não serve para entrar: é um dado de cadastro,
+aparece junto do usuário na ficha da revenda e só o administrador vê. O painel confere os dígitos
+verificadores e recusa número errado.
 
 Na ficha de cada revenda:
 
 | Ação | O que faz |
 |---|---|
-| **Editar** | Nome, usuário, tema, logo/fundo/QR (também editáveis pela própria revenda) |
+| **Editar** | Nome, usuário, CPF (apagar o campo remove), tema, logo/fundo/QR (estes três últimos também editáveis pela própria revenda) |
 | **Vencimento** | Define ou remove a data. Revenda vencida só consegue entrar no painel para **renovar**; os apps dos clientes dela mostram "Expirado" e param de reproduzir |
 | **Bloquear / Desbloquear** | Bloqueio é imediato: a revenda não entra e os apps dela mostram "Expirado". Use para inadimplência grave ou suspeita de conta comprometida |
 | **Redefinir senha** | Nova senha para a revenda (ela pode trocar depois em *Perfil*) |

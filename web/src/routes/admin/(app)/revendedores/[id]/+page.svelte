@@ -9,7 +9,7 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import Select from '$lib/components/Select.svelte';
-	import { expirationState, formatDate, formatDateTime, formatMoney } from '$lib/format';
+	import { expirationState, formatCpf, formatDate, formatDateTime, formatMoney } from '$lib/format';
 	import { updateQuery } from '$lib/query';
 	import { toast } from '$lib/stores/toast.svelte';
 	import type { DeviceDiagnostic, Reseller, ResellerDevice } from '$lib/types';
@@ -19,6 +19,9 @@
 	const base = $derived(`admin/resellers/${r.id}`);
 
 	const themes = [
+		{ value: 'rail', label: 'Menu lateral' },
+		{ value: 'cinema', label: 'Cinema' },
+		{ value: 'mosaic', label: 'Mosaico' },
 		{ value: 'default', label: 'Padrão' },
 		{ value: 'grid', label: 'Grade' }
 	];
@@ -44,10 +47,10 @@
 	}
 
 	// ---- edit ------------------------------------------------------------------
-	let edit = $state({ name: '', username: '', theme: 'theme_d' });
+	let edit = $state({ name: '', username: '', cpf: '', theme: 'rail' });
 	let saving = $state(false);
 	$effect(() => {
-		edit = { name: r.name, username: r.username, theme: r.theme };
+		edit = { name: r.name, username: r.username, cpf: formatCpf(r.cpf), theme: r.theme };
 	});
 	async function saveEdit(e: SubmitEvent) {
 		e.preventDefault();
@@ -258,6 +261,10 @@
 				<dd class="font-medium">{r.username}</dd>
 			</div>
 			<div class="flex justify-between">
+				<dt class="text-slate-500">CPF</dt>
+				<dd class="font-medium">{formatCpf(r.cpf) || '—'}</dd>
+			</div>
+			<div class="flex justify-between">
 				<dt class="text-slate-500">Tema do app</dt>
 				<dd class="font-medium">{themes.find((t) => t.value === r.theme)?.label ?? r.theme}</dd>
 			</div>
@@ -279,6 +286,14 @@
 				minlength={3}
 				pattern="[a-zA-Z0-9_.\-]+"
 				bind:value={edit.username}
+			/>
+			<Input
+				label="CPF"
+				inputmode="numeric"
+				placeholder="000.000.000-00"
+				autocomplete="off"
+				bind:value={edit.cpf}
+				oninput={() => (edit.cpf = formatCpf(edit.cpf))}
 			/>
 			<Select label="Tema do app" options={themes} bind:value={edit.theme} />
 			<Button type="submit" loading={saving}>Salvar</Button>

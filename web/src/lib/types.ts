@@ -14,6 +14,7 @@ export interface Reseller {
 	id: number;
 	username: string;
 	name: string;
+	cpf: string | null;
 	credits: number;
 	expires_at: string | null;
 	is_blocked: boolean;
