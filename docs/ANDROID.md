@@ -233,6 +233,14 @@ armazenado sem compressão, levava o universal a 216 MB.
 Para apontar o `debug` a outro backend sem editar o projeto (o emulador vê a máquina como
 `10.0.2.2`): `./gradlew :app:assembleDebug -Pbix.apiBaseUrl.debug=http://10.0.2.2:8001/`.
 
+Para a Google Play o pacote é o AAB: `./gradlew :app:bundleRelease` gera
+`app/build/outputs/bundle/release/app-release.aab`. O AGP recusa divisão por ABI em build de bundle,
+então `splits.abi` só fica ligado fora dele, e o APK do link não muda. Os idiomas ficam no pacote
+base (`bundle.language.enableSplit = false`) porque o idioma é escolhido nos Ajustes do app e a loja
+só entrega o split do idioma do aparelho. Para testar como a loja entrega,
+`./gradlew :app:makeApkFromBundleForDebug` gera os splits em
+`app/build/intermediates/apks_from_bundle/`; instale com `adb install-multiple` só os do aparelho.
+
 | Build | applicationId | API | Assinatura |
 |---|---|---|---|
 | `debug` | `<bix.applicationId>.debug` | `http://10.0.2.2:8000` | keystore de debug do SDK (automática) |

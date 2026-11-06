@@ -17,6 +17,9 @@ val keystoreProperties = Properties().apply {
 	if (file.exists()) file.inputStream().use { load(it) }
 }
 
+/** AGP refuses ABI splits in a bundle build; Google Play cuts the bundle per ABI by itself. */
+val buildingBundle = gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }
+
 android {
 	namespace = "pro.bixplayer.player"
 	// Several AndroidX artifacts now require compiling against 37; targetSdk stays at 36
@@ -71,11 +74,17 @@ android {
 	// remains the single download link for TV boxes of unknown architecture.
 	splits {
 		abi {
-			isEnable = true
+			isEnable = !buildingBundle
 			reset()
 			include("armeabi-v7a", "arm64-v8a", "x86_64")
 			isUniversalApk = true
 		}
+	}
+
+	// The language is chosen in the app's own settings, but a store install only brings the
+	// split for the device language: keep them all in the base or English and Spanish vanish.
+	bundle {
+		language { enableSplit = false }
 	}
 
 	buildFeatures {
