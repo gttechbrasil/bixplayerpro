@@ -84,14 +84,27 @@ def build_playlist(
 
     for n in range(1, channels + 1):
         category = CATEGORIES[(n - 1) % len(CATEGORIES)]
-        if n <= 3:
+        if n == 2 and Path("uploads/fixture/live_h264.ts").exists():
+            # H.264 in TS, the usual IPTV channel, long enough to measure (generated, not in git).
+            url = f"{host}/uploads/fixture/live_h264.ts"
+        elif n == 3 and Path("uploads/fixture/live_hls/index.m3u8").exists():
+            # The same video as HLS, so VLC's HLS path is measured without the internet in the way.
+            url = f"{host}/uploads/fixture/live_hls/index.m3u8"
+        elif n <= 3:
             url = PUBLIC_HLS
+        elif n == 5 and Path("uploads/fixture/live_1080p.ts").exists():
+            # 1080p at 4 Mb/s: how the engines cope with the heaviest usual channel.
+            url = f"{host}/uploads/fixture/live_1080p.ts"
         elif n <= 6:
             url = f"{host}/uploads/fixture/sample.ts"
         elif n == 7:
             # ASF/WMV bytes served as .ts: Media3 has no ASF extractor, so it fails and libVLC
             # takes over (a .wmv extension would classify the entry as a movie instead).
             url = f"{host}/uploads/fixture/compat.ts"
+        elif n == 8 and Path("uploads/fixture/live_mpeg2.ts").exists():
+            # MPEG-2 video with AAC audio, used only when present: Media3 has no decoder for that
+            # video and raises no error, so without the fallback it plays sound with no picture.
+            url = f"{host}/uploads/fixture/live_mpeg2.ts"
         else:
             url = f"{host}/fake/stream/{n}.ts"
         tvg_id = f'tvg-id="canal{n}.br" ' if n <= epg_channels or not with_epg else ""

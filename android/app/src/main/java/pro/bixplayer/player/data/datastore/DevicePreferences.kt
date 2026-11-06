@@ -50,6 +50,9 @@ class DevicePreferences @Inject constructor(
         const val DEFAULT_REFRESH_HOURS = 6L
         const val DEFAULT_LANGUAGE = "pt-BR"
         const val ENGINE_AUTO = "auto"
+
+        /** The default since 1.13.0: it opens more of what the lists carry (F2-019). */
+        const val ENGINE_VLC = "vlc"
     }
 
     /** DataStore surfaces read errors as IOException; treat them as "no data yet". */
@@ -79,7 +82,7 @@ class DevicePreferences @Inject constructor(
     override suspend fun currentLayoutOverride(): String? = layoutOverride.first()
     override suspend fun currentUiMode(): String = uiMode.first()
 
-    override fun playerEngine(playlistId: Long): Flow<String> = prefs.map { it[Keys.engine(playlistId)] ?: ENGINE_AUTO }
+    override fun playerEngine(playlistId: Long): Flow<String> = prefs.map { it[Keys.engine(playlistId)] ?: ENGINE_VLC }
     override suspend fun currentPlayerEngine(playlistId: Long): String = playerEngine(playlistId).first()
 
     override suspend fun saveCredentials(token: String, macAddress: String) {

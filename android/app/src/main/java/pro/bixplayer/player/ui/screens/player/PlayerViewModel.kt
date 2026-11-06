@@ -1,5 +1,6 @@
 package pro.bixplayer.player.ui.screens.player
 
+import pro.bixplayer.player.player.applyEnginePreference
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -181,7 +182,7 @@ class PlayerViewModel @Inject constructor(
         }.launchIn(viewModelScope)
 
         viewModelScope.launch {
-            applyEnginePreference()
+            session.applyEnginePreference(store)
             when (kind) {
                 ContentKind.MOVIE -> movieDao.byId(itemId)?.let { start(PlaybackItem.Movie(it)) }
                 ContentKind.EPISODE -> episodeDao.byId(itemId)?.let { ep ->
@@ -200,16 +201,6 @@ class PlayerViewModel @Inject constructor(
                 delay(PROGRESS_SAVE_MS)
                 if (!_uiState.value.isLive && session.isPlaying) saveProgress()
             }
-        }
-    }
-
-    /** Settings → Player: automático / Media3 / VLC, per playlist. */
-    private suspend fun applyEnginePreference() {
-        val playlistId = store.currentActivePlaylistId() ?: return
-        session.preference = when (store.currentPlayerEngine(playlistId)) {
-            "vlc" -> PlayerSession.EngineKind.VLC
-            "media3" -> PlayerSession.EngineKind.MEDIA3
-            else -> null
         }
     }
 
@@ -344,27 +335,17 @@ class PlayerViewModel @Inject constructor(
         showOverlay()
     }
 
-    /** Touch scrubbing: accumulate while the finger moves, seek once when it lifts. */
-    fun dragSeekBy(deltaMs: Long) {
+    /** Finger on the progress bar: the position follows it, the seek happens when it lifts. */
+    fun scrubTo(positionMs: Long) {
         if (_uiState.value.isLive || !_uiState.value.progress.seekable) return
-        val base = _uiState.value.seekTargetMs ?: session.progress.value.positionMs
-        val target = (base + deltaMs).coerceIn(0L, _uiState.value.progress.durationMs)
         seekJob?.cancel()
-        _uiState.value = _uiState.value.copy(seekTargetMs = target)
+        _uiState.value = _uiState.value.copy(seekTargetMs = positionMs.coerceIn(0L, _uiState.value.progress.durationMs))
         showOverlay()
     }
 
-    fun commitDragSeek() {
+    fun commitScrub() {
         val target = _uiState.value.seekTargetMs ?: return
         session.seekTo(target)
-        _uiState.value = _uiState.value.copy(seekTargetMs = null)
-    }
-
-    /** A tap on the progress bar: straight to that point of the video. */
-    fun seekToPosition(positionMs: Long) {
-        if (_uiState.value.isLive || !_uiState.value.progress.seekable) return
-        seekJob?.cancel()
-        session.seekTo(positionMs.coerceIn(0L, _uiState.value.progress.durationMs))
         _uiState.value = _uiState.value.copy(seekTargetMs = null)
         showOverlay()
     }
@@ -474,8 +455,9 @@ class PlayerViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(overlayVisible = true)
         overlayJob = viewModelScope.launch {
             delay(OVERLAY_TIMEOUT_MS)
-            // Keep the overlay while something needs the user's attention.
-            if (_uiState.value.playback is SessionState.Playing) hideOverlay()
+            // Keep the overlay while something needs the user's attention, or a finger is on the
+            // bar: hiding it would take the bar away from under the finger.
+            if (_uiState.value.playback is SessionState.Playing && _uiState.value.seekTargetMs == null) hideOverlay()
         }
     }
 

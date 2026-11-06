@@ -1,5 +1,8 @@
 package pro.bixplayer.player.ui.components
 
+import java.lang.ref.WeakReference
+import org.videolan.libvlc.MediaPlayer
+import org.videolan.libvlc.util.VLCVideoLayout
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
@@ -9,6 +12,9 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+
+/** The layout libVLC draws into right now. There is one player at a time; main thread only. */
+private var vlcSurfaceOwner: WeakReference<VLCVideoLayout>? = null
 
 /**
  * Video output for [player]. Controls are ours (Compose overlays), so the platform controller
@@ -21,22 +27,37 @@ fun VideoSurface(
     player: Player?,
     modifier: Modifier = Modifier,
     resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
-    vlcPlayer: org.videolan.libvlc.MediaPlayer? = null,
+    vlcPlayer: MediaPlayer? = null,
+    onVlcFill: (Boolean) -> Unit = {},
 ) {
     if (vlcPlayer != null) {
         // libVLC draws into its own layout; attach on the way in, detach on the way out.
         AndroidView(
             modifier = modifier,
             factory = { context ->
-                org.videolan.libvlc.util.VLCVideoLayout(context).apply {
+                VLCVideoLayout(context).apply {
                     layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                     setBackgroundColor(android.graphics.Color.BLACK)
                 }
             },
             update = { layout ->
-                if (!vlcPlayer.vlcVout.areViewsAttached()) vlcPlayer.attachViews(layout, null, false, false)
+                // Preview -> full screen: the new surface arrives while the old one is attached,
+                // and the old one's release then left libVLC with none until some state happened
+                // to change. The surface is handed over here, and only its owner may detach it.
+                if (vlcSurfaceOwner?.get() !== layout || !vlcPlayer.vlcVout.areViewsAttached()) {
+                    if (vlcPlayer.vlcVout.areViewsAttached()) vlcPlayer.detachViews()
+                    vlcPlayer.attachViews(layout, null, false, false)
+                    vlcSurfaceOwner = WeakReference(layout)
+                }
+                // "Tela cheia" and "Tamanho original" must mean the same as on Media3 (M5-032).
+                onVlcFill(resizeMode == AspectRatioFrameLayout.RESIZE_MODE_ZOOM)
             },
-            onRelease = { runCatching { vlcPlayer.detachViews() } },
+            onRelease = { layout ->
+                if (vlcSurfaceOwner?.get() === layout) {
+                    vlcSurfaceOwner = null
+                    runCatching { vlcPlayer.detachViews() }
+                }
+            },
         )
         return
     }

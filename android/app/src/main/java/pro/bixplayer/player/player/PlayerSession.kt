@@ -1,5 +1,7 @@
 package pro.bixplayer.player.player
 
+import androidx.media3.common.PlaybackException
+import pro.bixplayer.player.data.datastore.DeviceStore
 import android.content.Context
 import androidx.media3.common.Player
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -62,9 +64,12 @@ class PlayerSession @Inject constructor(
     private val media3 = Media3Engine(context, messages)
     private val vlc = VlcEngine(context, messages)
 
-    /** `null` = automatic (Media3 first, VLC when Media3 cannot decode); else forced. */
+    /** VLC by default (F2-019). `null` = automatic: Media3 first, VLC when it cannot decode. */
     @Volatile
-    var preference: EngineKind? = null
+    var preference: EngineKind? = EngineKind.VLC
+
+    /** One hand-over to the other engine per item, so two failing engines cannot ping-pong. */
+    private var fallbackTried = false
 
     /** True while the current item plays on VLC because Media3 gave up ("Modo de compatibilidade"). */
     private val _compatibilityMode = MutableStateFlow(false)
@@ -73,6 +78,11 @@ class PlayerSession @Inject constructor(
     /** libVLC player of the active engine, for the VLC surface; null while Media3 is active. */
     val vlcPlayer: org.videolan.libvlc.MediaPlayer?
         get() = (_engine.value as? VlcEngine)?.vlcPlayer
+
+    /** The VLC surface asks here for its fit, since only the engine knows when the video is up. */
+    fun setVlcFill(fill: Boolean) {
+        (_engine.value as? VlcEngine)?.setFill(fill)
+    }
 
     private val _engine = MutableStateFlow<PlayerEngine>(media3)
 
@@ -156,17 +166,26 @@ class PlayerSession @Inject constructor(
 
     val isPlaying: Boolean get() = engineState.value is PlaybackState.Playing
 
+    private fun preferredEngine(): PlayerEngine = if (preference == EngineKind.VLC) vlc else media3
+
     fun play(url: String) {
-        if (url == _currentUrl.value && state.value !is SessionState.Failed && _retrying.value == null) {
+        // A released engine (the app went to the background meanwhile) has nothing left to resume.
+        val sameItem = url == _currentUrl.value && state.value !is SessionState.Failed && _retrying.value == null &&
+            _engine.value.state.value !is PlaybackState.Idle
+        // The same item keeps playing, unless Ajustes now asks for the other engine. A fallback
+        // (compatibility mode) stays: going back would only fail again.
+        val rightEngine = preference == null || _compatibilityMode.value || _engine.value === preferredEngine()
+        if (sameItem && rightEngine) {
             _engine.value.play()
             return
         }
         cancelRetry()
         attempt = 0
+        fallbackTried = false
         _currentUrl.value = url
         // A new item starts on the preferred engine; the fallback is decided per item.
         _compatibilityMode.value = false
-        switchEngine(if (preference == EngineKind.VLC) vlc else media3)
+        switchEngine(preferredEngine())
         _engine.value.prepare(url)
     }
 
@@ -182,6 +201,9 @@ class PlayerSession @Inject constructor(
         val url = _currentUrl.value ?: return
         cancelRetry()
         attempt = 0
+        fallbackTried = false
+        _compatibilityMode.value = false
+        switchEngine(preferredEngine())
         _engine.value.prepare(url)
     }
 
@@ -229,16 +251,11 @@ class PlayerSession @Inject constructor(
 
     private fun onEngineError(error: PlaybackState.Error) {
         val url = _currentUrl.value ?: return
+        // A format the device cannot decode does not get better with retries.
+        if (error.code == PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED && fallBack(url, error.code)) return
         if (attempt >= MAX_RETRIES) {
             _retrying.value = null
-            if (_engine.value === media3 && preference != EngineKind.MEDIA3 && isDecodeOrSourceError(error.code)) {
-                // Media3 cannot handle the stream itself (not the network): hand it to libVLC.
-                Timber.i("media3 gave up with %d, falling back to vlc for %s", error.code, UrlRedactor.redact(url))
-                _compatibilityMode.value = true
-                switchEngine(vlc)
-                vlc.prepare(url)
-                return
-            }
+            if (fallBack(url, error.code)) return
             Timber.w("playback failed after %d retries: %s", MAX_RETRIES, error.message)
             return
         }
@@ -251,6 +268,25 @@ class PlayerSession @Inject constructor(
             _retrying.value = null
             _engine.value.prepare(url)
         }
+    }
+
+    /** Hands the item to the other engine, once. False when there is nothing left to try. */
+    private fun fallBack(url: String, code: Int): Boolean {
+        if (fallbackTried) return false
+        val target = when {
+            // Media3 cannot handle the stream itself (not the network): libVLC decodes more.
+            _engine.value === media3 && preference != EngineKind.MEDIA3 && isDecodeOrSourceError(code) -> vlc
+            // VLC being the default is no promise: what it refuses, Media3 may still open.
+            _engine.value === vlc -> media3
+            else -> return false
+        }
+        Timber.i("falling back after %d on %s", code, UrlRedactor.redact(url))
+        fallbackTried = true
+        cancelRetry()
+        _compatibilityMode.value = true
+        switchEngine(target)
+        target.prepare(url)
+        return true
     }
 
     private fun cancelRetry() {
@@ -266,8 +302,25 @@ class PlayerSession @Inject constructor(
          */
         fun isDecodeOrSourceError(code: Int): Boolean = code in 3000..5999
 
+        /** What Ajustes -> Player stored, as a preference: `null` means automatic. */
+        fun preferenceFrom(stored: String?): EngineKind? = when (stored) {
+            "media3" -> EngineKind.MEDIA3
+            "auto" -> null
+            else -> EngineKind.VLC
+        }
+
         const val MAX_RETRIES = 2
         const val RETRY_BASE_MS = 1_500L
         const val PROGRESS_TICK_MS = 500L
     }
+}
+
+/**
+ * Ajustes -> Player of the active playlist. Applied before anything plays, the channel preview
+ * included: it used to be read only when the full-screen player opened, so the first preview
+ * always ran on Media3 whatever the setting said.
+ */
+suspend fun PlayerSession.applyEnginePreference(store: DeviceStore) {
+    val playlistId = store.currentActivePlaylistId() ?: return
+    preference = PlayerSession.preferenceFrom(store.currentPlayerEngine(playlistId))
 }

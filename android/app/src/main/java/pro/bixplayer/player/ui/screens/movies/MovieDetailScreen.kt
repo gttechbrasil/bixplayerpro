@@ -1,5 +1,7 @@
 package pro.bixplayer.player.ui.screens.movies
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -82,12 +84,16 @@ fun MovieDetailScreen(
         // poster left nothing for the text, so the title showed as "Fil" and the synopsis broke
         // one letter per line (M5-031). In portrait everything stacks and scrolls instead.
         val compact = !LocalIsTv.current
+        // A phone in landscape is ~390 dp tall: the TV's 260 dp poster (390 dp high) took the room
+        // the buttons needed, and the third one fell off the screen (M5-041).
+        val short = LocalConfiguration.current.screenHeightDp < 500
         DetailFrame(
             compact = compact,
+            short = short,
             poster = {
             Box(
                 modifier = Modifier
-                    .then(if (compact) Modifier.fillMaxWidth(0.45f) else Modifier.width(260.dp))
+                    .then(if (compact) Modifier.fillMaxWidth(0.45f) else Modifier.width(if (short) 170.dp else 260.dp))
                     .aspectRatio(2f / 3f)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surface),
@@ -198,6 +204,7 @@ fun MovieDetailScreen(
 @Composable
 internal fun DetailFrame(
     compact: Boolean,
+    short: Boolean,
     poster: @Composable () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -215,8 +222,11 @@ internal fun DetailFrame(
         }
     } else {
         Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 56.dp, vertical = 40.dp),
-            horizontalArrangement = Arrangement.spacedBy(40.dp),
+            modifier = Modifier.fillMaxSize().padding(
+                horizontal = if (short) 24.dp else 56.dp,
+                vertical = if (short) 16.dp else 40.dp,
+            ),
+            horizontalArrangement = Arrangement.spacedBy(if (short) 20.dp else 40.dp),
         ) {
             poster()
             Column(
@@ -227,13 +237,20 @@ internal fun DetailFrame(
     }
 }
 
-/** Buttons in a row on a TV, stacked full width on a phone, where thumbs need the space. */
+/**
+ * Buttons stacked full width in the compact layout, where thumbs need the space; otherwise a row
+ * that slides sideways when they do not all fit, so none is squeezed out of reach (M5-041). The
+ * padding keeps the focus ring of the first and last button inside the scroll's clip.
+ */
 @Composable
 internal fun DetailActions(compact: Boolean, content: @Composable () -> Unit) {
     if (compact) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) { content() }
     } else {
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) { content() }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 4.dp),
+        ) { content() }
     }
 }
 

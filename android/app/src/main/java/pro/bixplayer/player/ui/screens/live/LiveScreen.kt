@@ -631,7 +631,12 @@ private fun PreviewPanel(
                 .background(Color.Black),
             contentAlignment = Alignment.Center,
         ) {
-            VideoSurface(player = viewModel.session.player, vlcPlayer = viewModel.session.vlcPlayer, modifier = Modifier.fillMaxSize())
+            VideoSurface(
+                player = viewModel.session.player,
+                vlcPlayer = viewModel.session.vlcPlayer,
+                onVlcFill = viewModel.session::setVlcFill,
+                modifier = Modifier.fillMaxSize(),
+            )
             when (val preview = state.preview) {
                 SessionState.Loading -> CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 is SessionState.Retrying -> PreviewNotice(

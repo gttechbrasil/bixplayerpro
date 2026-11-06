@@ -1,5 +1,6 @@
 package pro.bixplayer.player.ui.screens.live
 
+import pro.bixplayer.player.player.applyEnginePreference
 import pro.bixplayer.player.data.epg.NowNext
 import pro.bixplayer.player.data.epg.observeNowNext
 import androidx.lifecycle.SavedStateHandle
@@ -99,7 +100,7 @@ data class LiveUiState(
 @HiltViewModel
 class LiveViewModel @Inject constructor(
     private val savedState: SavedStateHandle,
-    store: DeviceStore,
+    private val store: DeviceStore,
     categoryDao: CategoryDao,
     ruleDao: CategoryRuleDao,
     private val channelDao: ChannelDao,
@@ -116,9 +117,13 @@ class LiveViewModel @Inject constructor(
     /**
      * Applies the scope the caller asked for in the route (`live?scope=fav`). The home's
      * Favourites entry used to land on every channel because the destination is reused and the
-     * ViewModel had already read its saved scope (M5-028).
+     * ViewModel had already read its saved scope (M5-028). The screen calls this every time it
+     * comes back into composition, the return from the player included, so each route value counts
+     * once: otherwise `scope=all` threw the viewer out of the folder they were in (M5-042).
      */
     fun applyScopeKey(key: String?) {
+        if (savedState.get<String>(KEY_ROUTE_SCOPE) == key) return
+        savedState[KEY_ROUTE_SCOPE] = key
         val wanted = when {
             key.isNullOrBlank() -> return
             key == ChannelScope.KEY_FAVORITES -> ChannelScope.Favorites
@@ -216,7 +221,12 @@ class LiveViewModel @Inject constructor(
                 .debounce(PREVIEW_DEBOUNCE_MS)
                 .map { it?.streamUrl }
                 .distinctUntilChanged()
-                .collect { url -> if (url != null) session.play(url) }
+                .collect { url ->
+                    if (url != null) {
+                        session.applyEnginePreference(store)
+                        session.play(url)
+                    }
+                }
         }
     }
 
@@ -265,6 +275,7 @@ class LiveViewModel @Inject constructor(
         openingPlayer = false
         viewModelScope.launch {
             followPlayerChannel()
+            session.applyEnginePreference(store)
             focusedChannel.value?.let { session.play(it.streamUrl) }
         }
     }
@@ -314,6 +325,7 @@ class LiveViewModel @Inject constructor(
         const val PREVIEW_DEBOUNCE_MS = 700L
         private const val KEY_SCOPE = "scope"
         private const val KEY_SCOPE_NAME = "scope_name"
+        private const val KEY_ROUTE_SCOPE = "route_scope"
         private const val KEY_QUERY = "query"
         private const val KEY_INDEX = "channel_index"
     }

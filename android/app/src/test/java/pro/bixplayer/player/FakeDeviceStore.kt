@@ -49,8 +49,8 @@ class FakeDeviceStore(
     override suspend fun currentLayoutOverride(): String? = _layout.value
     override suspend fun currentUiMode(): String = _uiMode.value
     override suspend fun setUiMode(mode: String) { _uiMode.value = mode }
-    override fun playerEngine(playlistId: Long): Flow<String> = _engines.map { it[playlistId] ?: "auto" }
-    override suspend fun currentPlayerEngine(playlistId: Long): String = _engines.value[playlistId] ?: "auto"
+    override fun playerEngine(playlistId: Long): Flow<String> = _engines.map { it[playlistId] ?: "vlc" }
+    override suspend fun currentPlayerEngine(playlistId: Long): String = _engines.value[playlistId] ?: "vlc"
 
     override suspend fun saveCredentials(token: String, macAddress: String) {
         saveCredentialsCalls++

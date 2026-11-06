@@ -299,16 +299,22 @@ uv run python scripts/make_fixture.py --download-sample
 # uploads/fixture/sample.ts   ~2 MB de MPEG-TS (4 segmentos do stream público da Mux)
 # uploads/fixture/sample.mp4  filmes e episódios (VOD com seek e progresso)
 # uploads/fixture/compat.ts   bytes WMV servidos como .ts: o Media3 falha e o app cai no libVLC
+# Gerados à mão, opcionais e fora do git; quando existem, o fixture aponta os canais para eles:
+# uploads/fixture/live_h264.ts       canal 2, H.264 em TS (o canal típico de IPTV), 5 min
+# uploads/fixture/live_hls/index.m3u8  canal 3, o mesmo vídeo em HLS local
+# uploads/fixture/live_1080p.ts      canal 5, 1080p a 4 Mb/s
+# uploads/fixture/live_mpeg2.ts      canal 8, MPEG-2 + AAC: sem decoder no Media3 do emulador
 uv run python scripts/make_fixture.py --movies 20000 --series 500   # fixture de estresse do M4
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 | Canais | URL | Exercita |
 |---|---|---|
-| 1–3 | `https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8` | HLS público, multi-bitrate |
-| 4–6 | `http://10.0.2.2:8000/uploads/fixture/sample.ts` | TS local (extractor tolerante) |
-| 7 | `http://10.0.2.2:8000/uploads/fixture/compat.ts` | fallback para libVLC ("Modo de compatibilidade") |
-| 8+ | `http://10.0.2.2:8000/fake/stream/N.ts` (404) | retry automático 2× + botão "Tentar novamente" |
+| 1–3 | `https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8` | HLS público, multi-bitrate (2, 3 e 5 trocam pelos arquivos locais acima, quando existem) |
+| 4–6 | `http://10.0.2.2:8000/uploads/fixture/sample.ts` | TS local de 10 s: termina logo, não serve para medir imagem em movimento |
+| 7 | `http://10.0.2.2:8000/uploads/fixture/compat.ts` | fallback entre motores ("Modo de compatibilidade") |
+| 8 | `http://10.0.2.2:8000/uploads/fixture/live_mpeg2.ts`, quando existe | só áudio no Media3 sem o tratamento da M5-039 |
+| 9+ | `http://10.0.2.2:8000/fake/stream/N.ts` (404) | retry automático 2× + botão "Tentar novamente" |
 
 Medido no AVD de TV (x86_64, 05-06/09/2026) com a fixture de estresse: sync completo de 1.200
 canais + 20.000 filmes + 500 séries (12.000 episódios) em **4,2 s**, EPG de 10.832 programas em
@@ -373,7 +379,9 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
   abas) não foi apagado: é o *Modo de interface → Compacto (celular)*. `LaunchActivity` manda
   hardware sem toque para `TvActivity` e todo o resto para `MobileActivity`; o override `TV`
   num celular dá no mesmo que `Automático`.
-- **Barra que acompanha o dedo (M5-038, 1.12.0)**: no toque, o arrasto horizontal do `PlayerScreen` converte pixels em tempo pela largura da barra do overlay (`onSizeChanged` → `seekBarWidthPx`): largura da barra = duração inteira. Antes era fixo em 4 min por largura de tela. A barra (`BoxWithConstraints`, 36 dp de altura no toque) tem bolinha e `detectTapGestures` que chama `seekToPosition`. Duração desconhecida (0) volta ao passo fixo.
+- **Avançar só pela barra (M5-040, 1.13.0)**: no toque, a imagem só reconhece um toque simples, que mostra ou esconde os controles; o arrasto na tela inteira e o toque duplo de ±10 s saíram. A barra (`BoxWithConstraints`, 44 dp de altura de toque, com bolinha) usa `awaitEachGesture`: o dedo define a posição (`scrubTo`: largura da barra = duração inteira, M5-038) e o vídeo só pula ao soltar (`commitScrub`). Enquanto o dedo está na barra, os controles não se escondem.
+- **VLC por padrão (F2-019, 1.13.0)**: ver `ADR-006`, seção "Revisão". O `applyEnginePreference` roda antes da prévia, não só no player. O `VideoSurface` não decide mais o enquadramento do VLC: pede por `onVlcFill` e o `VlcEngine.applyFit` aplica. Não leia `currentVideoTrack` antes de o vídeo estar na tela (`videoIsUp`): o `Media` guarda a primeira leitura para sempre, e em TS ela vem 0x0.
+- **Ciclo de vida do player (M5-043, 1.13.0)**: o `PlayerScreen` observa a *Activity*, não a entrada de navegação. A entrada para (`ON_STOP`) também quando se sai da tela, e isso liberava o motor que a prévia acabava de herdar.
 - **Nomes de pasta em letreiro (F2-018, 1.11.0)**: `ScrollingLabel` liga `basicMarquee` só
   quando `active` (foco ou pasta aberta); parado, mostra até `restingLines` linhas (1 na TV, 2 no
   toque, e só quando a primeira palavra cabe na largura, medida com `rememberTextMeasurer`). O marquee só anima quando o texto não cabe, e no máximo duas linhas animam por vez, o
@@ -464,10 +472,10 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
 - **BACK**: com `targetSdk 36` o sistema entrega o voltar por `OnBackInvokedCallback`; tratar
   `Key.Back` em `onKeyEvent` faz o NavHost e a tela "voltarem" duas vezes e esvazia o grafo. Use
   `BackHandler` (o `PlayerScreen` fecha painéis antes de sair).
-- **Um player só**: `PlayerSession` é um singleton com um `Media3Engine`; a prévia da TV ao vivo e o
-  player em tela cheia trocam de superfície (`VideoSurface`), nunca de instância. Desde o M4 a
-  sessão pode trocar o motor para `VlcEngine` (libVLC real) quando o Media3 falha com erro de
-  fonte/decodificação após os retries — `ADR-006`.
+- **Um player só**: `PlayerSession` é um singleton com `VlcEngine` (padrão desde a 1.13.0) e
+  `Media3Engine`; a prévia da TV ao vivo e o player em tela cheia trocam de superfície
+  (`VideoSurface`), nunca de instância. Se o motor falha depois dos retries, a sessão abre o item
+  uma vez no outro — `ADR-006`. No VLC só o `VLCVideoLayout` dono da superfície pode soltá-la.
 - **Toque × controle remoto**: `Modifier.onSelect` (`ui/components/Select.kt`) é OK/ENTER na TV e
   `clickable` no celular, nunca os dois — `clickable` também reage ao DPAD_CENTER e dispararia a
   ação duas vezes. `Modifier.tap` é só toque, para linhas que já tratam várias teclas.
@@ -635,7 +643,7 @@ segundo plano bem antes disso, mas o app em primeiro plano só cai perto do esgo
 |---|---|---|---|---|
 | **MXQ Pro 4K 5G** (cliente) | SDK 29 (Android 10; string "11.1" falsa) | Allwinner H616 `sun50iw9p1`, armeabi-v7a, RAM total mal reportada (16 MB) | 1.2.0 | Abria a UI de celular (M5-017: launcher dispara `LAUNCHER`); D-pad só em modo mouse; fechamentos ao reproduzir filme (M5-013) |
 | **MXQ Pro 4K 5G** (cliente) | idem | idem | **1.2.2** | Cliente relata funcionamento normal. Diagnóstico manual de 08/09/2026: entrada única abriu a UI de TV pelo automático; 3 reproduções com o decodificador AVC de hardware; sem crash Java, sem evidência de morte do processo (o `ApplicationExitInfo` não existe no SDK 29, então uma morte por memória só apareceria como ausência de crash file); memória do app 43 MB de heap. M5-013 fica em observação |
-| **AVD `bix_box_lowend`** (referência) | 9 (SDK 28), imagem `google_apis` x86, perfil `tv_1080p` | x86, 1 GB (`hw.ramSize=1024`; o kernel reporta 1,46 GB), GPU por software | 1.2.2 (debug universal) | Sem dispositivo de toque → `UiModeDecider` escolhe **TV** mesmo sem leanback e com a feature de touchscreen declarada: é a simulação da box AOSP. Sync de 1.200 canais + 20.000 filmes + 500 séries em **15,4 s**. PSS: home 72–75 MB, grade de filmes após 20–40 linhas 87–106 MB, detalhe 86 MB, **filme tocando 93–97 MB**, lista de TV com prévia 100 MB, **canal HLS em tela cheia 111 MB**, canal TS 119 MB, fallback VLC 118 MB; memória livre do sistema nunca abaixo de 750 MB; nenhum `am_kill`/crash em ~20 min de uso |
+| **AVD `bix_box_lowend`** (referência) | 9 (SDK 28), imagem `google_apis` x86, perfil `tv_1080p` | x86, 1 GB (`hw.ramSize=1024`; o kernel reporta 1,46 GB), GPU por software | 1.2.2 (debug universal) | Sem dispositivo de toque → `UiModeDecider` escolhe **TV** mesmo sem leanback e com a feature de touchscreen declarada: é a simulação da box AOSP. Sync de 1.200 canais + 20.000 filmes + 500 séries em **15,4 s**. PSS: home 72–75 MB, grade de filmes após 20–40 linhas 87–106 MB, detalhe 86 MB, **filme tocando 93–97 MB**, lista de TV com prévia 100 MB, **canal HLS em tela cheia 111 MB**, canal TS 119 MB, fallback VLC 118 MB; memória livre do sistema nunca abaixo de 750 MB; nenhum `am_kill`/crash em ~20 min de uso. **Com VLC por padrão (1.13.0, build debug):** PSS 99 MB na home, 158 MB com canal MPEG-2 na prévia e em tela cheia, 169 MB com a prévia de HLS, 184–191 MB com filme, 151 MB de volta à home; memória livre nunca abaixo de 726 MB, sem morte por memória nem crash. O VLC custa de 60 a 90 MB a mais que o Media3 |
 
 | Aparelho | Android | Chip / ABI | Release | Resultado |
 |---|---|---|---|---|

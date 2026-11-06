@@ -1,7 +1,8 @@
 package pro.bixplayer.player.ui.screens.player
 
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.CircleShape
@@ -64,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
@@ -90,7 +92,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import pro.bixplayer.player.ui.theme.LocalIsTv
@@ -115,8 +116,6 @@ fun PlayerScreen(
     val rootRequester = remember { FocusRequester() }
     val isTv = LocalIsTv.current
     val touch = LocalTouch.current
-    // Width of the overlay's progress bar, so a swipe can move the bar exactly with the finger.
-    var seekBarWidthPx by remember { mutableIntStateOf(0) }
     val activity = LocalActivity.current
     // Phones fill the screen by default: their 20:9 panels leave thick side bars on 16:9 video,
     // which is what "deita mas não preenche" meant (M5-032). TVs match the content already.
@@ -162,9 +161,11 @@ fun PlayerScreen(
     }
 
     // The screen must stay on while something plays, and the decoder must not run in the
-    // background: release on stop, resume with the same item on start.
+    // background: release on stop, resume with the same item on start. This is the activity's
+    // lifecycle, not the navigation entry's: leaving this screen stops the entry too, and that
+    // released the engine live had just handed over, leaving the preview without a picture.
     val view = LocalView.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = activity as? LifecycleOwner ?: LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         view.keepScreenOn = true
         val observer = LifecycleEventObserver { _, event ->
@@ -213,35 +214,12 @@ fun PlayerScreen(
             .background(Color.Black)
             .focusRequester(rootRequester)
             .focusable()
-            // Touch: tap shows/hides controls, double tap seeks ±10 s, horizontal drag scrubs.
+            // Touch: a tap on the picture only shows or hides the controls. Seeking lives on the
+            // progress bar alone: double taps and swipes anywhere moved the video by accident.
             .then(
-                if (!touch) Modifier else Modifier
-                    .pointerInput(state.isLive) {
-                        detectTapGestures(
-                            onTap = { viewModel.toggleOverlay() },
-                            onDoubleTap = { offset -> if (!state.isLive) viewModel.seek(offset.x > size.width / 2) },
-                        )
-                    }
-                    .pointerInput(state.isLive) {
-                        if (state.isLive) return@pointerInput
-                        detectHorizontalDragGestures(
-                            onDragEnd = { viewModel.commitDragSeek() },
-                            onDragCancel = { viewModel.commitDragSeek() },
-                        ) { change, dragAmount ->
-                            change.consume()
-                            // The bar follows the finger: moving it by the bar's width covers the
-                            // whole video. It used to be a fixed 4 minutes per screen width, so in
-                            // a movie the bar crawled far behind the finger (M5-038). Without a
-                            // known duration (some streams) the fixed step is all there is.
-                            val duration = state.progress.durationMs
-                            val deltaMs = if (duration > 0) {
-                                dragAmount / (seekBarWidthPx.takeIf { it > 0 } ?: size.width) * duration
-                            } else {
-                                dragAmount / size.width * DRAG_FULL_WIDTH_MS
-                            }
-                            viewModel.dragSeekBy(deltaMs.toLong())
-                        }
-                    },
+                if (!touch) Modifier else Modifier.pointerInput(Unit) {
+                    detectTapGestures(onTap = { viewModel.toggleOverlay() })
+                },
             )
             .onPreviewKeyEvent { event ->
                 // Panels handle their own keys; the root only acts when nothing is open.
@@ -291,6 +269,7 @@ fun PlayerScreen(
         VideoSurface(
             player = viewModel.session.player,
             vlcPlayer = viewModel.session.vlcPlayer,
+            onVlcFill = viewModel.session::setVlcFill,
             modifier = Modifier.fillMaxSize(),
             resizeMode = if (videoFill) {
                 AspectRatioFrameLayout.RESIZE_MODE_ZOOM
@@ -381,8 +360,8 @@ fun PlayerScreen(
                 onTracks = viewModel::openTracks,
                 videoFill = videoFill,
                 onToggleFill = { viewModel.toggleVideoFill(videoFill) },
-                onSeekTo = viewModel::seekToPosition,
-                onSeekBarWidth = { seekBarWidthPx = it },
+                onScrub = viewModel::scrubTo,
+                onScrubEnd = viewModel::commitScrub,
             )
         }
 
@@ -427,8 +406,6 @@ fun PlayerScreen(
     }
 }
 
-private const val DRAG_FULL_WIDTH_MS = 240_000f
-
 @Composable
 private fun InfoOverlay(
     state: PlayerUiState,
@@ -437,8 +414,8 @@ private fun InfoOverlay(
     onTracks: () -> Unit = {},
     videoFill: Boolean = false,
     onToggleFill: () -> Unit = {},
-    onSeekTo: (Long) -> Unit = {},
-    onSeekBarWidth: (Int) -> Unit = {},
+    onScrub: (Long) -> Unit = {},
+    onScrubEnd: () -> Unit = {},
 ) {
     var now by remember { mutableStateOf(LocalTime.now()) }
     LaunchedEffect(state.overlayVisible) {
@@ -505,19 +482,33 @@ private fun InfoOverlay(
                 )
                 Spacer(Modifier.width(16.dp))
                 val fraction = if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f
-                // On a touchscreen the bar is a scrubber: a tall touch area, a handle that moves
-                // with the finger and a tap that jumps there (M5-038). On a TV it stays a plain bar.
+                // On a touchscreen the bar is the scrubber: a tall touch area and a handle that goes
+                // to the finger and stays under it; the seek happens when it lifts (M5-038). On a
+                // TV it stays a plain bar.
+                val latestDuration by rememberUpdatedState(duration)
                 BoxWithConstraints(
                     contentAlignment = Alignment.CenterStart,
                     modifier = Modifier
                         .weight(1f)
-                        .height(if (touch) 36.dp else 6.dp)
-                        .onSizeChanged { onSeekBarWidth(it.width) }
+                        .height(if (touch) 44.dp else 6.dp)
                         .then(
-                            if (touch && duration > 0) {
-                                Modifier.pointerInput(duration) {
-                                    detectTapGestures { offset ->
-                                        onSeekTo((offset.x / size.width * duration).toLong())
+                            if (touch) {
+                                Modifier.pointerInput(Unit) {
+                                    fun positionAt(x: Float) =
+                                        ((x / size.width).coerceIn(0f, 1f) * latestDuration).toLong()
+                                    awaitEachGesture {
+                                        val down = awaitFirstDown()
+                                        down.consume()
+                                        onScrub(positionAt(down.position.x))
+                                        while (true) {
+                                            val change = awaitPointerEvent().changes
+                                                .firstOrNull { it.id == down.id } ?: break
+                                            change.consume()
+                                            // The lift counts too: it lands where the finger left.
+                                            onScrub(positionAt(change.position.x))
+                                            if (!change.pressed) break
+                                        }
+                                        onScrubEnd()
                                     }
                                 }
                             } else {

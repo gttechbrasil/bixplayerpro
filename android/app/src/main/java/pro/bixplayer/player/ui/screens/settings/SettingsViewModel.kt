@@ -40,7 +40,7 @@ data class SettingsUiState(
     val layout: String = "default",
     val layoutFromPanel: Boolean = true,
     /** `auto` | `media3` | `vlc` for the active playlist. */
-    val engine: String = "auto",
+    val engine: String = "vlc",
     val activePlaylistId: Long? = null,
     val macAddress: String = "",
     val version: String = BuildConfig.VERSION_NAME,
@@ -124,7 +124,7 @@ class SettingsViewModel @Inject constructor(
 
     fun cycleEngine() {
         val id = _uiState.value.activePlaylistId ?: return
-        val order = listOf("auto", "media3", "vlc")
+        val order = listOf("vlc", "auto", "media3")
         val next = order[(order.indexOf(_uiState.value.engine) + 1) % order.size]
         viewModelScope.launch { store.setPlayerEngine(id, next) }
     }

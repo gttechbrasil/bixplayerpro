@@ -68,6 +68,17 @@ class Media3Engine(
 
         override fun onTracksChanged(tracks: Tracks) {
             _tracks.value = tracks.toOptions()
+            // A track the device cannot decode raises no error: ExoPlayer plays the rest, which
+            // is the "só áudio, sem imagem" of M5-039 (MPEG-2 or HEVC with no decoder). Report it,
+            // so the session can hand the stream to libVLC instead of leaving a black screen.
+            if (tracks.hasUndecodable(C.TRACK_TYPE_VIDEO) || tracks.hasUndecodable(C.TRACK_TYPE_AUDIO)) {
+                Timber.w("media3 has no decoder for a track of %s", UrlRedactor.redact(currentUrl))
+                player?.stop()
+                _state.value = PlaybackState.Error(
+                    messages.unsupported,
+                    PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED,
+                )
+            }
         }
     }
 
@@ -290,3 +301,7 @@ class Media3Engine(
         private const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS = 3_000
     }
 }
+
+/** The stream carries this type of track, and not one of them can be decoded here. */
+private fun Tracks.hasUndecodable(type: Int): Boolean =
+    containsType(type) && !isTypeSupported(type, /* allowExceedsCapabilities = */ true)
