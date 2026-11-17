@@ -20,6 +20,12 @@ val keystoreProperties = Properties().apply {
 /** AGP refuses ABI splits in a bundle build; Google Play cuts the bundle per ABI by itself. */
 val buildingBundle = gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }
 
+/**
+ * The store version (ADR-007): updates only through Google Play, no reseller QR, access code for
+ * the reviewer. Every bundle is for the store; `-Pbix.store=play` builds the same thing as an APK.
+ */
+val playStore = buildingBundle || prop("bix.store") == "play"
+
 android {
 	namespace = "pro.bixplayer.player"
 	// Several AndroidX artifacts now require compiling against 37; targetSdk stays at 36
@@ -34,6 +40,8 @@ android {
 		versionName = prop("bix.versionName", "1.0.0")
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 		resValue("string", "app_name", prop("bix.appName", "Bix Player"))
+		buildConfigField("boolean", "PLAY_STORE", playStore.toString())
+		buildConfigField("String", "PRIVACY_URL", "\"${prop("bix.privacyUrl", "https://bixplayer.pro/privacidade")}\"")
 	}
 
 	signingConfigs {

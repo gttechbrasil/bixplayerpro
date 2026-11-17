@@ -19,6 +19,9 @@ def _to_out(values: dict[str, Any]) -> SettingsOut:
         min_app_version=str(values.get("min_app_version", "")),
         apk_url=str(values.get("apk_url", "")),
         platform_name=str(values.get("platform_name", "")),
+        play_review_code=str(values.get("play_review_code") or ""),
+        play_review_reseller=str(values.get("play_review_reseller") or ""),
+        play_review_playlist_url=str(values.get("play_review_playlist_url") or ""),
     )
 
 
@@ -39,13 +42,16 @@ async def update_settings(
             {"months": p.months, "price": f"{p.price:.2f}"} for p in body.packages
         ]
     values = await set_settings(db, changes)
+    logged = dict(changes)
+    if logged.get("play_review_code"):
+        logged["play_review_code"] = "***"  # it opens a device: keep it out of the audit log
     await audit.record(
         db,
         actor_type="admin",
         actor_id=admin.id,
         action="settings.update",
         target="settings",
-        payload=changes,
+        payload=logged,
         ip=get_client_ip(request),
     )
     await db.commit()

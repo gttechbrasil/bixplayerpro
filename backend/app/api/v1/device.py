@@ -1,12 +1,13 @@
-from datetime import UTC, datetime
+import hmac
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy import func, select
 
 from app.core.deps import CurrentDevice, DbSession, get_client_ip
-from app.core.exceptions import bad_request, forbidden, not_found
-from app.core.ratelimit import device_with_rate_limit, limit_device_register
-from app.models import Device, Playlist
+from app.core.exceptions import bad_request, conflict, forbidden, not_found
+from app.core.ratelimit import consume, device_with_rate_limit, limit_device_register
+from app.models import Device, Playlist, Reseller
 from app.schemas.common import Message
 from app.schemas.device import (
     DeviceConfig,
@@ -14,6 +15,7 @@ from app.schemas.device import (
     DeviceRegisterResponse,
     PlaylistCreate,
     PlaylistOut,
+    ReviewCodeRequest,
 )
 from app.services import audit
 from app.services.devices import build_config, register_device
@@ -134,3 +136,78 @@ async def delete_playlist(
     )
     await db.commit()
     return Message(message="Playlist removida.")
+
+
+# ---- Google Play review (ADR-007) --------------------------------------------------------------
+REVIEW_LICENSE_DAYS = 14
+REVIEW_ATTEMPTS = 5
+REVIEW_WINDOW_SECONDS = 3600
+REVIEW_CLIENT_NAME = "Revisão Google Play"
+REVIEW_PLAYLIST_NAME = "Demonstração"
+MSG_REVIEW_INVALID = "Código inválido."
+MSG_REVIEW_TAKEN = "Este aparelho já está ativado por um revendedor."
+
+
+async def _review_reseller(db: DbSession, values: dict) -> Reseller | None:
+    username = str(values.get("play_review_reseller") or "").strip()
+    if not username:
+        return None
+    reseller = await db.scalar(select(Reseller).where(Reseller.username == username))
+    if reseller is None or reseller.is_blocked:
+        return None
+    return reseller
+
+
+@router.post(
+    "/review-code",
+    summary="Ativa o aparelho com o código de revisão da Google Play",
+    response_model=Message,
+)
+async def review_code(
+    body: ReviewCodeRequest, device: CurrentDevice, db: DbSession, request: Request
+) -> Message:
+    """The store build has no reseller behind the reviewer's device: a code set by the admin
+    links it to the demo reseller for a few days, with the demo list. No credit is spent."""
+    ip = get_client_ip(request)
+    await consume(f"rl:review:dev:{device.id}", REVIEW_ATTEMPTS, REVIEW_WINDOW_SECONDS)
+    await consume(f"rl:review:ip:{ip or '-'}", REVIEW_ATTEMPTS * 4, REVIEW_WINDOW_SECONDS)
+
+    values = await get_all_settings(db)
+    expected = str(values.get("play_review_code") or "").strip()
+    given = body.code.strip()
+    reseller = await _review_reseller(db, values)
+    if (
+        not expected
+        or reseller is None
+        or not hmac.compare_digest(given.encode(), expected.encode())
+    ):
+        raise forbidden(MSG_REVIEW_INVALID, "review_code_invalid")
+    if device.reseller_id is not None and device.reseller_id != reseller.id:
+        raise conflict(MSG_REVIEW_TAKEN, "device_already_registered")
+
+    device.reseller_id = reseller.id
+    device.client_name = device.client_name or REVIEW_CLIENT_NAME
+    device.license_expires_at = date.today() + timedelta(days=REVIEW_LICENSE_DAYS)
+    playlist_url = str(values.get("play_review_playlist_url") or "").strip()
+    existing = await db.scalar(
+        select(func.count()).select_from(Playlist).where(Playlist.device_id == device.id)
+    )
+    if playlist_url and not existing:
+        playlist = Playlist(device_id=device.id, name=REVIEW_PLAYLIST_NAME, position=0)
+        apply_parsed(playlist, parse_playlist_url(playlist_url))
+        db.add(playlist)
+    await db.flush()
+    await audit.record(
+        db,
+        actor_type="device",
+        actor_id=device.id,
+        action="device.review_activate",
+        target=f"device:{device.id}",
+        payload={
+            "reseller_id": reseller.id,
+            "license_expires_at": str(device.license_expires_at),
+        },
+        ip=ip,
+    )
+    await db.commit()
+    return Message(message="Aparelho ativado para avaliação.")

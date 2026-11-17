@@ -13,6 +13,7 @@ import pro.bixplayer.player.data.api.DeviceRegistrar
 import pro.bixplayer.player.data.api.dto.ApiErrorEnvelope
 import pro.bixplayer.player.data.api.dto.DeviceConfigDto
 import pro.bixplayer.player.data.api.dto.PlaylistCreateRequest
+import pro.bixplayer.player.data.api.dto.ReviewCodeRequest
 import pro.bixplayer.player.data.datastore.DeviceStore
 import pro.bixplayer.player.domain.model.AppConfig
 import pro.bixplayer.player.domain.model.ConfigState
@@ -82,6 +83,13 @@ class ConfigRepository @Inject constructor(
         refresh()
         Unit
     }.onFailure { Timber.w(it, "addPlaylist failed") }
+
+    /** Links the device to the demo reseller with the review code (ADR-007), then reloads. */
+    suspend fun activateWithReviewCode(code: String): Result<Unit> = runCatching {
+        api.reviewCode(ReviewCodeRequest(code = code.trim()))
+        refresh()
+        Unit
+    }.onFailure { Timber.w("review code refused: %s", it.javaClass.simpleName) }
 
     suspend fun deletePlaylist(id: Long): Result<Unit> = runCatching {
         api.deletePlaylist(id)

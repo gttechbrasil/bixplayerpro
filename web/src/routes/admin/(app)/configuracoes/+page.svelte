@@ -16,6 +16,9 @@
 		monthly_price: '',
 		min_app_version: '',
 		apk_url: '',
+		play_review_code: '',
+		play_review_reseller: '',
+		play_review_playlist_url: '',
 		packages: [] as { months: number; price: string }[]
 	});
 	let saving = $state(false);
@@ -28,6 +31,9 @@
 			monthly_price: s.monthly_price,
 			min_app_version: s.min_app_version,
 			apk_url: s.apk_url,
+			play_review_code: s.play_review_code,
+			play_review_reseller: s.play_review_reseller,
+			play_review_playlist_url: s.play_review_playlist_url,
 			packages: s.packages.map((p) => ({ ...p }))
 		};
 	});
@@ -49,6 +55,9 @@
 				monthly_price: String(form.monthly_price).replace(',', '.'),
 				min_app_version: form.min_app_version.trim(),
 				apk_url: form.apk_url.trim(),
+				play_review_code: form.play_review_code.trim(),
+				play_review_reseller: form.play_review_reseller.trim(),
+				play_review_playlist_url: form.play_review_playlist_url.trim(),
 				packages: form.packages.map((p) => ({
 					months: Number(p.months),
 					price: String(p.price).replace(',', '.')
@@ -150,6 +159,37 @@
 					</div>
 				{/each}
 			</div>
+		</div>
+	</section>
+
+	<section class="card space-y-4 p-5 lg:col-span-2">
+		<div>
+			<h2 class="font-semibold">Revisão da Google Play</h2>
+			<p class="mt-1 text-sm text-slate-500">
+				Na versão da loja, a tela de ativação aceita este código: o aparelho entra na revenda abaixo
+				por 14 dias, com a lista de demonstração, sem gastar crédito. Informe o código só nas
+				instruções de acesso do Play Console. Deixe em branco para desligar.
+			</p>
+		</div>
+		<div class="grid gap-4 sm:grid-cols-3">
+			<Input
+				label="Código de revisão"
+				maxlength={64}
+				pattern="[A-Za-z0-9\-]*"
+				hint="Letras, números e hífen."
+				bind:value={form.play_review_code}
+			/>
+			<Input
+				label="Usuário da revenda de demonstração"
+				maxlength={64}
+				bind:value={form.play_review_reseller}
+			/>
+			<Input
+				label="Lista de demonstração (URL)"
+				type="url"
+				placeholder="https://bixplayer.pro/demo/lista-revisao.m3u"
+				bind:value={form.play_review_playlist_url}
+			/>
 		</div>
 	</section>
 

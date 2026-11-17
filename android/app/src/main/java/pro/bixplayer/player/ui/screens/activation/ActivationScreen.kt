@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pro.bixplayer.player.BuildConfig
 import pro.bixplayer.player.R
 import pro.bixplayer.player.ui.components.BixButton
 import pro.bixplayer.player.ui.components.BixTextField
@@ -73,6 +74,7 @@ fun ActivationScreen(
     val addedMessage = stringResource(R.string.playlist_added)
     val invalidUrl = stringResource(R.string.playlist_invalid_url)
     val emptyFields = stringResource(R.string.playlist_required_fields)
+    val codeEmpty = stringResource(R.string.access_code_empty)
 
     val checkFocus = remember { FocusRequester() }
     val compact = !LocalIsTv.current
@@ -161,6 +163,14 @@ fun ActivationScreen(
                     onClick = { viewModel.togglePlaylistForm() },
                     modifier = if (compact) Modifier.fillMaxWidth() else Modifier,
                 )
+                if (BuildConfig.PLAY_STORE) {
+                    BixButton(
+                        text = stringResource(R.string.access_code_button),
+                        primary = false,
+                        onClick = { viewModel.toggleCodeForm() },
+                        modifier = if (compact) Modifier.fillMaxWidth() else Modifier,
+                    )
+                }
                 BixButton(
                     text = stringResource(R.string.back),
                     primary = false,
@@ -199,6 +209,15 @@ fun ActivationScreen(
                         },
                     )
                 }
+            }
+
+            if (BuildConfig.PLAY_STORE && state.showCodeForm) {
+                Spacer(Modifier.height(if (compact) 20.dp else 32.dp))
+                AccessCodeForm(
+                    compact = compact,
+                    submitting = state.submittingCode,
+                    onSubmit = { code -> viewModel.activateWithCode(code, codeEmpty, notYet) },
+                )
             }
 
             if (state.showPlaylistForm) {
@@ -341,6 +360,49 @@ private fun PlaylistForm(
             text = stringResource(R.string.playlist_add),
             enabled = !submitting,
             onClick = { onSubmit(name, url) },
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            focusRequester = submitFocus,
+        )
+    }
+}
+
+/** Store build only: the code the Google Play reviewer gets in the Console (ADR-007). */
+@Composable
+private fun AccessCodeForm(
+    compact: Boolean,
+    submitting: Boolean,
+    onSubmit: (code: String) -> Unit,
+) {
+    var code by remember { mutableStateOf("") }
+    val fieldFocus = remember { FocusRequester() }
+    val submitFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { fieldFocus.requestFocusWithRetry() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth(if (compact) 1f else 0.5f)
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+            .padding(if (compact) 16.dp else 24.dp)
+            .imePadding(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        BixTextField(
+            value = code,
+            onValueChange = { code = it },
+            label = stringResource(R.string.access_code_label),
+            keyboardType = KeyboardType.Ascii,
+            imeAction = ImeAction.Done,
+            focusRequester = fieldFocus,
+            onImeAction = {
+                submitFocus.requestFocusSafely()
+                if (!submitting) onSubmit(code)
+            },
+        )
+        BixButton(
+            text = if (submitting) stringResource(R.string.activation_checking)
+            else stringResource(R.string.access_code_submit),
+            enabled = !submitting,
+            onClick = { onSubmit(code) },
             modifier = Modifier.align(Alignment.CenterHorizontally),
             focusRequester = submitFocus,
         )

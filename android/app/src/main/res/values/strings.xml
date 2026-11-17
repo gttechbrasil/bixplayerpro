@@ -202,4 +202,13 @@
     <string name="activation_copy_mac">Copiar MAC</string>
     <string name="activation_share">Compartilhar</string>
     <string name="activation_copied">MAC copiado.</string>
+
+    <!-- Google Play build (ADR-007) -->
+    <string name="access_code_button">Código de acesso</string>
+    <string name="access_code_label">Digite o código de acesso</string>
+    <string name="access_code_submit">Ativar</string>
+    <string name="access_code_empty">Digite o código.</string>
+    <string name="update_store_hint">Atualize pela Google Play.</string>
+    <string name="update_open_store">Abrir a Google Play</string>
+    <string name="settings_privacy">Política de privacidade</string>
 </resources>

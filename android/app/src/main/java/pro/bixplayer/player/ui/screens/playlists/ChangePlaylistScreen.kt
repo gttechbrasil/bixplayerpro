@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pro.bixplayer.player.BuildConfig
 import pro.bixplayer.player.R
 import pro.bixplayer.player.domain.model.Playlist
 import pro.bixplayer.player.domain.model.PlaylistType
@@ -139,7 +140,8 @@ fun ChangePlaylistScreen(
             }
         }
 
-        qrContent?.takeIf { it.isNotBlank() }?.let { content ->
+        // The store build may not point at a purchase outside Google Play (ADR-007).
+        qrContent?.takeIf { it.isNotBlank() && !BuildConfig.PLAY_STORE }?.let { content ->
             Spacer(Modifier.height(if (short) 12.dp else 20.dp))
             ResellerQr(content = content, side = if (short) 104.dp else 150.dp)
         }

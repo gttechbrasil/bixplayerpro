@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="demo1" tvg-name="Big Buck Bunny 720p" group-title="Demonstração",Big Buck Bunny 720p (Blender CC BY)
+https://test-streams.mux.dev/x36xhzz/url_0/193039199_mp4_h264_aac_hd_7.m3u8
+#EXTINF:-1 tvg-id="demo2" tvg-name="Big Buck Bunny 480p" group-title="Demonstração",Big Buck Bunny 480p (Blender CC BY)
+https://test-streams.mux.dev/x36xhzz/url_6/193039199_mp4_h264_aac_hq_7.m3u8
+#EXTINF:-1 tvg-id="demo3" tvg-name="Teste Apple" group-title="Demonstração",Teste de imagem (Apple)
+https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear4/prog_index.m3u8

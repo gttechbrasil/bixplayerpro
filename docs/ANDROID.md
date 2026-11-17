@@ -241,6 +241,13 @@ só entrega o split do idioma do aparelho. Para testar como a loja entrega,
 `./gradlew :app:makeApkFromBundleForDebug` gera os splits em
 `app/build/intermediates/apks_from_bundle/`; instale com `adb install-multiple` só os do aparelho.
 
+Todo bundle é a **versão da loja** (ADR-007): `BuildConfig.PLAY_STORE` fica `true`, a tela de
+atualização abre a página do app na Play Store em vez do link e do QR do APK, o QR do revendedor
+some de Configurações → Playlist e a tela de ativação ganha o botão **Código de acesso**, para o
+revisor do Google. Para testar isso como APK: `./gradlew :app:assembleDebug -Pbix.store=play`. A
+política de privacidade (`BuildConfig.PRIVACY_URL`, `-Pbix.privacyUrl` para trocar) aparece em
+Configurações nas duas versões.
+
 | Build | applicationId | API | Assinatura |
 |---|---|---|---|
 | `debug` | `<bix.applicationId>.debug` | `http://10.0.2.2:8000` | keystore de debug do SDK (automática) |

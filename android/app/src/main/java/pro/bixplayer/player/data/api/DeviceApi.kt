@@ -8,6 +8,7 @@ import pro.bixplayer.player.data.api.dto.PlaylistCreateRequest
 import pro.bixplayer.player.data.api.dto.PlaylistDto
 import pro.bixplayer.player.data.api.dto.RegisterRequest
 import pro.bixplayer.player.data.api.dto.RegisterResponse
+import pro.bixplayer.player.data.api.dto.ReviewCodeRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -31,4 +32,8 @@ interface DeviceApi {
 
     @POST("api/v1/device/diagnostics")
     suspend fun sendDiagnostics(@Body body: DiagnosticRequest): DiagnosticResponse
+
+    /** Store build only: the Google Play reviewer's way in (ADR-007). */
+    @POST("api/v1/device/review-code")
+    suspend fun reviewCode(@Body body: ReviewCodeRequest): MessageResponse
 }

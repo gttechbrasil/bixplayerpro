@@ -62,6 +62,7 @@ venceu). Tudo isso fica em **Pagamentos** e em **Auditoria**.
 | **Pacotes** | Combinações meses × valor com desconto (ex.: 3 meses por R$ 90) |
 | **Versão mínima do app** | Apps com versão menor mostram a tela "Atualização disponível" no boot |
 | **Link do APK** | Endereço do botão "Atualizar" (normalmente `https://<dominio>/downloads/app.apk`) |
+| **Revisão da Google Play** | Código de acesso, usuário da revenda de demonstração e URL da lista de demonstração (`https://<dominio>/demo/lista-revisao.m3u`). Na versão da loja, quem digita o código na ativação entra nessa revenda por 14 dias, sem gastar crédito. Informe o código só nas instruções de acesso do Play Console; em branco, a função fica desligada |
 | **Gateway** (somente leitura) | Provedor, token mascarado e se é de **teste** ou **produção**, URL do webhook. Os segredos ficam só no `.env` do servidor (§8) |
 
 ## 6. Pagamentos e auditoria

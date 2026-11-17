@@ -84,3 +84,8 @@ data class ApiErrorDetail(
     @Json(name = "message") val message: String? = null,
     @Json(name = "code") val code: String? = null,
 )
+
+@JsonClass(generateAdapter = true)
+data class ReviewCodeRequest(
+    @Json(name = "code") val code: String,
+)

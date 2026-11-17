@@ -24,7 +24,7 @@ Erros seguem o formato `{"detail": {"message": "<texto em português>", "code": 
 | 404 | Registro não encontrado |
 | 409 | Conflito (ex.: `username_taken`) |
 | 422 | Corpo/parâmetros inválidos |
-| 429 | Muitas tentativas de login, ou limite dos endpoints públicos do app excedido (`rate_limited`; a resposta traz `Retry-After` em segundos e `detail.retry_after`) |
+| 429 | Muitas tentativas de login (`rate_limited`) |
 
 ## Paginação
 
@@ -115,7 +115,7 @@ Login da revenda
     "logo_url": "https://cdn.exemplo.com/logo.png",
     "bg_url": "https://cdn.exemplo.com/fundo.jpg",
     "qr_content": "https://wa.me/5511999999999",
-    "theme": "theme_d",
+    "theme": "rail",
     "auto_ads": false
   },
   "csrf_token": "Y2xpZW50LWNzcmYtdG9rZW4",
@@ -144,13 +144,18 @@ Encerra a sessão
 
 Ator autenticado na sessão atual
 
-Returns the logged-in actor. Admin and reseller sessions live in different cookies and may
-coexist in one browser; `?as=admin|reseller` says which one the caller wants (the panels always
-send it). Without it the admin session wins.
+Returns the logged-in actor. Admin and reseller sessions live in different cookies and
+may coexist in one browser (the platform owner opening a reseller panel, or a reseller
+who was handed the admin login). Each panel asks for its own role with `?as=`; without
+it the admin session wins, as before (M5-024).
 
 **Autenticação:** Sem autenticação.
 
-**Query:** `as` — `admin` ou `reseller` (opcional).
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `as` | query | não | string |
 
 **Response 200**
 
@@ -173,9 +178,6 @@ send it). Without it the admin session wins.
 #### `POST /api/v1/device/register`
 
 Registra o aparelho e devolve MAC + token
-
-Limite: `DEVICE_REGISTER_RATE_LIMIT` chamadas por IP e `DEVICE_RATE_LIMIT` por `device_id` a cada
-`DEVICE_RATE_WINDOW` segundos (padrão 30 / 20 / 60). Acima disso → `429 rate_limited` com `Retry-After`.
 
 **Autenticação:** Sem autenticação.
 
@@ -204,13 +206,6 @@ Configuração completa para o app (playlists, tema, status)
 
 **Autenticação:** Header `Authorization: Bearer <token>` (token devolvido pelo `POST /device/register`).
 
-Limite: `DEVICE_RATE_LIMIT` chamadas por dispositivo e `DEVICE_RATE_LIMIT_IP` por IP a cada
-`DEVICE_RATE_WINDOW` segundos (padrão 20 / 600 / 60) → `429 rate_limited` com `Retry-After`.
-
-Cabeçalhos opcionais `X-App-Version` (≤ 32) e `X-App-Type` (`tv` | `mobile`): quando presentes,
-atualizam `app_version`/`app_type` do dispositivo a cada chamada (o app 1.2.3+ envia em todas as
-requisições; antes só o `register` gravava a versão).
-
 **Response 200**
 
 ```json
@@ -229,7 +224,7 @@ requisições; antes só o `register` gravava a versão).
       "is_protected": false
     }
   ],
-  "theme": "theme_d",
+  "theme": "rail",
   "logo_url": "https://cdn.exemplo.com/logo.png",
   "bg_url": "https://cdn.exemplo.com/fundo.jpg",
   "qr_content": "https://wa.me/5511999999999",
@@ -276,33 +271,6 @@ Adiciona playlist ao dispositivo (auto-cadastro pelo app)
 }
 ```
 
-#### `POST /api/v1/device/diagnostics`
-
-Envia um pacote de diagnóstico do app (M5-013). **Autenticação:** `Bearer <token>` do dispositivo.
-Limite: 10 envios por dispositivo a cada 10 minutos (`429 rate_limited`). O painel guarda os
-10 mais recentes de cada dispositivo.
-
-```json
-{
-  "kind": "crash",                       // "crash" (automático) | "manual" (botão em Configurações)
-  "app_version": "1.2.1",
-  "device_info": {"model": "X96 Mini", "android": "9 (SDK 28)", "abi": "armeabi-v7a,armeabi"},
-  "log": "=== Bix Player Pro diagnostics ...\n"   // texto, até 512 KB (524288 caracteres) → 422 acima disso
-}
-```
-
-`201` → `{"id": 12, "message": "Diagnóstico enviado. Obrigado!"}`
-
-#### `GET /api/v1/admin/resellers/{reseller_id}/devices/{device_id}/diagnostics`
-
-Lista (sem o corpo) os diagnósticos do dispositivo, mais recentes primeiro. **Admin.**
-`[{"id","device_id","kind","app_version","device_info","size","created_at"}]`. `404` se o
-dispositivo não pertence à revenda.
-
-#### `GET /api/v1/admin/resellers/{reseller_id}/devices/{device_id}/diagnostics/{diagnostic_id}`
-
-Mesmo objeto com `body` (o texto completo). **Admin.**
-
 #### `DELETE /api/v1/device/playlists/{playlist_id}`
 
 Remove playlist do dispositivo
@@ -319,6 +287,57 @@ Remove playlist do dispositivo
 
 ```json
 {
+  "message": "Operação realizada."
+}
+```
+
+#### `POST /api/v1/device/review-code`
+
+Ativa o aparelho com o código de revisão da Google Play
+
+The store build has no reseller behind the reviewer's device: a code set by the admin
+links it to the demo reseller for a few days, with the demo list. No credit is spent.
+
+**Autenticação:** Header `Authorization: Bearer <token>` (token devolvido pelo `POST /device/register`).
+
+**Request**
+
+```json
+{
+  "code": "texto"
+}
+```
+
+**Response 200**
+
+```json
+{
+  "message": "Operação realizada."
+}
+```
+
+#### `POST /api/v1/device/diagnostics`
+
+Envia um pacote de diagnóstico (crash ou manual) para o painel
+
+**Autenticação:** Header `Authorization: Bearer <token>` (token devolvido pelo `POST /device/register`).
+
+**Request**
+
+```json
+{
+  "kind": "manual",
+  "app_version": "1.0.0",
+  "device_info": {},
+  "log": "texto"
+}
+```
+
+**Response 201**
+
+```json
+{
+  "id": 12,
   "message": "Operação realizada."
 }
 ```
@@ -461,8 +480,8 @@ Edita dados da revenda
 ```json
 {
   "name": "Revenda 01",
-  "cpf": "52998224725",
   "username": "revenda01",
+  "cpf": "52998224725",
   "theme": "rail",
   "logo_url": "https://cdn.exemplo.com/logo.png",
   "bg_url": "https://cdn.exemplo.com/fundo.jpg",
@@ -741,6 +760,7 @@ Dispositivos da revenda (somente leitura)
       "last_seen_at": "2026-09-04T12:00:00Z",
       "connected": false,
       "status": "active",
+      "diagnostics_count": 0,
       "created_at": "2026-09-04T12:00:00Z"
     }
   ],
@@ -791,6 +811,64 @@ Histórico de pagamentos da revenda
 }
 ```
 
+#### `GET /api/v1/admin/resellers/{reseller_id}/devices/{device_id}/diagnostics`
+
+Diagnósticos enviados pelo app deste dispositivo (mais recentes primeiro)
+
+**Autenticação:** Cookie `admin_session` (login do admin) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `reseller_id` | path | sim | integer |
+| `device_id` | path | sim | integer |
+
+**Response 200**
+
+```json
+[
+  {
+    "id": 12,
+    "device_id": "9774d56d682e549c",
+    "kind": "texto",
+    "app_version": "1.0.0",
+    "device_info": {},
+    "size": 1,
+    "created_at": "2026-09-04T12:00:00Z"
+  }
+]
+```
+
+#### `GET /api/v1/admin/resellers/{reseller_id}/devices/{device_id}/diagnostics/{diagnostic_id}`
+
+Conteúdo completo de um diagnóstico
+
+**Autenticação:** Cookie `admin_session` (login do admin) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Parâmetros**
+
+| Nome | Em | Obrigatório | Tipo |
+|---|---|---|---|
+| `reseller_id` | path | sim | integer |
+| `device_id` | path | sim | integer |
+| `diagnostic_id` | path | sim | integer |
+
+**Response 200**
+
+```json
+{
+  "id": 12,
+  "device_id": "9774d56d682e549c",
+  "kind": "texto",
+  "app_version": "1.0.0",
+  "device_info": {},
+  "size": 1,
+  "created_at": "2026-09-04T12:00:00Z",
+  "body": "texto"
+}
+```
+
 ### admin: settings
 
 #### `GET /api/v1/admin/settings`
@@ -813,7 +891,10 @@ Configurações globais
   ],
   "min_app_version": "1.0.0",
   "apk_url": "https://cdn.exemplo.com/app.apk",
-  "platform_name": "Minha Plataforma"
+  "platform_name": "Minha Plataforma",
+  "play_review_code": "texto",
+  "play_review_reseller": "texto",
+  "play_review_playlist_url": "texto"
 }
 ```
 
@@ -837,7 +918,10 @@ Atualiza configurações globais
   ],
   "min_app_version": "1.0.0",
   "apk_url": "https://cdn.exemplo.com/app.apk",
-  "platform_name": "Minha Plataforma"
+  "platform_name": "Minha Plataforma",
+  "play_review_code": "texto",
+  "play_review_reseller": "texto",
+  "play_review_playlist_url": "texto"
 }
 ```
 
@@ -855,7 +939,10 @@ Atualiza configurações globais
   ],
   "min_app_version": "1.0.0",
   "apk_url": "https://cdn.exemplo.com/app.apk",
-  "platform_name": "Minha Plataforma"
+  "platform_name": "Minha Plataforma",
+  "play_review_code": "texto",
+  "play_review_reseller": "texto",
+  "play_review_playlist_url": "texto"
 }
 ```
 
@@ -1034,6 +1121,7 @@ Lista os dispositivos da revenda
       "last_seen_at": "2026-09-04T12:00:00Z",
       "connected": false,
       "status": "active",
+      "diagnostics_count": 0,
       "created_at": "2026-09-04T12:00:00Z"
     }
   ],
@@ -1078,6 +1166,7 @@ Cadastra (ou reivindica) um dispositivo pelo MAC
   "last_seen_at": "2026-09-04T12:00:00Z",
   "connected": false,
   "status": "active",
+  "diagnostics_count": 0,
   "created_at": "2026-09-04T12:00:00Z"
 }
 ```
@@ -1111,6 +1200,7 @@ Detalhe do dispositivo
   "last_seen_at": "2026-09-04T12:00:00Z",
   "connected": false,
   "status": "active",
+  "diagnostics_count": 0,
   "created_at": "2026-09-04T12:00:00Z"
 }
 ```
@@ -1155,6 +1245,7 @@ Edita o dispositivo
   "last_seen_at": "2026-09-04T12:00:00Z",
   "connected": false,
   "status": "active",
+  "diagnostics_count": 0,
   "created_at": "2026-09-04T12:00:00Z"
 }
 ```
@@ -1264,7 +1355,7 @@ Personalização do app (logo, fundo, QR, layout)
   "logo_url": "https://cdn.exemplo.com/logo.png",
   "bg_url": "https://cdn.exemplo.com/fundo.jpg",
   "qr_content": "https://wa.me/5511999999999",
-  "theme": "theme_d",
+  "theme": "rail",
   "auto_ads": false
 }
 ```
@@ -1282,7 +1373,7 @@ Atualiza a personalização
   "logo_url": "https://cdn.exemplo.com/logo.png",
   "bg_url": "https://cdn.exemplo.com/fundo.jpg",
   "qr_content": "https://wa.me/5511999999999",
-  "theme": "theme_d",
+  "theme": "rail",
   "auto_ads": false
 }
 ```
@@ -1294,9 +1385,27 @@ Atualiza a personalização
   "logo_url": "https://cdn.exemplo.com/logo.png",
   "bg_url": "https://cdn.exemplo.com/fundo.jpg",
   "qr_content": "https://wa.me/5511999999999",
-  "theme": "theme_d",
+  "theme": "rail",
   "auto_ads": false
 }
+```
+
+#### `GET /api/v1/reseller/branding/backgrounds`
+
+Fundos prontos oferecidos pela plataforma
+
+**Autenticação:** Cookie `reseller_session` (login da revenda) + header `X-CSRF-Token` em métodos que alteram dados.
+
+**Response 200**
+
+```json
+[
+  {
+    "id": 12,
+    "label": "texto",
+    "url": "http://servidor.exemplo.com/get.php?username=u1&password=p1&type=m3u_plus"
+  }
+]
 ```
 
 #### `POST /api/v1/reseller/branding/upload`

@@ -1,5 +1,7 @@
 package pro.bixplayer.player.ui.screens.settings
 
+import android.net.Uri
+import pro.bixplayer.player.BuildConfig
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -209,6 +211,19 @@ fun SettingsScreen(
                 value = state.version,
                 enabled = false,
                 onClick = {},
+            )
+            // Required by Google Play in the app itself (ADR-007). A TV must not open a browser,
+            // so there the address is only shown; a phone opens it.
+            val privacyContext = LocalContext.current
+            val privacyTouch = LocalTouch.current
+            SettingRow(
+                title = stringResource(R.string.settings_privacy),
+                value = BuildConfig.PRIVACY_URL.removePrefix("https://"),
+                enabled = privacyTouch,
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.PRIVACY_URL))
+                    runCatching { privacyContext.startActivity(intent) }
+                },
             )
 
             if (state.confirmLogout) {

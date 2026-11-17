@@ -60,3 +60,7 @@ class PlaylistCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     url: str = Field(min_length=8, max_length=2048)
     is_protected: bool = False
+
+
+class ReviewCodeRequest(BaseModel):
+    code: str = Field(min_length=1, max_length=64)

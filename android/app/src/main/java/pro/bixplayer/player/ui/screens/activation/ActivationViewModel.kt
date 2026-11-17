@@ -21,6 +21,9 @@ data class ActivationUiState(
     /** Message to show the user; already translated. */
     val notice: String? = null,
     val showPlaylistForm: Boolean = false,
+    /** Store build: the access-code form for the Google Play reviewer (ADR-007). */
+    val showCodeForm: Boolean = false,
+    val submittingCode: Boolean = false,
     /** Set when the device became usable and the screen should navigate away. */
     val activated: Boolean = false,
 )
@@ -123,6 +126,41 @@ class ActivationViewModel @Inject constructor(
                 // message beats guessing (it may be "device not registered", not a bad URL).
                 _uiState.value.copy(
                     addingPlaylist = false,
+                    notice = repository.messageFor(result.exceptionOrNull()),
+                )
+            }
+        }
+    }
+
+    fun toggleCodeForm() {
+        _uiState.value = _uiState.value.copy(
+            showCodeForm = !_uiState.value.showCodeForm,
+            notice = null,
+        )
+    }
+
+    /** Sends the access code; the server links the device to the demo reseller (ADR-007). */
+    fun activateWithCode(code: String, emptyMessage: String, notYetMessage: String) {
+        if (_uiState.value.submittingCode) return
+        if (code.isBlank()) {
+            _uiState.value = _uiState.value.copy(notice = emptyMessage)
+            return
+        }
+        _uiState.value = _uiState.value.copy(submittingCode = true, notice = null)
+        viewModelScope.launch {
+            val result = repository.activateWithReviewCode(code)
+            val config = (repository.state.value as? ConfigState.Ready)?.config
+            _uiState.value = if (result.isSuccess) {
+                val usable = config?.canWatch == true
+                _uiState.value.copy(
+                    submittingCode = false,
+                    showCodeForm = !usable,
+                    activated = usable,
+                    notice = if (usable) null else notYetMessage,
+                )
+            } else {
+                _uiState.value.copy(
+                    submittingCode = false,
                     notice = repository.messageFor(result.exceptionOrNull()),
                 )
             }

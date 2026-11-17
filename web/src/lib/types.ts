@@ -58,6 +58,9 @@ export interface Settings {
 	min_app_version: string;
 	apk_url: string;
 	platform_name: string;
+	play_review_code: string;
+	play_review_reseller: string;
+	play_review_playlist_url: string;
 }
 
 export interface Dashboard {

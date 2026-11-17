@@ -14,6 +14,10 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "apk_url": "",
     "platform_name": "Plataforma",
     "credits_enabled": False,
+    # Google Play review (ADR-007): empty code turns the review activation off.
+    "play_review_code": "",
+    "play_review_reseller": "",
+    "play_review_playlist_url": "",
 }
 
 

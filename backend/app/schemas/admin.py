@@ -99,6 +99,9 @@ class SettingsOut(BaseModel):
     min_app_version: str
     apk_url: str
     platform_name: str
+    play_review_code: str
+    play_review_reseller: str
+    play_review_playlist_url: str
 
 
 class SettingsUpdate(BaseModel):
@@ -108,6 +111,9 @@ class SettingsUpdate(BaseModel):
     min_app_version: str | None = Field(None, max_length=32, pattern=r"^\d+(\.\d+){0,3}$")
     apk_url: str | None = Field(None, max_length=2048)
     platform_name: str | None = Field(None, min_length=1, max_length=80)
+    play_review_code: str | None = Field(None, max_length=64, pattern=r"^[A-Za-z0-9-]*$")
+    play_review_reseller: str | None = Field(None, max_length=64)
+    play_review_playlist_url: str | None = Field(None, max_length=2048)
 
 
 # ---- dashboard / listings ----------------------------------------------------
