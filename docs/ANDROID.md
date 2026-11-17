@@ -494,7 +494,10 @@ atualização: o app compara com o próprio `versionName` no boot e mostra a tel
 - **Player no celular**: trava em paisagem, esconde as barras (`WindowInsetsControllerCompat`),
   desenha sob o recorte da câmera (`LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES`) e o `Scaffold`
   zera os insets nessa rota; `configChanges` no manifesto evita recriar a activity ao girar. PiP
-  entra em `onUserLeaveHint` enquanto algo toca.
+  entra em `onUserLeaveHint` enquanto algo toca. Fechar a janela no X para a activity antes de
+  sair do PiP, por isso o player libera o motor quando o PiP termina com a activity parada
+  (`pipWindowClosed`). No VLC, quando a superfície some (tela apagada com o PiP aberto), o libVLC
+  se desconecta sozinho e não volta: o `VideoSurface` reconecta ao recriar a superfície (M5-047).
 - **`cast` é palavra reservada no SQLite**: a coluna de elenco chama-se `actors` (Room quebrava em
   `COALESCE(:cast, cast)`).
 - **IME na TV**: um campo de texto focado abre o teclado; por isso a busca é uma linha focável que

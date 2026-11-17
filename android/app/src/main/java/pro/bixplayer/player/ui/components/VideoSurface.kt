@@ -3,7 +3,11 @@ package pro.bixplayer.player.ui.components
 import java.lang.ref.WeakReference
 import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.util.VLCVideoLayout
+import android.view.SurfaceHolder
+import android.view.SurfaceView
+import android.view.View
 import android.view.ViewGroup
+import timber.log.Timber
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -41,16 +45,19 @@ fun VideoSurface(
                 }
             },
             update = { layout ->
+                val fill = resizeMode == AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                 // Preview -> full screen: the new surface arrives while the old one is attached,
                 // and the old one's release then left libVLC with none until some state happened
                 // to change. The surface is handed over here, and only its owner may detach it.
                 if (vlcSurfaceOwner?.get() !== layout || !vlcPlayer.vlcVout.areViewsAttached()) {
-                    if (vlcPlayer.vlcVout.areViewsAttached()) vlcPlayer.detachViews()
-                    vlcPlayer.attachViews(layout, null, false, false)
-                    vlcSurfaceOwner = WeakReference(layout)
+                    attachVlc(vlcPlayer, layout)
+                }
+                SurfaceWatcher.on(layout).also {
+                    it.player = vlcPlayer
+                    it.onFill = { onVlcFill(fill) }
                 }
                 // "Tela cheia" and "Tamanho original" must mean the same as on Media3 (M5-032).
-                onVlcFill(resizeMode == AspectRatioFrameLayout.RESIZE_MODE_ZOOM)
+                onVlcFill(fill)
             },
             onRelease = { layout ->
                 if (vlcSurfaceOwner?.get() === layout) {
@@ -80,4 +87,63 @@ fun VideoSurface(
         },
         onRelease = { view -> view.player = null },
     )
+}
+
+private fun attachVlc(player: MediaPlayer, layout: VLCVideoLayout) {
+    // detachViews also drops the helper of an output libVLC already let go by itself
+    player.detachViews()
+    player.attachViews(layout, null, false, false)
+    vlcSurfaceOwner = WeakReference(layout)
+}
+
+/**
+ * When the video surface is destroyed (screen off with the PiP window open, and on some phones
+ * the PiP transition itself), libVLC detaches by itself and never comes back when the surface
+ * does: sound with a black window (M5-047). Nothing in the composition changes at that point, so
+ * the layout's own surface callback attaches again, for the current owner only.
+ */
+private class SurfaceWatcher(private val layout: VLCVideoLayout) : SurfaceHolder.Callback {
+    var player: MediaPlayer? = null
+    var onFill: () -> Unit = {}
+    private var watching: SurfaceView? = null
+
+    private fun watch() {
+        val surface = layout.findSurfaceView() ?: return
+        if (surface === watching) return
+        watching?.holder?.removeCallback(this)
+        surface.holder.addCallback(this)
+        watching = surface
+    }
+
+    override fun surfaceCreated(holder: SurfaceHolder) {
+        layout.post {
+            val mp = player ?: return@post
+            if (mp.isReleased || vlcSurfaceOwner?.get() !== layout || mp.vlcVout.areViewsAttached()) return@post
+            Timber.d("vlc surface is back: attaching again")
+            attachVlc(mp, layout)
+            onFill()
+        }
+    }
+
+    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) = Unit
+
+    override fun surfaceDestroyed(holder: SurfaceHolder) = Unit
+
+    companion object {
+        /**
+         * Kept in the layout's tag so it lives and dies with the view. The layout inflates its
+         * SurfaceView on the first attach, so it is looked up again every time.
+         */
+        fun on(layout: VLCVideoLayout): SurfaceWatcher {
+            val watcher = layout.tag as? SurfaceWatcher ?: SurfaceWatcher(layout).also { layout.tag = it }
+            watcher.watch()
+            return watcher
+        }
+    }
+}
+
+private fun View.findSurfaceView(): SurfaceView? = when (this) {
+    is SurfaceView -> this
+    is ViewGroup -> (0 until childCount).firstNotNullOfOrNull { getChildAt(it).findSurfaceView() }
+    else -> null
 }

@@ -92,6 +92,10 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.compose.LocalActivity
+import androidx.core.app.OnPictureInPictureModeChangedProvider
+import androidx.core.app.PictureInPictureModeChangedInfo
+import androidx.core.util.Consumer
+import timber.log.Timber
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import pro.bixplayer.player.ui.theme.LocalIsTv
@@ -166,20 +170,32 @@ fun PlayerScreen(
     // released the engine live had just handed over, leaving the preview without a picture.
     val view = LocalView.current
     val lifecycleOwner = activity as? LifecycleOwner ?: LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
+    val pipOwner = activity as? OnPictureInPictureModeChangedProvider
+    DisposableEffect(lifecycleOwner, pipOwner) {
         view.keepScreenOn = true
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                // In PiP the activity stops but the video must keep going.
+                // A PiP window can be stopped while still on screen (screen off): keep going.
                 Lifecycle.Event.ON_STOP -> if (!viewModel.session.inPictureInPicture) viewModel.onBackground()
                 Lifecycle.Event.ON_START -> viewModel.onForeground()
                 else -> Unit
             }
         }
+        // Closing the PiP window stops the activity first and only then leaves PiP, so the stop
+        // above still saw PiP and the sound went on with nothing on screen (M5-047). Leaving PiP
+        // while stopped is that close; expanding back to full screen leaves it while started.
+        val pipListener = Consumer<PictureInPictureModeChangedInfo> { info ->
+            if (pipWindowClosed(info.isInPictureInPictureMode, lifecycleOwner.lifecycle.currentState)) {
+                Timber.d("pip window closed: releasing the player")
+                viewModel.onBackground()
+            }
+        }
         lifecycleOwner.lifecycle.addObserver(observer)
+        pipOwner?.addOnPictureInPictureModeChangedListener(pipListener)
         onDispose {
             view.keepScreenOn = false
             lifecycleOwner.lifecycle.removeObserver(observer)
+            pipOwner?.removeOnPictureInPictureModeChangedListener(pipListener)
             viewModel.onExit()
         }
     }
@@ -405,6 +421,10 @@ fun PlayerScreen(
         }
     }
 }
+
+/** Leaving PiP with the activity already stopped means the user closed the window. */
+internal fun pipWindowClosed(inPictureInPicture: Boolean, state: Lifecycle.State): Boolean =
+    !inPictureInPicture && !state.isAtLeast(Lifecycle.State.STARTED)
 
 @Composable
 private fun InfoOverlay(
