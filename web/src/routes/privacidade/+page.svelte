@@ -12,8 +12,8 @@
 			<h2>Quem somos</h2>
 			<p>
 				O Bix Player Pro é um player de vídeo para celular e Android TV, mantido por
-				<strong>Jose Lizandro Santos Diniz</strong>, responsável pelo tratamento dos dados descrito
-				aqui. Contato: <a href="mailto:bixplayerpro@gmail.com">bixplayerpro@gmail.com</a>.
+				<strong>BIX PLAYER LTDA</strong>, responsável pelo tratamento dos dados descrito aqui.
+				Contato: <a href="mailto:bixplayerpro@gmail.com">bixplayerpro@gmail.com</a>.
 			</p>
 			<p>
 				O app não fornece nem hospeda conteúdo. Ele reproduz as listas configuradas para cada
