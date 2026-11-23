@@ -13,7 +13,7 @@
 			<p>
 				O Bix Player Pro é um player de vídeo para celular e Android TV, mantido por
 				<strong>Jose Lizandro Santos Diniz</strong>, responsável pelo tratamento dos dados descrito
-				aqui. Contato: <a href="mailto:contato@bixplayer.pro">contato@bixplayer.pro</a>.
+				aqui. Contato: <a href="mailto:bixplayerpro@gmail.com">bixplayerpro@gmail.com</a>.
 			</p>
 			<p>
 				O app não fornece nem hospeda conteúdo. Ele reproduz as listas configuradas para cada
@@ -91,7 +91,7 @@
 			</p>
 			<p>
 				Para pedir acesso, correção ou exclusão dos seus dados, escreva para
-				<a href="mailto:contato@bixplayer.pro">contato@bixplayer.pro</a> informando o código MAC exibido
+				<a href="mailto:bixplayerpro@gmail.com">bixplayerpro@gmail.com</a> informando o código MAC exibido
 				no app. Respondemos em até 15 dias, conforme a LGPD (Lei 13.709/2018).
 			</p>
 		</section>
